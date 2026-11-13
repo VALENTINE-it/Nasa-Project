@@ -399,13 +399,9 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
 
         if (dashRes.ok) {
           const dashJson = await dashRes.json()
-          const summaryJson = summaryRes.ok ? await summaryRes.json() : {}
 
           if (active) {
-            setDashboardData({
-              ...dashJson,
-              summary: summaryJson,
-            })
+            setDashboardData(dashJson)
             if (dashJson.latest) {
               setLiveVitals({ ...dashJson.latest })
             }
@@ -423,11 +419,10 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     return () => {
       active = false
     }
-  }, [astronautId])
+  }, [astronautId, session])
 
-  // REAL-TIME DYNAMIC VITALS ENGINE (Heart rate variability, respiratory drift, steps accumulation)
   useEffect(() => {
-    if (!isStreaming) return
+    if (!isStreaming || isWatchHeartRateLive) return
 
     const interval = setInterval(() => {
       setLiveVitals((prev) => {
