@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import './App.css'
 
@@ -207,11 +207,9 @@ function ProtectedDashboard({ session, onLogout }) {
   const { profile, latest, history, alerts, summary } = dashboardData
   const statusClass = latest && latest.heartRate > 90 ? 'warning' : 'stable'
 
-  const chartSeries = useMemo(() => {
-    const records = [...history].reverse()
-    const limit = timeframe === 'daily' ? 3 : timeframe === 'week' ? 7 : Math.min(records.length, 12)
-    return records.slice(0, limit)
-  }, [history, timeframe])
+  const records = [...history].reverse()
+  const limit = timeframe === 'daily' ? 3 : timeframe === 'week' ? 7 : Math.min(records.length, 12)
+  const chartSeries = records.slice(0, limit)
 
   const heartPoints = buildChartPoints(chartSeries.map((record) => record.heartRate))
   const oxygenPoints = buildChartPoints(chartSeries.map((record) => record.bloodOxygen))
