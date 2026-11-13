@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, LogIn, Moon, Rocket, Sun } from 'lucide-react'
 
-export const DEMO_USERS = [
+const DEMO_USERS = [
   { id: 1, username: 'elenapark', password: 'mission-2041', name: 'Elena Park', role: 'Mission Commander' },
   { id: 2, username: 'danielortiz', password: 'mission-2056', name: 'Daniel Ortiz', role: 'Medical & Systems Officer' },
   { id: 3, username: 'priyashah', password: 'mission-2089', name: 'Priya Shah', role: 'Science Specialist' },
