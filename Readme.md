@@ -91,7 +91,7 @@ Here is the realistic, transparent technical breakdown of our practical setup:
 | Developer Laptop      | Simulator & Habitat Brain      | Runs Python/FastAPI backend,    | $0     |
 |                       |                                | DuckDB, and Telemetry Simulator | (Owned)|
 |                       |                                | Injects health surges/anomalies |        |
-|                       |                                | Displays Station Command Screen |        |
+|                       |                                | Displays Earth Watch Centre Screen |        |
 |-----------------------+--------------------------------+---------------------------------+--------|
 | Standard Smartphone   | Astronaut Tactical Mobile HUD  | Connects via local Wi-Fi / IP   | $0     |
 |                       | (Display, Alarm, Voice, SOPs)  | Displays live vital dials       | (Owned)|
@@ -160,7 +160,7 @@ The phone does not pretend to be a medical sensor. It does what phones do best: 
 |  |    - DuckDB Columnar Time-Series Database (Fast local query engine)                          |  |
 |  |    - Anomaly Detector: Flags statistical surges (> 3.0σ deviation from baseline)            |  |
 |  |    - Bayesian Clinical Decision Support (CDSS): Matches NASA HRP medical protocols          |  |
-|  | 3. Station Command Console:                                                                 |  |
+|  | 3. Earth Watch Centre Console:                                                               |  |
 |  |    - Full habitat multi-crew status display on laptop screen                                 |  |
 |  |    - Interplanetary DTN transmission queue (Simulates 3 to 22 min delay to Earth)           |  |
 |  +---------------------------------------------------------------------------------------------+  |
@@ -228,7 +228,7 @@ flowchart TD
     subgraph User_Interfaces [3.0 Guidance & Visualization]
         P7[3.1 Astronaut Mobile HUD (Phone Web App)]
         P8[3.2 Step-by-Step Voice & Checklist Engine]
-        P9[3.3 Station Medical Command Console (Laptop)]
+        P9[3.3 Earth Watch Centre Console (Laptop)]
         P10[3.4 DTN Latency Buffer & Uplink Agent]
     end
 
@@ -307,7 +307,7 @@ sequenceDiagram
     
     par Dual Alert Delivery
         Laptop->>Phone: Push Emergency Alert (WebSockets)
-        Laptop->>Laptop: Flash Red Alert on Station Command Console
+        Laptop->>Laptop: Flash Red Alert on Earth Watch Centre Console
     end
 
     Note over Phone: Phone turns bright RED, sounds loud siren, and speaks voice instructions
@@ -548,7 +548,7 @@ Streams live telemetry frames at 1 Hz directly to connected mobile HUDs and comm
 +---------------------------------------------------------------------------------------------------+
 |                                  DUAL DASHBOARD IMPLEMENTATION                                    |
 +---------------------------------------------------------------------------------------------------+
-|  DASHBOARD A: ASTRONAUT TACTICAL HUD (PHONE PWA)    DASHBOARD B: MARS COMMAND CONSOLE (LAPTOP)    |
+|  DASHBOARD A: ASTRONAUT TACTICAL HUD (PHONE PWA)    DASHBOARD B: EARTH WATCH CENTRE CONSOLE (LAPTOP) |
 |  - Ultra-high contrast OLED dark mode               - Multi-crew status matrix (Elena, Mark, etc.)|
 |  - One-tap large buttons (glove-friendly)           - Synchronized cabin CO2 & radiation graphs   |
 |  - Voice-synthesized audio instructions             - Full DuckDB historical trend analytics      |
@@ -603,7 +603,7 @@ nasa-aura-med/
 │   │   │   │   ├── CameraPpg.tsx  # Fingertip camera heart rate & HRV
 │   │   │   │   ├── PvtTest.tsx    # 3-minute Psychomotor Vigilance Task
 │   │   │   │   └── SalivaScan.tsx # OpenCV camera strip scanner
-│   │   │   └── console/           # Mars Habitat Command Console (Laptop)
+│   │   │   └── console/           # Earth Watch Centre Console (Laptop)
 │   │   │       ├── CrewGrid.tsx   # All-crew overview tiles
 │   │   │       └── DtnMonitor.tsx # Simulated 3-22 min radio delay widget
 │   │   └── pages/
@@ -683,7 +683,7 @@ cd frontend
 npm install
 npm run dev
 ```
-* **Station Command Console:** Open `http://localhost:3000/console` on the laptop.
+* **Earth Watch Centre Console:** Open `http://localhost:3000/console` on the laptop.
 * **Astronaut Mobile HUD:** Open `http://<laptop-local-ip>:3000/hud` on your smartphone browser (connected to the same local WiFi or laptop mobile hotspot).
 
 ---

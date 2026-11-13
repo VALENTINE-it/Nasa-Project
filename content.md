@@ -42,7 +42,7 @@ Remember viruses can re-awaken in space
 
 ---
 
->We wanted to have two dashboards one for the astraunots on the go and the other one for the watch centre on mars.
+>We wanted to have two dashboards one for the astraunots on the go and the other one for the watch centre on earth.
 >We wanted to incorporate use of a smart watch/phone for some of the data that we can collect in real time.
 >Test these cases using different conditions from the Nasa data eg *Before lift off. In space. After the mission*
 
