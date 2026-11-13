@@ -277,7 +277,9 @@ function App() {
           return
         }
         const data = await response.json()
-        if (isSubscribed) setSessionUser(data.authenticated ? data.user : null)
+        if (isSubscribed) {
+          setSessionUser(data.user || (data.astronautId ? data : null))
+        }
       } catch {
         if (isSubscribed) setSessionUser(null)
       } finally {
