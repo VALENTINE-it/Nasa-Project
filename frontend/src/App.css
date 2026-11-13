@@ -1882,18 +1882,197 @@
 
 .remedy-recovery-footer {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
   color: var(--text-secondary);
   background: var(--bg-surface);
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 12px 14px;
+  border-radius: 8px;
   border: 1px solid var(--border-subtle);
+  border-left: 3px solid #10b981;
 }
 
 .remedy-recovery-footer strong {
   color: var(--text-primary);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.remedy-recovery-footer p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* =========================================================
+   EMERGENCY TRIAGE: HAS THIS HAPPENED? / IF THIS HAPPENS...
+   VISUAL STEP DIAGRAMS & PANIC-PROOF LAYOUT
+   ========================================================= */
+
+.remedy-question-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--accent-color, #0284c7);
+  background: var(--accent-bg, rgba(2, 132, 199, 0.08));
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  width: fit-content;
+}
+
+.nasa-remedy-card.critical .remedy-question-banner {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.nasa-remedy-card.warning .remedy-question-banner {
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.remedy-human-question {
+  margin: 2px 0 3px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.remedy-plain-subtitle {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.notice-has-happened-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--status-warn-text, #f59e0b);
+  margin-bottom: 3px;
+}
+
+.notice-full-card.good .notice-has-happened-label {
+  color: var(--status-good-text, #10b981);
+}
+
+/* 1-2-3 Action Steps with SVG Diagrams */
+.checklist-step-item-visual {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.checklist-step-item-visual:hover {
+  background: var(--bg-surface-hover, rgba(0, 0, 0, 0.02));
+  border-color: var(--border-focus);
+}
+
+.checklist-step-item-visual.checked {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.step-check-col {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checked-icon {
+  color: #10b981;
+}
+
+.step-graphic-box {
+  width: 78px;
+  height: 58px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 2px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.step-svg-visual {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.step-content-visual {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-pill-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--accent-bg, rgba(2, 132, 199, 0.1));
+  color: var(--accent-color, #0284c7);
+  padding: 1px 7px;
+  border-radius: 4px;
+  margin-bottom: 3px;
+}
+
+.step-content-visual strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+  line-height: 1.35;
+}
+
+.checklist-step-item-visual.checked .step-content-visual strong {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.step-content-visual p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.solution-check-icon {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+@media (max-width: 640px) {
+  .checklist-step-item-visual {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .step-graphic-box {
+    width: 100%;
+    max-width: 160px;
+    height: 70px;
+  }
 }
 
 

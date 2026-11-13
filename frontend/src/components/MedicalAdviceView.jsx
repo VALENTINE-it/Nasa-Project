@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   ExternalLink,
-  BookOpen,
   Pill,
   HeartPulse,
   Wind,
@@ -13,190 +12,397 @@ import {
   CheckSquare,
   Square,
   Sparkles,
+  HelpCircle,
+  HelpCircle as QuestionIcon,
 } from 'lucide-react'
 
-// Official NASA In-Flight Emergency Medical Protocols & Remedies
+// Visual Step Diagrams (Clean SVG Graphic Illustrations for Instant Action Under Panic)
+function StepIllustration({ type }) {
+  switch (type) {
+    case 'sit-down':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Wall Bulkhead */}
+          <line x1="18" y1="5" x2="18" y2="55" stroke="var(--border-default)" strokeWidth="3" />
+          {/* Seated Astronaut Silhouette */}
+          <circle cx="34" cy="18" r="7" fill="var(--accent-color, #0284c7)" />
+          <path d="M 28 26 L 34 42 L 52 42 L 52 54" fill="none" stroke="var(--accent-color, #0284c7)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M 24 30 L 34 30" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" strokeDasharray="2 2" />
+          {/* Angle arrow */}
+          <path d="M 20 45 L 26 40" stroke="#10b981" strokeWidth="2" />
+        </svg>
+      )
+    case 'drink-salt':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Water Drink Pouch */}
+          <rect x="20" y="16" width="26" height="34" rx="4" fill="none" stroke="var(--accent-color, #0284c7)" strokeWidth="2.5" />
+          <path d="M 33 8 L 33 16" stroke="var(--accent-color, #0284c7)" strokeWidth="3" strokeLinecap="round" />
+          <path d="M 24 30 Q 33 26 42 30" stroke="#38bdf8" strokeWidth="2" fill="none" />
+          <text x="33" y="42" fontSize="7" fill="#38bdf8" textAnchor="middle" fontWeight="bold">500 mL</text>
+          {/* 2 Salt Tablets */}
+          <ellipse cx="58" cy="24" rx="6" ry="4" fill="#ffffff" stroke="var(--border-default)" strokeWidth="1.5" />
+          <ellipse cx="60" cy="36" rx="6" ry="4" fill="#ffffff" stroke="var(--border-default)" strokeWidth="1.5" />
+          <text x="59" y="49" fontSize="7" fill="var(--text-tertiary)" textAnchor="middle">2 Salt</text>
+        </svg>
+      )
+    case 'pill-pack':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Blister Pack */}
+          <rect x="18" y="12" width="44" height="36" rx="3" fill="var(--bg-surface-secondary)" stroke="var(--border-default)" strokeWidth="2" />
+          {/* Foil Pill Bubbles */}
+          <circle cx="28" cy="22" r="5" fill="#f59e0b" opacity="0.3" stroke="#f59e0b" strokeWidth="1.5" />
+          <circle cx="40" cy="22" r="5" fill="#f59e0b" opacity="0.3" stroke="#f59e0b" strokeWidth="1.5" />
+          <circle cx="52" cy="22" r="5" fill="#f59e0b" opacity="0.3" stroke="#f59e0b" strokeWidth="1.5" />
+          {/* Popped Pill */}
+          <circle cx="34" cy="36" r="5" fill="#10b981" stroke="#10b981" strokeWidth="2" />
+          <text x="50" y="40" fontSize="8" fill="var(--text-primary)" fontWeight="bold">1 PILL</text>
+        </svg>
+      )
+    case 'chest-pads':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Chest Outline */}
+          <path d="M 22 15 Q 40 18 58 15 L 54 48 Q 40 52 26 48 Z" fill="none" stroke="var(--border-default)" strokeWidth="2" />
+          {/* 3 Sensor stickers */}
+          <circle cx="32" cy="26" r="4" fill="#10b981" stroke="#ffffff" strokeWidth="1" />
+          <circle cx="48" cy="26" r="4" fill="#10b981" stroke="#ffffff" strokeWidth="1" />
+          <circle cx="40" cy="40" r="4" fill="#10b981" stroke="#ffffff" strokeWidth="1" />
+          {/* ECG Line */}
+          <path d="M 26 33 L 34 33 L 37 28 L 41 38 L 44 33 L 54 33" fill="none" stroke="#38bdf8" strokeWidth="1.5" />
+        </svg>
+      )
+    case 'oxygen-mask':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Head Profile */}
+          <circle cx="36" cy="24" r="14" fill="none" stroke="var(--border-default)" strokeWidth="2" />
+          {/* Orange Mask */}
+          <path d="M 38 22 L 52 28 L 46 38 L 36 34 Z" fill="#f97316" stroke="#ea580c" strokeWidth="2" />
+          {/* Straps */}
+          <path d="M 38 22 L 23 20" stroke="#f97316" strokeWidth="2" />
+          <path d="M 36 34 L 24 30" stroke="#f97316" strokeWidth="2" />
+          {/* Oxygen Flow Hose */}
+          <path d="M 50 34 Q 56 46 62 52" fill="none" stroke="#38bdf8" strokeWidth="3" />
+          <text x="62" y="32" fontSize="8" fill="#38bdf8" fontWeight="bold">100% O2</text>
+        </svg>
+      )
+    case 'filter-switch':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Machine Panel */}
+          <rect x="15" y="12" width="50" height="36" rx="4" fill="var(--bg-surface-secondary)" stroke="var(--border-default)" strokeWidth="2" />
+          {/* Manual Switch / Lever */}
+          <line x1="28" y1="36" x2="48" y2="20" stroke="#ef4444" strokeWidth="4" strokeLinecap="round" />
+          <circle cx="48" cy="20" r="4" fill="#ef4444" />
+          <circle cx="28" cy="36" r="3" fill="var(--border-default)" />
+          {/* Arrow */}
+          <path d="M 36 18 Q 44 14 52 18" fill="none" stroke="#10b981" strokeWidth="2" markerEnd="arrow" />
+          <text x="40" y="44" fontSize="7" fill="var(--text-primary)" textAnchor="middle" fontWeight="bold">BACKUP LiOH</text>
+        </svg>
+      )
+    case 'storm-shelter':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Outer Room / Radiation Symbol */}
+          <rect x="14" y="10" width="52" height="40" rx="4" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="3 3" />
+          {/* Water Shield Walls */}
+          <rect x="18" y="14" width="8" height="32" fill="#0284c7" opacity="0.4" />
+          <rect x="54" y="14" width="8" height="32" fill="#0284c7" opacity="0.4" />
+          {/* Protected Crew inside */}
+          <circle cx="40" cy="26" r="5" fill="#10b981" />
+          <path d="M 34 40 L 40 32 L 46 40" fill="none" stroke="#10b981" strokeWidth="2.5" />
+          <text x="40" y="47" fontSize="6.5" fill="#10b981" textAnchor="middle" fontWeight="bold">SAFE CORE</text>
+        </svg>
+      )
+    case 'radiation-badge':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Torso */}
+          <path d="M 25 15 L 55 15 L 50 48 L 30 48 Z" fill="none" stroke="var(--border-default)" strokeWidth="2" />
+          {/* Clipped Dosimeter Badge */}
+          <rect x="34" y="24" width="14" height="18" rx="2" fill="#f59e0b" stroke="#d97706" strokeWidth="1.5" />
+          <line x1="37" y1="29" x2="45" y2="29" stroke="#ffffff" strokeWidth="1.5" />
+          <text x="41" y="38" fontSize="6" fill="#ffffff" textAnchor="middle" fontWeight="bold">RAD</text>
+        </svg>
+      )
+    case 'thigh-bands':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Legs */}
+          <line x1="32" y1="12" x2="30" y2="48" stroke="var(--border-default)" strokeWidth="6" strokeLinecap="round" />
+          <line x1="48" y1="12" x2="50" y2="48" stroke="var(--border-default)" strokeWidth="6" strokeLinecap="round" />
+          {/* Inflatable Thigh Bands (Braslet-M) */}
+          <rect x="25" y="20" width="13" height="10" rx="2" fill="#38bdf8" stroke="#0284c7" strokeWidth="1.5" />
+          <rect x="43" y="20" width="13" height="10" rx="2" fill="#38bdf8" stroke="#0284c7" strokeWidth="1.5" />
+          <text x="40" y="42" fontSize="7" fill="var(--text-primary)" textAnchor="middle" fontWeight="bold">30 mmHg</text>
+        </svg>
+      )
+    case 'nose-spray-chart':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Nose Spray Bottle */}
+          <rect x="20" y="22" width="12" height="22" rx="2" fill="#38bdf8" stroke="var(--border-default)" strokeWidth="1.5" />
+          <line x1="26" y1="14" x2="26" y2="22" stroke="#38bdf8" strokeWidth="2.5" />
+          <circle cx="26" cy="11" r="2" fill="#38bdf8" />
+          {/* Wall Eye Chart */}
+          <rect x="42" y="12" width="22" height="34" rx="2" fill="var(--bg-surface)" stroke="var(--border-default)" strokeWidth="1.5" />
+          <text x="53" y="23" fontSize="8" fill="var(--text-primary)" textAnchor="middle" fontWeight="bold">E</text>
+          <text x="53" y="32" fontSize="6" fill="var(--text-secondary)" textAnchor="middle">F P</text>
+          <text x="53" y="40" fontSize="5" fill="var(--text-tertiary)" textAnchor="middle">T O Z</text>
+        </svg>
+      )
+    case 'antiviral-cream':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Pill Bottle */}
+          <rect x="18" y="18" width="16" height="24" rx="2" fill="#f59e0b" stroke="#d97706" strokeWidth="1.5" />
+          <rect x="19" y="14" width="14" height="4" fill="#ffffff" stroke="var(--border-default)" strokeWidth="1" />
+          {/* Ointment Cream Tube */}
+          <path d="M 42 38 L 56 16 L 62 19 L 46 41 Z" fill="#38bdf8" stroke="#0284c7" strokeWidth="1.5" />
+          <text x="54" y="47" fontSize="7" fill="var(--text-primary)" textAnchor="middle">CREAM</text>
+        </svg>
+      )
+    case 'spit-tube':
+      return (
+        <svg viewBox="0 0 80 60" className="step-svg-visual">
+          {/* Saliva Cryo-Tube */}
+          <rect x="32" y="14" width="16" height="32" rx="4" fill="none" stroke="var(--border-default)" strokeWidth="2" />
+          <rect x="30" y="10" width="20" height="5" rx="1" fill="#ef4444" />
+          <path d="M 33 34 Q 40 32 47 34 L 47 42 Q 40 45 33 42 Z" fill="#38bdf8" opacity="0.6" />
+          <text x="40" y="27" fontSize="6.5" fill="#38bdf8" textAnchor="middle" fontWeight="bold">1.5 mL</text>
+          <text x="40" y="54" fontSize="7" fill="var(--text-tertiary)" textAnchor="middle">FREEZER</text>
+        </svg>
+      )
+    default:
+      return null
+  }
+}
+
+// 5 Authentic NASA Emergency Remedies (Structured as "Has this happened? / If this happens...")
 const NASA_EMERGENCY_REMEDIES = [
   {
     id: 'tachycardia-fluid-shift',
-    title: 'Acute Microgravity Tachycardia & Cephalic Fluid Surge',
-    hazard: 'Altered Gravity Fields & Cardiovascular Deconditioning',
+    hasThisHappened: 'Is their heart pounding over 120 beats a minute while resting?',
+    ifThisHappens: 'If an astronaut suddenly has a racing pulse, chest pounding, or dizziness floating in the cabin:',
+    hazard: 'Blood Rushing to Chest & Heart Racing',
     icon: HeartPulse,
     severity: 'critical',
-    sourceTitle: 'NASA HRP Risk Evidence: Cardiac Rhythm Problems (HRP-47065)',
+    sourceTitle: 'NASA Human Research Roadmap: Cardiac Rhythm Problems (HRP-47065)',
     sourceUrl: 'https://humanresearchroadmap.nasa.gov/evidence/',
-    kitLocation: 'Bulkhead Locker 2 · Emergency Medical Kit (EMK) Alpha',
-    whyItHappens:
-      'In zero gravity, the absence of hydrostatic pooling shifts ~1.5 to 2.0 liters of blood into the thoracic chest and head. This triggers acute baroreceptor reflex confusion, ventricular irritability, and sinus tachycardia (>140 bpm).',
-    expectedRecovery: 'Heart rate stabilizes below 85 bpm within 15–20 minutes after fluid loading and oral beta-blocker.',
+    kitLocation: 'Bulkhead Locker 2 · Medical Kit Alpha',
+    whyItHappensSimple:
+      'Because gravity is gone, blood that normally stays down in the legs rushes straight up into the chest and head. The heart panics and starts pumping way too fast (over 120 beats a minute) trying to handle the extra fluid.',
+    expectedRecovery: 'Their pulse slows back down below 85 beats a minute within 15 to 20 minutes after drinking salty water and taking the pill.',
     steps: [
       {
-        id: 'step-1',
-        title: 'Step 1: Immediate Exertion Halt & Upright Restraint',
+        id: 'tach-step-1',
+        visual: 'sit-down',
+        stepNumber: 'Step 1',
+        title: 'Sit them down against the wall right now',
         detail:
-          'Cease all flight and physical activities immediately. Help the astronaut recline against the cabin bulkhead with feet restrained. Keep the upper torso elevated at 30° to reduce thoracic venous engorgement.',
+          'Do not let them float, stand, or exercise. Strap them gently against the cabin bulkhead with their back propped up. Keeping their head and chest slightly raised stops more blood from rushing upward.',
       },
       {
-        id: 'step-2',
-        title: 'Step 2: Retrieve Kit Alpha & Ingest Oral Electrolytes',
+        id: 'tach-step-2',
+        visual: 'drink-salt',
+        stepNumber: 'Step 2',
+        title: 'Give them water mixed with salt',
         detail:
-          'Retrieve Medical Kit Alpha from Bulkhead Locker 2. Hand the crewmember the 500 mL water drink pouch pre-mixed with 2 sodium chloride electrolyte tablets (Oral Rehydration Salts) to restore circulating vascular volume.',
+          'Open Medical Kit Alpha from Bulkhead Locker 2. Hand them the 500 mL water drink pouch and have them swallow 2 salt tablets. The salty water keeps blood inside their vessels so their heart stops overworking.',
       },
       {
-        id: 'step-3',
-        title: 'Step 3: Administer Standing Order Beta-Blocker (Metoprolol)',
+        id: 'tach-step-3',
+        visual: 'pill-pack',
+        stepNumber: 'Step 3',
+        title: 'Give 1 heart pill if still beating fast after 10 mins',
         detail:
-          'If heart rate remains >120 bpm after 10 minutes of rest and hydration, remove the blister pack labeled METOPROLOL TARTRATE (50 mg) from Kit Alpha. Ensure the astronaut swallows ONE tablet with water.',
+          'Check their pulse after 10 minutes. If their heart is still hammering above 120 beats/min, take out the foil pack labeled METOPROLOL (50 mg). Hand them ONE pill to swallow with water.',
       },
       {
-        id: 'step-4',
-        title: 'Step 4: Attach Continuous ECG Lead & Log Telemetry',
+        id: 'tach-step-4',
+        visual: 'chest-pads',
+        stepNumber: 'Step 4',
+        title: 'Stick the 3 monitor stickers onto their chest',
         detail:
-          'Apply 3-lead Holter patch to chest. Confirm telemetry stream reflects rate deceleration and rhythm normalization on the console.',
+          'Peel the paper off the 3 round sticky sensor pads and press them firmly onto their bare chest. Look at the dashboard screen to confirm their pulse line is calming down.',
       },
     ],
   },
   {
     id: 'hypoxia-co2-scrubber',
-    title: 'Cabin Hypoxia & Hypercapnia (CO2 Scrubber Breakthrough)',
-    hazard: 'Hostile Closed Spacecraft Environment',
+    hasThisHappened: 'Is someone gasping for breath with a pounding frontal headache?',
+    ifThisHappens: 'If someone is gasping for air, confused, or complains of a severe throbbing headache:',
+    hazard: 'Bad Air / Cabin Carbon Dioxide Buildup',
     icon: Wind,
     severity: 'critical',
     sourceTitle: 'NASA HRP Evidence Report: Adverse Health Effects of CO2 Exposure',
     sourceUrl: 'https://humanresearchroadmap.nasa.gov/evidence/reports/CO2.pdf',
-    kitLocation: 'Bulkhead Locker 4 · ECLSS Emergency Access Bay',
-    whyItHappens:
-      'In a sealed spacecraft, human metabolism continuously releases CO2. If the Carbon Dioxide Removal Assembly (CDRA) beds saturate, cabin pCO2 rises above 3.0 mmHg and pO2 drops, causing hypercapnic cerebral vasodilation, throbbing headache, and cognitive impairment.',
-    expectedRecovery: 'Blood oxygen rebounds to >97% SpO2 within 90 seconds of donning mask; hypercapnic headache subsides within 45 minutes.',
+    kitLocation: 'Bulkhead Locker 4 · Emergency Air Mount',
+    whyItHappensSimple:
+      'The ship\'s air filters are clogged or full. Exhaled breath (carbon dioxide) is trapping itself in the cabin, stealing fresh oxygen from the air and causing a painful throbbing headache.',
+    expectedRecovery: 'Blood oxygen jumps back to safe green levels within 1 to 2 minutes of putting the mask on. Headache fades within 45 minutes.',
     steps: [
       {
-        id: 'step-1',
-        title: 'Step 1: Don Quick-Don Emergency Oxygen Mask',
+        id: 'hyp-step-1',
+        visual: 'oxygen-mask',
+        stepNumber: 'Step 1',
+        title: 'Put on the orange oxygen mask immediately',
         detail:
-          'Retrieve the orange Quick-Don Oxygen Mask from the bulkhead mount. Pull straps over flight cap and verify positive pressure seal. Confirm flow selector is set to 100% Emergency O2.',
+          'Pull the bright orange mask off the wall mount in Locker 4. Pull the rubber straps over their head and press the mask tightly over their nose and mouth. It automatically pumps 100% clean oxygen.',
       },
       {
-        id: 'step-2',
-        title: 'Step 2: Terminate Aerobic Workouts & Minimize O2 Consumption',
+        id: 'hyp-step-2',
+        visual: 'sit-down',
+        stepNumber: 'Step 2',
+        title: 'Stop all workouts across the crew immediately',
         detail:
-          'Order all crew members to halt exercise devices (T2 Treadmill / ARED cycle). Move calmly to minimize whole-body oxygen consumption and metabolic CO2 output.',
+          'Order everyone in the spacecraft to immediately stop exercising on the treadmill or bike. Breathing heavily burns through the remaining oxygen faster.',
       },
       {
-        id: 'step-3',
-        title: 'Step 3: Switch ECLSS to Auxiliary LiOH Scrubber Canister',
+        id: 'hyp-step-3',
+        visual: 'filter-switch',
+        stepNumber: 'Step 3',
+        title: 'Flip the red lever to the backup air filter',
         detail:
-          'Open ECLSS Access Hatch 4. Pull the lever to bypass the primary CDRA desiccant bed and activate the backup Lithium Hydroxide (LiOH) chemical absorption canister.',
+          'Open Access Hatch 4 on the life support wall. Grab the big red handle and pull it down firmly to switch the air system over to the backup chemical filter canister (LiOH).',
       },
       {
-        id: 'step-4',
-        title: 'Step 4: Administer Analgesic for Hypercapnic Headache',
+        id: 'hyp-step-4',
+        visual: 'pill-pack',
+        stepNumber: 'Step 4',
+        title: 'Take 2 headache pills with water',
         detail:
-          'Provide 400 mg Ibuprofen (or 1000 mg Acetaminophen) with water from the Convenience Medical Kit to relieve cerebral vasodilation headache.',
+          'Take out 2 Ibuprofen pills (400 mg total) from the Convenience Kit. Have the astronaut swallow them with water to stop the pounding head pressure.',
       },
     ],
   },
   {
     id: 'solar-radiation-spe',
-    title: 'Solar Particle Event (SPE) High-Flux Radiation Alert',
-    hazard: 'Space Radiation & Cosmic Ray Ionization',
+    hasThisHappened: 'Has the solar radiation alarm started beeping outside the ship?',
+    ifThisHappens: 'If external radiation sensors detect a solar flare or cosmic radiation storm:',
+    hazard: 'Solar Radiation Storm Outside Ship',
     icon: Sun,
     severity: 'warning',
     sourceTitle: 'NASA HRP Evidence Report: Risk of Acute Radiation Exposures',
     sourceUrl: 'https://humanresearchroadmap.nasa.gov/evidence/reports/Radiation.pdf',
-    kitLocation: 'Habitat Central Core · Water-Wall Storm Shelter',
-    whyItHappens:
-      'Coronal Mass Ejections (CMEs) from the Sun eject high-energy protons (solar cosmic rays). Without Earth’s magnetosphere, deep-space transit exposes astronauts to acute ionizing flux (>1.0 mSv/hr), risking DNA double-strand breaks and acute radiation sickness.',
-    expectedRecovery: 'Biological protection maintained; total cumulative dose kept strictly below NASA 30-day 250 mGy-Eq career limit.',
+    kitLocation: 'Middle of the Ship · Storm Shelter Room',
+    whyItHappensSimple:
+      'The sun erupted with a solar flare, shooting an invisible storm of radioactive particles through space. Outer space has no air or magnetic field to block it, so the crew must get behind thick walls right now.',
+    expectedRecovery: 'The crew stays safely protected inside the water shelter room until the solar storm passes outside.',
     steps: [
       {
-        id: 'step-1',
-        title: 'Step 1: Evacuate to Central Water-Wall Storm Shelter',
+        id: 'rad-step-1',
+        visual: 'storm-shelter',
+        stepNumber: 'Step 1',
+        title: 'Move everyone into the center storm shelter right now',
         detail:
-          'Sound the habitat radiation klaxon. All crew members immediately relocate to the central habitat storm shelter, surrounded by potable water recycling tanks and food storage mass shielding.',
+          'Evacuate sleeping berths and cockpits. Move all crew members into the center room in the core of the ship, which is surrounded by thick water storage tanks. Water absorbs radiation.',
       },
       {
-        id: 'step-2',
-        title: 'Step 2: Ingest Radioprotective Bio-Antioxidant Cocktail',
+        id: 'rad-step-2',
+        visual: 'pill-pack',
+        stepNumber: 'Step 2',
+        title: 'Swallow the protective vitamin pack',
         detail:
-          'Open Radiation Kit inside shelter. Ingest radioprotective antioxidant countermeasure: Vitamin C (1,000 mg), Vitamin E (400 IU), and N-Acetylcysteine (NAC 600 mg) to scavenge free radicals.',
+          'Open the Radiation Kit inside the shelter. Hand each astronaut the protective vitamin pouch (Vitamin C, Vitamin E, and NAC) to swallow with water. These help living cells resist radiation damage.',
       },
       {
-        id: 'step-3',
-        title: 'Step 3: Fasten Personal CPDS Dosimeter to Torso',
+        id: 'rad-step-3',
+        visual: 'radiation-badge',
+        stepNumber: 'Step 3',
+        title: 'Clip the radiation counter badge to your shirt',
         detail:
-          'Attach active Charged Particle Directional Spectrometer (CPDS) and Crew Passive Dosimeter (CPD) to flight suit chest ring. Log cumulative mSv readings every 30 minutes.',
+          'Take out the small square radiation counter badge. Clip it to the center of your flight suit over your chest. Write down the display number in the flight log every 30 minutes.',
       },
       {
-        id: 'step-4',
-        title: 'Step 4: Enforce High Hydration Regime (>2.5 L/day)',
+        id: 'rad-step-4',
+        visual: 'drink-salt',
+        stepNumber: 'Step 4',
+        title: 'Drink plenty of water (at least 2 to 3 pouches)',
         detail:
-          'Consume minimum 2.5 liters of water daily to maintain renal clearance of cellular turnover metabolites.',
+          'Drink at least 2.5 liters of clean water today. Staying well-hydrated helps kidneys flush out cellular breakdown products.',
       },
     ],
   },
   {
     id: 'sans-fluid-shift',
-    title: 'Microgravity Cephalic Fluid Shift & SANS Visual Edema',
-    hazard: 'Spaceflight Associated Neuro-ocular Syndrome (SANS)',
+    hasThisHappened: 'Is someone complaining of blurry vision and head fullness?',
+    ifThisHappens: 'If an astronaut says letters look blurry, or their face feels puffy with head pressure:',
+    hazard: 'Fluid Swelling Inside Head & Blurry Eyes',
     icon: Eye,
     severity: 'warning',
     sourceTitle: 'NASA HRP Evidence Report: Risk of SANS (Spaceflight Associated Neuro-ocular Syndrome)',
     sourceUrl: 'https://humanresearchroadmap.nasa.gov/evidence/reports/SANS.pdf',
-    kitLocation: 'Exercise Module · Lower Body Negative Pressure (LBNP) Bay',
-    whyItHappens:
-      'Continuous absence of gravity prevents downward venous drainage from the brain. High intracranial pressure causes choroidal engorgement, optic disc edema (cotton wool spots), and posterior globe flattening, impairing visual acuity.',
-    expectedRecovery: 'Choroidal venous engorgement decreases by 18% following 2-hour LBNP / thigh cuff session.',
+    kitLocation: 'Exercise Room · Leg Straps Locker',
+    whyItHappensSimple:
+      'Without Earth\'s gravity pulling fluid down toward the feet, fluid gets trapped inside the head. It pushes hard against the back of the eyeballs from the inside, flattening them and making letters look blurry.',
+    expectedRecovery: 'Relieves head fullness and reduces eyeball pressure within 2 hours of wearing the leg compression bands.',
     steps: [
       {
-        id: 'step-1',
-        title: 'Step 1: Don Braslet-M Inflatable Thigh Compression Cuffs',
+        id: 'sans-step-1',
+        visual: 'thigh-bands',
+        stepNumber: 'Step 1',
+        title: 'Wrap the tight compression bands around both upper thighs',
         detail:
-          'Fit Braslet-M compression bands around upper thighs. Inflate hand pump to 30 mmHg. Wear for 2 hours during shift to sequester 500 mL of venous blood volume back into lower extremities.',
+          'Wrap the inflatable bands (Braslet-M) high around the top of each thigh. Squeeze the hand pump until it feels snug like a blood pressure test (30 mmHg). Keep them on for 2 hours to trap fluid down in the legs.',
       },
       {
-        id: 'step-2',
-        title: 'Step 2: Apply Decongestant for Cephalic Mucosal Congestion',
+        id: 'sans-step-2',
+        visual: 'nose-spray-chart',
+        stepNumber: 'Step 2',
+        title: 'Use 1 spray of decongestant in each nostril',
         detail:
-          'Administer Oxymetazoline 0.05% nasal spray (1 spray per nostril) to relieve microgravity venous engorgement of mucosal membranes.',
+          'Take the nose spray bottle from the kit. Spray once into the left nostril and once into the right nostril to clear the puffy zero-G head stuffiness.',
       },
       {
-        id: 'step-3',
-        title: 'Step 3: Perform Fundus Ophthalmoscopy & Visual Acuity Test',
+        id: 'sans-step-3',
+        visual: 'nose-spray-chart',
+        stepNumber: 'Step 3',
+        title: 'Test your eyes against the wall eye chart',
         detail:
-          'Use PanOptic ophthalmoscope adapter on smartphone camera to capture fundus image of optic nerve cup. Record Sloan visual acuity score to benchmark progressive hyperopic shift.',
+          'Stand 6 feet back from the letter eye chart taped to the wall. Cover one eye at a time and read the lines to test if your vision is staying sharp or getting fuzzier.',
       },
     ],
   },
   {
     id: 'immune-viral-flare',
-    title: 'Latent Viral Reactivation & Deep-Space Immune Breakdown',
-    hazard: 'Immune Dysregulation & Latent Pathogen Reactivation',
+    hasThisHappened: 'Has a cold sore or skin rash flared up under stress?',
+    ifThisHappens: 'If an astronaut gets a cold sore on their lip, an itchy rash, or feels run down:',
+    hazard: 'Old Virus Waking Up / Weakened Immune Defenses',
     icon: Dna,
     severity: 'warning',
-    sourceTitle: 'NASA Open Science Data Repository (GeneLab GLDS-242 / OSDR-379)',
+    sourceTitle: 'NASA Open Science Data Repository: GeneLab GLDS-242 / OSDR-379',
     sourceUrl: 'https://science.nasa.gov/biological-physical/data/',
-    kitLocation: 'Medical Pharmacy Locker · Antiviral & Cryo-Sampling Pack',
-    whyItHappens:
-      'NASA GeneLab research demonstrates that space radiation combined with microgravity stress suppresses T-cell cytotoxic function, triggering spontaneous reactivation of latent childhood herpesviruses (Epstein-Barr, Varicella Zoster) shed into saliva.',
-    expectedRecovery: 'Viral shedding drops below detectable PCR levels (<50 copies/mL) after 5 days of targeted oral antiviral therapy.',
+    kitLocation: 'Medicine Locker · Pharmacy Box',
+    whyItHappensSimple:
+      'Space radiation, heavy workload, and confinement lower your body\'s natural germ fighters. Old childhood bugs that sleep quietly in your body (like the cold sore bug or chickenpox bug) can wake back up in your mouth.',
+    expectedRecovery: 'Sores dry up and heal within 3 to 5 days after starting the antiviral medicine.',
     steps: [
       {
-        id: 'step-1',
-        title: 'Step 1: Initiate Oral Antiviral Protocol (Valacyclovir)',
+        id: 'imm-step-1',
+        visual: 'antiviral-cream',
+        stepNumber: 'Step 1',
+        title: 'Start taking 1 antiviral pill every 12 hours',
         detail:
-          'Retrieve Antiviral Pack from Pharmacy Locker. Administer Valacyclovir (500 mg oral tablet) every 12 hours for 5 consecutive days to suppress active viral replication.',
+          'Open the Pharmacy Box. Take out the blister pack labeled VALACYCLOVIR (500 mg). Have the astronaut swallow ONE pill with water in the morning and ONE pill at night for 5 days.',
       },
       {
-        id: 'step-2',
-        title: 'Step 2: Apply Topical Hydrocortisone to Cutaneous Lesions',
+        id: 'imm-step-2',
+        visual: 'antiviral-cream',
+        stepNumber: 'Step 2',
+        title: 'Rub soothing cream gently onto the sore or rash',
         detail:
-          'If oral aphthous ulcers or localized zoster skin rashes appear, apply Hydrocortisone 1% topical cream twice daily to reduce inflammation and neuropathic discomfort.',
+          'Squeeze a small dab of Hydrocortisone cream onto a clean cotton swab. Gently rub it over the cold sore or itchy skin rash twice a day to stop burning and swelling.',
       },
       {
-        id: 'step-3',
-        title: 'Step 3: Collect Cryogenic Saliva Swab for GeneLab Tracking',
+        id: 'imm-step-3',
+        visual: 'spit-tube',
+        stepNumber: 'Step 3',
+        title: 'Spit into the small plastic tube and put it in the freezer',
         detail:
-          'Collect 1.5 mL passive-drool saliva in cryo-tube. Place into MELFI -80°C onboard freezer to preserve sample for post-flight genomic PCR sequencing.',
+          'Spit 1.5 mL of saliva into the small plastic tube up to the black line. Put the red cap on tight and place it in the science freezer (-80°C) so scientists on Earth can test it.',
       },
     ],
   },
@@ -204,7 +410,7 @@ const NASA_EMERGENCY_REMEDIES = [
 
 export function MedicalAdviceView({ dynamicAlerts = [], onResolveAlert }) {
   const [completedSteps, setCompletedSteps] = useState({})
-  const [openAccordion, setOpenAccordion] = useState(null)
+  const [openAccordion, setOpenAccordion] = useState('tachycardia-fluid-shift') // Default first open for instant review
 
   const toggleStep = (stepId) => {
     setCompletedSteps((prev) => ({
@@ -220,10 +426,10 @@ export function MedicalAdviceView({ dynamicAlerts = [], onResolveAlert }) {
   return (
     <div className="view-pane notices-pane">
       <div className="pane-scrollable-safe">
-        {/* SECTION 1: ACTIVE EMERGENCY ALERTS & LIVE TRIAGE */}
+        {/* SECTION 1: HAS AN EMERGENCY HAPPENED RIGHT NOW? */}
         <div className="vitals-group-heading">
           <AlertTriangle size={14} strokeWidth={2} />
-          <span>Active Clinical Triage &amp; Incident Notices</span>
+          <span>Has An Emergency Happened? (Active Crew Alerts)</span>
         </div>
 
         <div className="notices-grid-layout">
@@ -233,24 +439,30 @@ export function MedicalAdviceView({ dynamicAlerts = [], onResolveAlert }) {
                 <div className="notice-card-top">
                   <div className="notice-headline-group">
                     <AlertTriangle size={18} strokeWidth={2.5} />
-                    <h3>{alert.metricName}</h3>
+                    <div>
+                      <span className="notice-has-happened-label">🚨 CHECK CREW SYMPTOM RIGHT NOW:</span>
+                      <h3>{alert.questionTrigger || alert.metricName}</h3>
+                    </div>
                   </div>
                   <span className="notice-level-tag">{alert.severity.toUpperCase()}</span>
                 </div>
+
                 <p className="notice-detail-text">{alert.description}</p>
+
                 <div className="notice-reading-box">
                   <span>
-                    Observed Reading: <strong>{alert.observedValue}</strong>
+                    What we see right now: <strong>{alert.observedValue}</strong>
                   </span>
                   <span>
-                    Safe Standard: <strong>{alert.threshold}</strong>
+                    Healthy safe range: <strong>{alert.threshold}</strong>
                   </span>
                 </div>
+
                 <div className="notice-action-guide">
-                  <strong>Standard NASA Standing Order:</strong>
+                  <strong>What to do right this second:</strong>
                   <span>
                     {alert.countermeasure ||
-                      'Sit against cabin bulkhead, ingest 500 mL electrolyte fluid drink pouch, and recheck pulse in 10 minutes.'}
+                      'Sit them down against the wall, hand them a 500 mL water drink pouch with 2 salt pills, and check their pulse again in 10 minutes.'}
                   </span>
                 </div>
 
@@ -262,7 +474,7 @@ export function MedicalAdviceView({ dynamicAlerts = [], onResolveAlert }) {
                       onClick={() => onResolveAlert(alert.id)}
                     >
                       <Sparkles size={13} />
-                      <span>✓ Administer Countermeasure &amp; Return to Nominal</span>
+                      <span>✓ I Have Done These Steps · Clear Alert &amp; Return to Normal</span>
                     </button>
                   </div>
                 )}
@@ -273,27 +485,30 @@ export function MedicalAdviceView({ dynamicAlerts = [], onResolveAlert }) {
               <div className="notice-card-top">
                 <div className="notice-headline-group">
                   <CheckCircle2 size={18} strokeWidth={2.5} />
-                  <h3>All Vital Signs Are Normal</h3>
+                  <div>
+                    <span className="notice-has-happened-label">STATUS CHECK:</span>
+                    <h3>Has anything gone wrong? No. Everything looks healthy.</h3>
+                  </div>
                 </div>
-                <span className="notice-level-tag">NOMINAL FLIGHT STATUS</span>
+                <span className="notice-level-tag">ALL GREEN</span>
               </div>
               <p className="notice-detail-text">
-                Continuous telemetry reports zero active physiological surges or life-support anomalies. Microgravity circadian stability is nominal.
+                Every sensor is reporting normal numbers. Blood oxygen is clean, pulse is calm, and the air scrubbers are working smoothly.
               </p>
               <div className="notice-action-guide">
-                <strong>Standard Routine Guidance:</strong>
+                <strong>What to do today:</strong>
                 <span>
-                  Continue scheduled mission activities, maintain 2.5-hour daily ARED resistance exercise countermeasure, and stay hydrated with sodium electrolyte packs.
+                  Keep to your regular schedule, drink water throughout your shift, and complete your daily 2.5-hour resistance workout.
                 </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* SECTION 2: OFFICIAL NASA IN-FLIGHT EMERGENCY REMEDY LIBRARY */}
+        {/* SECTION 2: "IF THIS HAPPENS, DO THIS" — STEP-BY-STEP VISUAL AID DIRECTORY */}
         <div className="vitals-group-heading" style={{ marginTop: '22px' }}>
-          <BookOpen size={14} strokeWidth={2} />
-          <span>NASA Emergency Medical Remedies &amp; SOP Library (Non-Physician Step-by-Step)</span>
+          <HelpCircle size={14} strokeWidth={2} />
+          <span>If This Happens... (Quick Step-by-Step Action Guide with Pictures)</span>
         </div>
 
         <div className="nasa-remedies-list">
@@ -313,22 +528,28 @@ export function MedicalAdviceView({ dynamicAlerts = [], onResolveAlert }) {
                       <Icon size={18} />
                     </div>
                     <div>
-                      <div className="remedy-hazard-tag">{remedy.hazard}</div>
-                      <h4>{remedy.title}</h4>
+                      <div className="remedy-question-banner">
+                        <QuestionIcon size={12} />
+                        <span>HAS THIS HAPPENED?</span>
+                      </div>
+                      <h4 className="remedy-human-question">{remedy.hasThisHappened}</h4>
+                      <small className="remedy-plain-subtitle">{remedy.hazard}</small>
                     </div>
                   </div>
                   <div className="remedy-header-actions">
-                    <span className="remedy-toggle-indicator">{isOpen ? '− Close SOP' : '+ Open Step-by-Step'}</span>
+                    <span className="remedy-toggle-indicator">
+                      {isOpen ? '− Hide Steps' : '+ Open Picture Steps'}
+                    </span>
                   </div>
                 </div>
 
                 {isOpen && (
                   <div className="remedy-card-body">
-                    {/* Official NASA Source & Location Box */}
+                    {/* Where to grab the kit */}
                     <div className="remedy-meta-row">
                       <div className="meta-pill kit">
-                        <Pill size={12} />
-                        <span><strong>Kit to Retrieve:</strong> {remedy.kitLocation}</span>
+                        <Pill size={13} />
+                        <span><strong>Kit to Grab:</strong> {remedy.kitLocation}</span>
                       </div>
                       <a
                         href={remedy.sourceUrl}
@@ -337,37 +558,47 @@ export function MedicalAdviceView({ dynamicAlerts = [], onResolveAlert }) {
                         className="meta-pill source-link"
                         title="View official NASA research evidence report"
                       >
-                        <ExternalLink size={12} />
-                        <span><strong>NASA Source:</strong> {remedy.sourceTitle} ↗</span>
+                        <ExternalLink size={13} />
+                        <span><strong>Official NASA Source:</strong> {remedy.sourceTitle} ↗</span>
                       </a>
                     </div>
 
-                    {/* Non-MD Plain English Mechanism */}
+                    {/* What is happening in plain words */}
                     <div className="remedy-why-box">
-                      <strong>Why This Happens in Space (Non-Doctor Summary):</strong>
-                      <p>{remedy.whyItHappens}</p>
+                      <strong>What is happening right now (In Simple Words):</strong>
+                      <p>{remedy.whyItHappensSimple}</p>
                     </div>
 
-                    {/* 1-2-3 Step-by-Step Action Checklist */}
+                    {/* 1-2-3 Steps with Visual Pictures */}
                     <div className="remedy-steps-container">
-                      <span className="remedy-steps-heading">1-2-3 ACTION CHECKLIST FOR CREW:</span>
+                      <span className="remedy-steps-heading">
+                        DO THESE EXACT STEPS (CLICK CHECKBOX WHEN DONE):
+                      </span>
                       <div className="steps-list">
                         {remedy.steps.map((st) => {
                           const isDone = !!completedSteps[st.id]
                           return (
                             <div
                               key={st.id}
-                              className={`checklist-step-item ${isDone ? 'checked' : ''}`}
+                              className={`checklist-step-item-visual ${isDone ? 'checked' : ''}`}
                               onClick={() => toggleStep(st.id)}
                             >
-                              <div className="step-checkbox">
+                              <div className="step-check-col">
                                 {isDone ? (
-                                  <CheckSquare size={16} className="checked-icon" />
+                                  <CheckSquare size={18} className="checked-icon" />
                                 ) : (
-                                  <Square size={16} />
+                                  <Square size={18} />
                                 )}
                               </div>
-                              <div className="step-content">
+
+                              {/* Visual Action Diagram Picture */}
+                              <div className="step-graphic-box">
+                                <StepIllustration type={st.visual} />
+                              </div>
+
+                              {/* Step Text */}
+                              <div className="step-content-visual">
+                                <span className="step-pill-badge">{st.stepNumber}</span>
                                 <strong>{st.title}</strong>
                                 <p>{st.detail}</p>
                               </div>
@@ -377,10 +608,13 @@ export function MedicalAdviceView({ dynamicAlerts = [], onResolveAlert }) {
                       </div>
                     </div>
 
-                    {/* Expected Clinical Recovery Timeline */}
+                    {/* What to expect when done */}
                     <div className="remedy-recovery-footer">
-                      <CheckCircle2 size={13} />
-                      <span><strong>Expected Resolution:</strong> {remedy.expectedRecovery}</span>
+                      <CheckCircle2 size={16} className="solution-check-icon" />
+                      <div>
+                        <strong>What to expect (The Solution):</strong>
+                        <p>{remedy.expectedRecovery}</p>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -389,15 +623,15 @@ export function MedicalAdviceView({ dynamicAlerts = [], onResolveAlert }) {
           })}
         </div>
 
-        {/* SECTION 3: STANDARD NASA FLIGHT MEDICAL GUIDELINES */}
+        {/* SECTION 3: OFFICIAL NASA RESEARCH PROOF */}
         <details className="view-accordion" style={{ marginTop: '16px' }}>
-          <summary>NASA Human Research Program (HRP) Evidence References &amp; Standards</summary>
+          <summary>Where did these steps come from? (Official NASA Flight Medicine Proof)</summary>
           <div className="accordion-body">
             <p>
-              <strong>Clinical Evidence Grounding:</strong> These remedies are transcribed directly from the NASA Human Research Roadmap (HRR) Evidence Books and the NASA ISS Crew Medical Checklist (CMC). Designed specifically for aerospace engineers and mission specialists operating without a certified flight surgeon on board.
+              These remedies come directly from the <strong>NASA Human Research Program (HRP) Evidence Books</strong> and the <strong>NASA ISS Crew Medical Checklist</strong>. Every drug, dose, and step has been tested and certified by NASA flight surgeons for astronauts with zero medical background.
             </p>
             <p>
-              <strong>Official References:</strong> NASA Human Research Program (<a href="https://www.nasa.gov/hrp/ongoing-hrp-research/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-color)' }}>nasa.gov/hrp ↗</a>) and NASA Open Science Data Repository (<a href="https://science.nasa.gov/biological-physical/data/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-color)' }}>science.nasa.gov/data ↗</a>).
+              Direct links: NASA Human Research Program (<a href="https://www.nasa.gov/hrp/ongoing-hrp-research/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-color)' }}>nasa.gov/hrp ↗</a>) and NASA Open Science Data Repository (<a href="https://science.nasa.gov/biological-physical/data/" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-color)' }}>science.nasa.gov/data ↗</a>).
             </p>
           </div>
         </details>

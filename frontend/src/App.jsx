@@ -553,48 +553,54 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   const isPulseElevated = latest && (latest.heartRate > 95 || scenarioMode !== 'nominal')
   const statusClass = isPulseElevated ? 'warning' : 'good'
   const statusLabel = scenarioMode === 'tachycardia'
-    ? 'Tachycardia Surge'
+    ? 'Heart Racing (>120 bpm)'
     : scenarioMode === 'hypoxia'
-    ? 'Hypoxia Alert'
+    ? 'Air Warning (Low O2)'
     : scenarioMode === 'radiation'
-    ? 'Radiation Storm'
+    ? 'Radiation Alert'
     : isPulseElevated
     ? 'Attention Needed'
     : 'Healthy & Steady'
 
-  // Dynamic notices based on live vitals & scenarios
+  // Dynamic notices based on live vitals & scenarios (Plain human English triggers)
   const dynamicAlerts = [...(alerts || [])]
 
   if (scenarioMode === 'tachycardia' || latest.heartRate > 120) {
     dynamicAlerts.unshift({
       id: 'live-alert-tachycardia',
-      metricName: 'Acute Microgravity Tachycardia & Fluid Surge',
+      metricName: 'Blood Rushing to Chest: Pulse Hammering Fast',
       severity: 'warning',
-      description: `Continuous telemetry reports elevated pulse (${latest.heartRate} bpm) driven by microgravity cephalic fluid redistribution.`,
+      questionTrigger: "Has the astronaut's heart started racing over 120 beats a minute?",
+      description: `Their heart is pounding at ${latest.heartRate} beats per minute because blood has pooled into their chest with no gravity.`,
       observedValue: `${latest.heartRate} bpm`,
-      threshold: '60 – 100 bpm',
+      threshold: '60 – 100 bpm (Calm)',
+      countermeasure: 'Sit them down against the wall right now, hand them a 500 mL water drink pouch with 2 salt pills from Bulkhead Locker 2, and check pulse in 10 minutes.',
     })
   }
 
   if (scenarioMode === 'hypoxia' || latest.bloodOxygen < 93) {
     dynamicAlerts.unshift({
       id: 'live-alert-hypoxia',
-      metricName: 'Cabin Hypoxia & Hypercapnia Risk',
+      metricName: 'Bad Cabin Air: Low Oxygen & Trapped Breath',
       severity: 'warning',
-      description: `Blood oxygen saturation dropped to ${latest.bloodOxygen}%. Spacecraft environmental scrubber efficiency degraded.`,
-      observedValue: `${latest.bloodOxygen}% SpO2`,
-      threshold: '95 – 100%',
+      questionTrigger: 'Is someone gasping for breath or suffering a throbbing headache?',
+      description: `Blood oxygen dropped to ${latest.bloodOxygen}%. Old exhaled carbon dioxide breath is building up in the cabin because filters are full.`,
+      observedValue: `${latest.bloodOxygen}% Oxygen`,
+      threshold: '95 – 100% (Healthy)',
+      countermeasure: 'Pull the orange emergency oxygen mask from Bulkhead Locker 4 and strap it on immediately, then switch the air scrubber lever to BACKUP LiOH.',
     })
   }
 
   if (scenarioMode === 'radiation') {
     dynamicAlerts.unshift({
       id: 'live-alert-radiation',
-      metricName: 'Solar Particle Event (SPE) Radiation Exposure',
+      metricName: 'Space Radiation Storm: Solar Flare Warning',
       severity: 'warning',
-      description: 'Habitat exterior dosimeters indicate elevated ionizing flux. Core body temperature trending upward.',
-      observedValue: '1.42 mSv/hr',
-      threshold: '< 0.05 mSv/hr',
+      questionTrigger: 'Has the loud radiation siren or strobe light turned on?',
+      description: 'The Sun launched a solar storm outside the ship. Outside radiation meters are clicking fast at 1.42 mSv/hr.',
+      observedValue: '1.42 mSv/hr (High Flare)',
+      threshold: '< 0.05 mSv/hr (Safe Normal)',
+      countermeasure: 'Move all crew into the center sleep storm bunker behind the water walls right away and clip on dosimeter badges.',
     })
   }
 
@@ -669,10 +675,10 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
                 onChange={(e) => setScenarioMode(e.target.value)}
                 title="Simulate realistic spaceflight physiological scenarios"
               >
-                <option value="nominal">Nominal Flight (OSDR)</option>
-                <option value="tachycardia">Tachycardia Surge</option>
-                <option value="hypoxia">Cabin Hypoxia &amp; CO2</option>
-                <option value="radiation">Solar Radiation Storm</option>
+                <option value="nominal">Normal Flight (All Green &amp; Healthy)</option>
+                <option value="tachycardia">If Heart Races: Chest Pounding (&gt;120 bpm)</option>
+                <option value="hypoxia">If Air Goes Bad: Gasping &amp; Headache</option>
+                <option value="radiation">If Radiation Alarm Sounds: Solar Storm Outside</option>
               </select>
             </div>
 
