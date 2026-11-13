@@ -515,10 +515,10 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     }, 6000)
 
     return () => clearInterval(historyInterval)
-  }, [isStreaming, liveVitals])
+  }, [isStreaming, isWatchHeartRateLive])
 
   const { profile, alerts } = baseProfile
-  const latest = liveVitals || baseProfile.latest
+  const latest = currentVitals || baseProfile.latest
   const isPulseElevated = latest && latest.heartRate > 90
   const statusClass = isPulseElevated ? 'warning' : 'good'
   const statusLabel = isPulseElevated ? 'Attention Needed' : 'Healthy & Steady'
