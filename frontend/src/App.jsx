@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { AlertTriangle, CheckCircle2, Watch } from 'lucide-react'
 import EarthWatchConsole from './EarthWatchConsole'
