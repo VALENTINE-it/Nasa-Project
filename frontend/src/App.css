@@ -459,6 +459,64 @@
   color: var(--text-primary);
   border-color: var(--border-focus);
 }
+
+.watch-connect-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: var(--primary-btn-bg);
+  color: var(--primary-btn-text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.watch-connect-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.profile-watch-connect {
+  align-self: flex-start;
+}
+
+.device-source-badge {
+  padding: 4px 8px;
+  border: 1px solid var(--status-warn-border);
+  border-radius: 6px;
+  background: var(--status-warn-bg);
+  color: var(--status-warn-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.device-source-badge.connected {
+  border-color: var(--status-good-border);
+  background: var(--status-good-bg);
+  color: var(--status-good-text);
+}
+
+.watch-connection-message {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.watch-connection-message.error {
+  border-color: var(--status-danger-border);
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}
+
 .vitals-matrix-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1224,4 +1282,248 @@
 
 .ground-link:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+  .workstation-app-layout {
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    flex-direction: column;
+    padding-bottom: 112px;
+  }
+
+  .left-sidebar-navigation {
+    position: fixed;
+    z-index: 20;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
+    border: 0;
+    border-top: 1px solid var(--border-default);
+    overflow: visible;
+  }
+
+  .sidebar-brand-block,
+  .sidebar-crew-identity,
+  .nav-group-title,
+  .sidebar-action-link {
+    display: none;
+  }
+
+  .sidebar-nav-menu {
+    flex: none;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .sidebar-nav-menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-menu-button {
+    min-width: 62px;
+    min-height: 54px;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 5px 3px;
+    text-align: center;
+  }
+
+  .nav-btn-text strong {
+    font-size: 10px;
+  }
+
+  .nav-btn-text small {
+    display: none;
+  }
+
+  .sidebar-bottom-controls {
+    padding-top: 6px;
+    border-top: 0;
+  }
+
+  .sidebar-utility-row {
+    gap: 6px;
+  }
+
+  .utility-btn {
+    min-height: 32px;
+    padding: 4px 8px;
+  }
+
+  .main-viewport-content {
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .viewport-top-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .viewport-top-header h1 {
+    font-size: 18px;
+  }
+
+  .top-header-stats {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .wearable-indicator {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .viewport-screen-body {
+    flex: none;
+    overflow: visible;
+    padding: 14px 12px 20px;
+  }
+
+  .view-pane {
+    height: auto;
+  }
+
+  .telemetry-live-control-strip {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .telemetry-mode-selector {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mode-selector-lbl {
+    grid-column: 1 / -1;
+  }
+
+  .telemetry-mode-btn,
+  .telemetry-stream-toggle,
+  .watch-connect-button {
+    min-height: 40px;
+  }
+
+  .vitals-matrix-row,
+  .vitals-matrix-row.secondary-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .vital-block {
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .block-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .block-title {
+    font-size: 11px;
+  }
+
+  .block-num {
+    font-size: 30px;
+  }
+
+  .block-unit,
+  .block-desc {
+    font-size: 12px;
+  }
+
+  .vitals-footer-strip {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .profile-details-grid,
+  .notices-grid-layout,
+  .charts-full-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-info-card {
+    padding: 16px;
+  }
+
+  .info-key-val {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .pane-control-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .timeframe-selector {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .history-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .clean-history-table {
+    min-width: 620px;
+  }
+
+  .login-screen-wrapper {
+    width: 100%;
+  }
+
+  .login-top-bar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .badge-caption {
+    display: none;
+  }
+
+  .top-bar-controls {
+    flex-wrap: wrap;
+  }
+
+  .login-center-content {
+    align-items: flex-start;
+    padding: 20px 12px;
+  }
+
+  .auth-card-container {
+    padding: 20px;
+  }
+
+  .ground-switch-bar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
 }
