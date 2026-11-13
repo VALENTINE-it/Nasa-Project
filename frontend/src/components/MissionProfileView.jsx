@@ -1,6 +1,7 @@
 import React from 'react'
+import { Bluetooth, BluetoothOff } from 'lucide-react'
 
-export function MissionProfileView({ profile }) {
+export function MissionProfileView({ profile, smartwatch, onConnectWatch }) {
   return (
     <div className="view-pane profile-pane">
       <div className="profile-details-grid">
@@ -29,29 +30,41 @@ export function MissionProfileView({ profile }) {
         </div>
 
         <div className="profile-info-card">
-          <h3>Wearable &amp; Ship Telemetry Links</h3>
+          <h3>Smartwatch Connection</h3>
           <div className="info-key-val">
-            <span>Smart Watch Status:</span>
-            <strong className="status-good-text">Connected (Oraimo Watch via Bluetooth)</strong>
+            <span>Device:</span>
+            <strong>{smartwatch.deviceName || 'No device connected'}</strong>
           </div>
           <div className="info-key-val">
-            <span>Location:</span>
-            <strong>Deep-Space Mars Transit Habitat</strong>
+            <span>Bluetooth status:</span>
+            <strong>{smartwatch.status}</strong>
           </div>
           <div className="info-key-val">
-            <span>Distance from Earth:</span>
-            <strong>142 million miles away</strong>
+            <span>Heart-rate service:</span>
+            <strong>{smartwatch.heartRateSupported ? 'Available' : 'Not detected'}</strong>
           </div>
           <div className="info-key-val">
-            <span>Radio Delay to Houston:</span>
-            <strong>12 minutes, 44 seconds</strong>
+            <span>Other readings:</span>
+            <strong>SpO2 and steps require a supported manufacturer or Android health integration.</strong>
           </div>
           <div className="info-key-val">
-            <span>Autonomous Computer:</span>
-            <strong>
-              Clinical Decision Engine Active (<span className="status-good-text">Ready</span>)
-            </strong>
+            <span>Compatibility:</span>
+            <strong>Chrome on Android, HTTPS, and a standard Bluetooth heart-rate service.</strong>
           </div>
+          <button
+            type="button"
+            className="watch-connect-button profile-watch-connect"
+            onClick={smartwatch.status === 'connected' ? smartwatch.disconnect : onConnectWatch}
+            disabled={smartwatch.status === 'connecting'}
+          >
+            {smartwatch.status === 'connected' ? <BluetoothOff size={16} /> : <Bluetooth size={16} />}
+            {smartwatch.status === 'connected'
+              ? 'Disconnect watch'
+              : smartwatch.status === 'connecting'
+                ? 'Connecting…'
+                : 'Pair smartwatch'}
+          </button>
+          {smartwatch.error ? <p className="watch-connection-message error">{smartwatch.error}</p> : null}
         </div>
       </div>
     </div>
