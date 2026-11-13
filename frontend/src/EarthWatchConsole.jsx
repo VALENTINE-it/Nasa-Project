@@ -36,7 +36,7 @@ const CREW_PROFILES = [
     mission: 'Artemis Mars Flight',
     healthStatus: 'Healthy & Normal',
     statusClass: 'good',
-    wearableSource: 'Oraimo Smart Watch Linked',
+    wearableSource: 'Demo data · no watch connected',
     baseline: {
       preFlight: { hr: 68, bp: '118/76', o2: 99, temp: 36.6, resp: 14, sleep: 7.8, fatigue: 15, immune: 8 },
       inSpace: { hr: 78, bp: '124/80', o2: 98, temp: 36.8, resp: 16, sleep: 6.4, fatigue: 38, immune: 24 },
@@ -53,7 +53,7 @@ const CREW_PROFILES = [
     mission: 'Mars Flight Operations',
     healthStatus: 'Needs Attention',
     statusClass: 'warning',
-    wearableSource: 'Oraimo Smart Watch Linked',
+    wearableSource: 'Demo data · no watch connected',
     baseline: {
       preFlight: { hr: 72, bp: '120/78', o2: 99, temp: 36.7, resp: 15, sleep: 7.2, fatigue: 22, immune: 12 },
       inSpace: { hr: 88, bp: '136/88', o2: 97, temp: 37.2, resp: 18, sleep: 5.2, fatigue: 64, immune: 42 },
@@ -70,7 +70,7 @@ const CREW_PROFILES = [
     mission: 'Deep-Space Habitat Systems',
     healthStatus: 'Healthy & Normal',
     statusClass: 'good',
-    wearableSource: 'Oraimo Smart Watch Linked',
+    wearableSource: 'Demo data · no watch connected',
     baseline: {
       preFlight: { hr: 64, bp: '114/72', o2: 99, temp: 36.5, resp: 13, sleep: 8.0, fatigue: 12, immune: 6 },
       inSpace: { hr: 72, bp: '120/76', o2: 98, temp: 36.7, resp: 15, sleep: 6.8, fatigue: 28, immune: 18 },
@@ -529,7 +529,7 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               </div>
 
               <div className="crew-matrix-footer">
-                <p>Telemetry stream active across all 3 crew members. Click any card to inspect their live biometrics.</p>
+                <p>Simulated telemetry is active for all 3 crew members. Click any card to inspect the demo biometrics.</p>
               </div>
             </div>
           )}
