@@ -468,6 +468,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		Value:    sessionID,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   isSecureRequest(r),
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   12 * 60 * 60,
 	})
@@ -477,6 +478,10 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		"username":    userRow.Username,
 		"role":        userRow.Role,
 	})
+}
+
+func isSecureRequest(r *http.Request) bool {
+	return r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
 }
 
 func generateSessionID() string {
@@ -517,7 +522,15 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 		delete(sessionStore, cookie.Value)
 		mu.Unlock()
 	}
-	http.SetCookie(w, &http.Cookie{Name: sessionCookieName, Value: "", Path: "/", MaxAge: -1, HttpOnly: true, SameSite: http.SameSiteLaxMode})
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   isSecureRequest(r),
+		SameSite: http.SameSiteLaxMode,
+	})
 	w.WriteHeader(http.StatusOK)
 }
 
