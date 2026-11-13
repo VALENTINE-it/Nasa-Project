@@ -9,6 +9,7 @@ import HealthTrendsView from './components/HealthTrendsView'
 import MedicalAdviceView from './components/MedicalAdviceView'
 import CheckupHistoryView from './components/CheckupHistoryView'
 import MissionProfileView from './components/MissionProfileView'
+import useBluetoothVitals from './hooks/useBluetoothVitals'
 import './App.css'
 
 function getFallbackDashboard(id) {
@@ -361,6 +362,7 @@ function App() {
 function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   const { id } = useParams()
   const astronautId = Number(id) || 1
+  const smartwatch = useBluetoothVitals()
   const [dashboardData, setDashboardData] = useState(() => getFallbackDashboard(astronautId))
   const [activeTab, setActiveTab] = useState('vitals')
   const [timeframe, setTimeframe] = useState('week')
