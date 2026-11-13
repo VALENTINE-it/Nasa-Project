@@ -1,43 +1,177 @@
+/* =========================================================
+   AURA-MED GLOBAL THEME: DEFAULT LIGHT MODE & CHROME DARK MODE
+   Clean, full-width, zero AI glow, sizable readable typography
+   Apple-grade micro-interactions & SpaceX mission ergonomics
+   ========================================================= */
+
 :root {
-  font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* LIGHT MODE (DEFAULT) */
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-surface-secondary: #f1f5f9;
+  --bg-surface-hover: #e2e8f0;
+
+  --border-subtle: #e2e8f0;
+  --border-default: #cbd5e1;
+  --border-strong: #94a3b8;
+  --border-focus: #0284c7;
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  --text-muted: #94a3b8;
+
+  --primary-btn-bg: #0f172a;
+  --primary-btn-text: #ffffff;
+  --primary-btn-hover: #1e293b;
+
+  --accent-color: #0284c7;
+  --accent-bg: #e0f2fe;
+
+  --status-good-text: #15803d;
+  --status-good-bg: #dcfce7;
+  --status-good-border: #bbf7d0;
+
+  --status-warn-text: #b45309;
+  --status-warn-bg: #fef3c7;
+  --status-warn-border: #fde68a;
+
+  --status-alert-text: #b91c1c;
+  --status-alert-bg: #fee2e2;
+  --status-alert-border: #fca5a5;
+
+  --status-danger-text: #b91c1c;
+  --status-danger-bg: #fee2e2;
+  --status-danger-border: #fca5a5;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+}
+
+/* CHROME DARK MODE (Exact Google Chrome / Google Workspace dark palette) */
+[data-theme="dark"] {
+  --bg-app: #202124;
+  --bg-surface: #292a2d;
+  --bg-surface-elevated: #303134;
+  --bg-surface-secondary: #35363a;
+  --bg-surface-hover: #3c4043;
+
+  --border-subtle: #3c4043;
+  --border-default: #4a4d51;
+  --border-strong: #5f6368;
+  --border-focus: #8ab4f8;
+
+  --text-primary: #e8eaed;
+  --text-secondary: #bdc1c6;
+  --text-tertiary: #9aa0a6;
+  --text-muted: #80868b;
+
+  --primary-btn-bg: #e8eaed;
+  --primary-btn-text: #202124;
+  --primary-btn-hover: #ffffff;
+
+  --accent-color: #8ab4f8;
+  --accent-bg: rgba(138, 180, 248, 0.15);
+
+  --status-good-text: #81c995;
+  --status-good-bg: rgba(129, 201, 149, 0.15);
+  --status-good-border: rgba(129, 201, 149, 0.3);
+
+  --status-warn-text: #fdd663;
+  --status-warn-bg: rgba(253, 214, 99, 0.15);
+  --status-warn-border: rgba(253, 214, 99, 0.3);
+
+  --status-alert-text: #f28b82;
+  --status-alert-bg: rgba(242, 139, 130, 0.15);
+  --status-alert-border: rgba(242, 139, 130, 0.3);
+
+  --status-danger-text: #f28b82;
+  --status-danger-bg: rgba(242, 139, 130, 0.15);
+  --status-danger-border: rgba(242, 139, 130, 0.3);
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 16px;
   line-height: 1.5;
-  font-weight: 400;
-  color: #eaf6ff;
-  background: #020b12;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html {
-  background: #020b12;
-}
-
-body {
-  margin: 0;
+/* Full-width root layout */
+#root {
+  width: 100%;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(105, 197, 255, 0.15), transparent 35%),
-    linear-gradient(160deg, #020b12 0%, #06131d 50%, #04141c 100%);
+  display: flex;
+  flex-direction: column;
 }
 
-button,
-input,
-textarea,
-select {
+button, input, textarea, select {
   font: inherit;
 }
 
-img {
-  max-width: 100%;
-  display: block;
+/* Clear, sizable typography */
+h1, h2, h3, h4 {
+  color: var(--text-primary);
+  margin-top: 0;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
-#root {
-  min-height: 100vh;
+p {
+  margin-top: 0;
+  color: var(--text-secondary);
+}
+
+/* Tabular figures for stable vitals */
+.tabular-nums, strong, .stat-value, [data-tabular] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Accessible focus rings */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Tactile micro-interactions (Apple HIG / SpaceX Cockpit) */
+button:active,
+.nav-menu-button:active,
+.earth-nav-item:active,
+.stage-pill-btn:active,
+.scenario-box-btn:active,
+.timeframe-chip:active,
+.picker-member-btn:active,
+.utility-btn:active,
+.footer-action-btn:active,
+.jump-tab-btn:active,
+.inspect-card-btn:active,
+.auth-submit-btn:active,
+.switch-astronaut-screen-btn:active,
+.send-uplink-btn:active {
+  transform: scale(0.98);
+  transition: transform 60ms ease-out;
 }
