@@ -597,7 +597,11 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
             </div>
             <div className="wearable-indicator">
               <Watch size={14} strokeWidth={2} />
-              <span>Oraimo Watch Linked ({isStreaming ? 'Live' : 'Paused'})</span>
+              <span>
+                {smartwatch.status === 'connected'
+                  ? `${smartwatch.deviceName}${isWatchHeartRateLive ? ' · heart rate live' : ' · no live heart-rate data'}`
+                  : 'No smartwatch connected'}
+              </span>
             </div>
           </div>
         </header>
@@ -607,11 +611,13 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
           {activeTab === 'vitals' && (
             <DailyVitalsView
               latest={latest}
-              isStreaming={isStreaming}
+              isStreaming={isStreaming && !isWatchHeartRateLive}
               setIsStreaming={setIsStreaming}
               activityMode={activityMode}
               setActivityMode={setActivityMode}
               onJumpToTrends={() => setActiveTab('trends')}
+              smartwatch={smartwatch}
+              onConnectWatch={handleConnectWatch}
             />
           )}
 
@@ -629,7 +635,13 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
 
           {activeTab === 'history' && <CheckupHistoryView records={records} />}
 
-          {activeTab === 'profile' && <MissionProfileView profile={profile} />}
+          {activeTab === 'profile' && (
+            <MissionProfileView
+              profile={profile}
+              smartwatch={smartwatch}
+              onConnectWatch={handleConnectWatch}
+            />
+          )}
         </div>
       </div>
     </div>
