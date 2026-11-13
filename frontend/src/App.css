@@ -1641,5 +1641,261 @@
   border-left: 3px solid var(--accent-color, #0284c7);
 }
 
+/* ==========================================================================
+   OFFICIAL NASA EMERGENCY MEDICAL REMEDIES & SOP LIBRARY
+   ========================================================================== */
+
+.nasa-remedies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.nasa-remedy-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: border-color 140ms ease;
+}
+
+.nasa-remedy-card:hover {
+  border-color: var(--border-focus);
+}
+
+.nasa-remedy-card.critical {
+  border-left: 4px solid var(--status-danger-text, #ef4444);
+}
+
+.nasa-remedy-card.warning {
+  border-left: 4px solid var(--status-warning-text, #f59e0b);
+}
+
+.remedy-card-header {
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  background: var(--bg-surface);
+  transition: background-color 120ms ease;
+}
+
+.remedy-card-header:hover {
+  background: var(--bg-surface-secondary);
+}
+
+.remedy-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.remedy-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color, #0284c7);
+  flex-shrink: 0;
+}
+
+.nasa-remedy-card.critical .remedy-icon-box {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.nasa-remedy-card.warning .remedy-icon-box {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.remedy-hazard-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+}
+
+.remedy-title-group h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.remedy-toggle-indicator {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-color, #0284c7);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.remedy-card-body {
+  padding: 16px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.remedy-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+}
+
+.meta-pill strong {
+  color: var(--text-primary);
+}
+
+.meta-pill.source-link {
+  color: var(--accent-color, #0284c7);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 120ms ease;
+}
+
+.meta-pill.source-link:hover {
+  background: var(--accent-bg, rgba(2, 132, 199, 0.1));
+  border-color: var(--accent-color, #0284c7);
+}
+
+.remedy-why-box {
+  background: var(--bg-surface);
+  border-radius: 8px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent-color, #0284c7);
+}
+
+.remedy-why-box strong {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+}
+
+.remedy-why-box p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.remedy-steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.remedy-steps-heading {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}
+
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checklist-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.checklist-step-item:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-focus);
+}
+
+.checklist-step-item.checked {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.step-checkbox {
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.checklist-step-item.checked .step-checkbox {
+  color: #10b981;
+}
+
+.step-content strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.checklist-step-item.checked .step-content strong {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.step-content p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.remedy-recovery-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+}
+
+.remedy-recovery-footer strong {
+  color: var(--text-primary);
+}
+
+
 
 
