@@ -492,22 +492,23 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [activityMode, isStreaming])
+  }, [activityMode, isStreaming, isWatchHeartRateLive])
 
   // Periodically append live readings to dynamic history so graphs advance in real time
   useEffect(() => {
-    if (!isStreaming) return
+    if (!isStreaming && !isWatchHeartRateLive) return
 
     const historyInterval = setInterval(() => {
       setLiveHistory((prev) => {
         if (!prev || !prev.length) return prev
+        const vitals = liveVitalsRef.current
         const newRecord = {
           id: Date.now(),
           recordedAt: new Date().toISOString(),
-          heartRate: liveVitals.heartRate,
-          bloodPressure: liveVitals.bloodPressure,
-          bloodOxygen: liveVitals.bloodOxygen,
-          sleepDuration: liveVitals.sleepDuration,
+          heartRate: vitals.heartRate,
+          bloodPressure: vitals.bloodPressure,
+          bloodOxygen: vitals.bloodOxygen,
+          sleepDuration: vitals.sleepDuration,
         }
         return [...prev.slice(-14), newRecord]
       })
