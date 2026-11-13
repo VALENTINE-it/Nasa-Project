@@ -372,16 +372,30 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   const [liveHistory, setLiveHistory] = useState(() => [...baseProfile.history])
   const [activityMode, setActivityMode] = useState('nominal') // 'nominal' | 'exercise' | 'stress'
   const [isStreaming, setIsStreaming] = useState(true)
+  const isWatchHeartRateLive =
+    smartwatch.status === 'connected' && smartwatch.heartRateSupported && smartwatch.heartRate !== null
+  const currentVitals = isWatchHeartRateLive
+    ? { ...liveVitals, heartRate: smartwatch.heartRate }
+    : liveVitals
+  const liveVitalsRef = useRef(currentVitals)
 
   useEffect(() => {
+    liveVitalsRef.current = {
+      ...liveVitals,
+      ...(isWatchHeartRateLive ? { heartRate: smartwatch.heartRate } : {}),
+    }
+  }, [isWatchHeartRateLive, liveVitals, smartwatch.heartRate])
+
+  useEffect(() => {
+    if (!session || session.astronautId !== astronautId) return undefined
+
     let active = true
 
     async function loadData() {
       try {
-        const [dashRes, summaryRes] = await Promise.all([
-          fetch(`/api/astronauts/${astronautId}/dashboard`, { credentials: 'include' }),
-          fetch(`/api/astronauts/${astronautId}/analytics/summary`, { credentials: 'include' }),
-        ])
+        const dashRes = await fetch(`/api/astronauts/${astronautId}/dashboard`, {
+          credentials: 'include',
+        })
 
         if (dashRes.ok) {
           const dashJson = await dashRes.json()
