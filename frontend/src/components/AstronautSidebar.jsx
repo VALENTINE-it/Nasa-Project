@@ -4,6 +4,7 @@ import {
   Rocket,
   Activity,
   TrendingUp,
+  Layers,
   Bell,
   ClipboardList,
   User,
@@ -59,6 +60,18 @@ export function AstronautSidebar({
           <div className="nav-btn-text">
             <strong>Daily Vitals</strong>
             <small>Heart, Oxygen, Pressure</small>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          className={`nav-menu-button ${activeTab === 'bioscan' ? 'active' : ''}`}
+          onClick={() => setActiveTab('bioscan')}
+        >
+          <Layers className="nav-btn-icon" size={18} strokeWidth={2} />
+          <div className="nav-btn-text">
+            <strong>3D Bio-Scan</strong>
+            <small>Muscular &amp; Organ Digital Twin</small>
           </div>
         </button>
 

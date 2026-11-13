@@ -9,6 +9,8 @@ import HealthTrendsView from './components/HealthTrendsView'
 import MedicalAdviceView from './components/MedicalAdviceView'
 import CheckupHistoryView from './components/CheckupHistoryView'
 import MissionProfileView from './components/MissionProfileView'
+import BioDigitalTwin3D from './components/BioDigitalTwin3D'
+import useWearableBluetooth from './hooks/useWearableBluetooth'
 import './App.css'
 
 function getFallbackDashboard(id) {
@@ -362,12 +364,26 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   const [dashboardData, setDashboardData] = useState(() => getFallbackDashboard(astronautId))
   const [activeTab, setActiveTab] = useState('vitals')
   const [timeframe, setTimeframe] = useState('week')
+  const [scenarioMode, setScenarioMode] = useState('nominal') // 'nominal' | 'tachycardia' | 'hypoxia' | 'radiation'
 
   const baseProfile = dashboardData || getFallbackDashboard(astronautId)
   const [liveVitals, setLiveVitals] = useState(() => ({ ...baseProfile.latest }))
   const [liveHistory, setLiveHistory] = useState(() => [...baseProfile.history])
   const [activityMode, setActivityMode] = useState('nominal') // 'nominal' | 'exercise' | 'stress'
   const [isStreaming, setIsStreaming] = useState(true)
+
+  // Web Bluetooth integration for live Oraimo Smartwatch telemetry
+  const {
+    connectionStatus: bleStatus,
+    deviceName: bleDeviceName,
+    connectDevice: connectBleWatch,
+    disconnectDevice: disconnectBleWatch,
+    isConnected: isBleConnected,
+  } = useWearableBluetooth({
+    onHeartRateUpdate: ({ heartRate }) => {
+      setLiveVitals((prev) => (prev ? { ...prev, heartRate } : prev))
+    },
+  })
 
   useEffect(() => {
     let active = true
@@ -407,7 +423,7 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     }
   }, [astronautId])
 
-  // REAL-TIME DYNAMIC VITALS ENGINE (Heart rate variability, respiratory drift, steps accumulation)
+  // REAL-TIME DYNAMIC VITALS ENGINE (Calibrated against NASA HRP & OSDR spaceflight baselines)
   useEffect(() => {
     if (!isStreaming) return
 
@@ -415,13 +431,14 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
       setLiveVitals((prev) => {
         if (!prev) return prev
 
-        let targetHr = 76
+        let targetHr = 75
         let targetO2 = 98
         let targetResp = 16
         let targetSystolic = 122
         let targetDiastolic = 80
         let baseTemp = 36.8
 
+        // Activity mode adjustments
         if (activityMode === 'exercise') {
           targetHr = 138
           targetO2 = 96
@@ -438,13 +455,32 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
           baseTemp = 37.1
         }
 
-        const hrStep = Math.round((targetHr - prev.heartRate) * 0.15)
-        const hrJitter = Math.floor(Math.random() * 5) - 2
-        const newHr = Math.max(55, Math.min(185, prev.heartRate + hrStep + hrJitter))
+        // Scenario mode overrides (Emergency anomaly injections)
+        if (scenarioMode === 'tachycardia') {
+          targetHr = 162
+          targetSystolic = 154
+          targetDiastolic = 94
+          targetResp = 22
+          baseTemp = 37.1
+        } else if (scenarioMode === 'hypoxia') {
+          targetO2 = 89
+          targetResp = 28
+          targetHr = 106
+          targetSystolic = 136
+        } else if (scenarioMode === 'radiation') {
+          baseTemp = 38.0
+          targetHr = 94
+          targetResp = 18
+        }
+
+        // If Oraimo BLE watch is connected, live pulse overrides synthetic HR
+        const hrStep = isBleConnected ? 0 : Math.round((targetHr - prev.heartRate) * 0.15)
+        const hrJitter = isBleConnected ? 0 : Math.floor(Math.random() * 5) - 2
+        const newHr = isBleConnected ? prev.heartRate : Math.max(55, Math.min(185, prev.heartRate + hrStep + hrJitter))
 
         const o2Step = Math.round((targetO2 - prev.bloodOxygen) * 0.2)
         const o2Jitter = Math.random() > 0.6 ? (Math.random() > 0.5 ? 1 : -1) : 0
-        const newO2 = Math.max(88, Math.min(100, prev.bloodOxygen + o2Step + o2Jitter))
+        const newO2 = Math.max(86, Math.min(100, prev.bloodOxygen + o2Step + o2Jitter))
 
         const respStep = Math.round((targetResp - prev.respiratoryRate) * 0.2)
         const respJitter = Math.random() > 0.6 ? (Math.random() > 0.5 ? 1 : -1) : 0
@@ -479,7 +515,7 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [activityMode, isStreaming])
+  }, [activityMode, scenarioMode, isStreaming, isBleConnected])
 
   // Periodically append live readings to dynamic history so graphs advance in real time
   useEffect(() => {
@@ -505,20 +541,51 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
 
   const { profile, alerts } = baseProfile
   const latest = liveVitals || baseProfile.latest
-  const isPulseElevated = latest && latest.heartRate > 90
+  const isPulseElevated = latest && (latest.heartRate > 95 || scenarioMode !== 'nominal')
   const statusClass = isPulseElevated ? 'warning' : 'good'
-  const statusLabel = isPulseElevated ? 'Attention Needed' : 'Healthy & Steady'
+  const statusLabel = scenarioMode === 'tachycardia'
+    ? 'Tachycardia Surge'
+    : scenarioMode === 'hypoxia'
+    ? 'Hypoxia Alert'
+    : scenarioMode === 'radiation'
+    ? 'Radiation Storm'
+    : isPulseElevated
+    ? 'Attention Needed'
+    : 'Healthy & Steady'
 
-  // Dynamic notices based on live vitals
+  // Dynamic notices based on live vitals & scenarios
   const dynamicAlerts = [...(alerts || [])]
-  if (latest.heartRate > 120) {
+
+  if (scenarioMode === 'tachycardia' || latest.heartRate > 120) {
     dynamicAlerts.unshift({
-      id: 'live-alert-surge',
-      metricName: 'Tachycardia Surge Detected',
+      id: 'live-alert-tachycardia',
+      metricName: 'Acute Microgravity Tachycardia & Fluid Surge',
       severity: 'warning',
-      description: `Continuous smartwatch telemetry reports high pulse (${latest.heartRate} bpm) during flight shift.`,
+      description: `Continuous telemetry reports elevated pulse (${latest.heartRate} bpm) driven by microgravity cephalic fluid redistribution.`,
       observedValue: `${latest.heartRate} bpm`,
       threshold: '60 – 100 bpm',
+    })
+  }
+
+  if (scenarioMode === 'hypoxia' || latest.bloodOxygen < 93) {
+    dynamicAlerts.unshift({
+      id: 'live-alert-hypoxia',
+      metricName: 'Cabin Hypoxia & Hypercapnia Risk',
+      severity: 'warning',
+      description: `Blood oxygen saturation dropped to ${latest.bloodOxygen}%. Spacecraft environmental scrubber efficiency degraded.`,
+      observedValue: `${latest.bloodOxygen}% SpO2`,
+      threshold: '95 – 100%',
+    })
+  }
+
+  if (scenarioMode === 'radiation') {
+    dynamicAlerts.unshift({
+      id: 'live-alert-radiation',
+      metricName: 'Solar Particle Event (SPE) Radiation Exposure',
+      severity: 'warning',
+      description: 'Habitat exterior dosimeters indicate elevated ionizing flux. Core body temperature trending upward.',
+      observedValue: '1.42 mSv/hr',
+      threshold: '< 0.05 mSv/hr',
     })
   }
 
@@ -551,6 +618,7 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               <span>{profile.fullName}</span> &rsaquo;{' '}
               <strong className="active-view-name">
                 {activeTab === 'vitals' && 'Daily Vitals Overview'}
+                {activeTab === 'bioscan' && '3D Bio-Scan Digital Twin'}
                 {activeTab === 'trends' && 'Health Trends & Comparison Charts'}
                 {activeTab === 'notices' && 'Medical Notices & Automated Advice'}
                 {activeTab === 'history' && 'Checkup History & Recent Logs'}
@@ -559,6 +627,7 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
             </div>
             <h1>
               {activeTab === 'vitals' && `${profile.fullName}'s Dynamic Health Telemetry`}
+              {activeTab === 'bioscan' && '3D Muscular Anatomy & Real-Time Bio-Scan'}
               {activeTab === 'trends' && 'Vital Sign Changes Over Time'}
               {activeTab === 'notices' && 'Onboard Medical Recommendations'}
               {activeTab === 'history' && 'Chronological Medical Check History'}
@@ -568,6 +637,23 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
 
           <div className="top-header-stats">
             <span className="side-confirmation-tag astronaut">Astronaut Workstation (Crew Side)</span>
+
+            {/* Scenario Anomaly Simulation Switcher */}
+            <div className="scenario-selector-pill">
+              <span className="scenario-label">Scenario:</span>
+              <select
+                className="scenario-select"
+                value={scenarioMode}
+                onChange={(e) => setScenarioMode(e.target.value)}
+                title="Simulate realistic spaceflight physiological scenarios"
+              >
+                <option value="nominal">Nominal Flight (OSDR)</option>
+                <option value="tachycardia">Tachycardia Surge</option>
+                <option value="hypoxia">Cabin Hypoxia &amp; CO2</option>
+                <option value="radiation">Solar Radiation Storm</option>
+              </select>
+            </div>
+
             <div className={`status-pill ${statusClass}`}>
               {isPulseElevated ? (
                 <AlertTriangle size={14} strokeWidth={2.5} />
@@ -576,10 +662,27 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               )}
               <strong>{statusLabel}</strong>
             </div>
-            <div className="wearable-indicator">
+
+            {/* Interactive Wearable Bluetooth Pairing Button */}
+            <button
+              type="button"
+              className={`wearable-connect-btn ${isBleConnected ? 'connected' : ''}`}
+              onClick={isBleConnected ? disconnectBleWatch : connectBleWatch}
+              title={
+                isBleConnected
+                  ? 'Click to disconnect Oraimo Watch'
+                  : 'Click to pair Oraimo Watch via Web Bluetooth'
+              }
+            >
               <Watch size={14} strokeWidth={2} />
-              <span>Oraimo Watch Linked ({isStreaming ? 'Live' : 'Paused'})</span>
-            </div>
+              <span>
+                {isBleConnected
+                  ? `${bleDeviceName || 'Oraimo Watch'} (Live BLE)`
+                  : bleStatus === 'connecting'
+                  ? 'Pairing BLE...'
+                  : 'Pair Oraimo Watch'}
+              </span>
+            </button>
           </div>
         </header>
 
@@ -596,6 +699,10 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
             />
           )}
 
+          {activeTab === 'bioscan' && (
+            <BioDigitalTwin3D latest={latest} isStreaming={isStreaming} />
+          )}
+
           {activeTab === 'trends' && (
             <HealthTrendsView
               latest={latest}
@@ -606,7 +713,12 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
             />
           )}
 
-          {activeTab === 'notices' && <MedicalAdviceView dynamicAlerts={dynamicAlerts} />}
+          {activeTab === 'notices' && (
+            <MedicalAdviceView
+              dynamicAlerts={dynamicAlerts}
+              onResolveAlert={() => setScenarioMode('nominal')}
+            />
+          )}
 
           {activeTab === 'history' && <CheckupHistoryView records={records} />}
 

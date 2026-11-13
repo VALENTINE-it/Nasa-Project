@@ -1,7 +1,7 @@
 import React from 'react'
 import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 
-export function MedicalAdviceView({ dynamicAlerts = [] }) {
+export function MedicalAdviceView({ dynamicAlerts = [], onResolveAlert }) {
   return (
     <div className="view-pane notices-pane">
       <div className="pane-scrollable-safe">
@@ -32,8 +32,19 @@ export function MedicalAdviceView({ dynamicAlerts = [] }) {
                 </div>
                 <div className="notice-action-guide">
                   <strong>Recommended Action:</strong>
-                  <span>Sit down in a quiet spot, drink 500 mL of fluids, and rest for 15 minutes.</span>
+                  <span>{alert.countermeasure || 'Sit down in a quiet spot, drink 500 mL of fluids, and rest for 15 minutes.'}</span>
                 </div>
+                {onResolveAlert && (
+                  <div style={{ marginTop: '12px' }}>
+                    <button
+                      type="button"
+                      className="notice-resolve-btn"
+                      onClick={() => onResolveAlert(alert.id)}
+                    >
+                      ✓ Complete Countermeasure &amp; Return to Nominal
+                    </button>
+                  </div>
+                )}
               </div>
             ))
           ) : (
