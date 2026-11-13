@@ -1,4 +1,5 @@
 import React from 'react'
+import { TrendingUp } from 'lucide-react'
 
 export function HealthTrendsView({
   latest,
@@ -27,6 +28,11 @@ export function HealthTrendsView({
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="vitals-group-heading">
+        <TrendingUp size={14} strokeWidth={2} />
+        <span>Telemetry Trends</span>
       </div>
 
       <div className="charts-full-grid">
@@ -76,6 +82,13 @@ export function HealthTrendsView({
           </div>
         </div>
       </div>
+
+      <details className="view-accordion">
+        <summary>Trend Information &amp; Time Window Notes</summary>
+        <div className="accordion-body">
+          <p>Dynamic polyline advancing with sensor stream. Comparison against baseline history.</p>
+        </div>
+      </details>
     </div>
   )
 }

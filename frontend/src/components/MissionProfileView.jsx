@@ -22,10 +22,12 @@ export function MissionProfileView({ profile }) {
             <span>Assignment:</span>
             <strong>Propulsion Systems &amp; Spacecraft Commander</strong>
           </div>
-          <div className="info-key-val">
-            <span>Health Overview:</span>
-            <p className="profile-bio-text">{profile.personalOverview}</p>
-          </div>
+          <details className="view-accordion">
+            <summary>Health Overview &amp; Bio</summary>
+            <div className="accordion-body">
+              <p className="profile-bio-text">{profile.personalOverview}</p>
+            </div>
+          </details>
         </div>
 
         <div className="profile-info-card">
@@ -38,20 +40,25 @@ export function MissionProfileView({ profile }) {
             <span>Location:</span>
             <strong>Deep-Space Mars Transit Habitat</strong>
           </div>
-          <div className="info-key-val">
-            <span>Distance from Earth:</span>
-            <strong>142 million miles away</strong>
-          </div>
-          <div className="info-key-val">
-            <span>Radio Delay to Houston:</span>
-            <strong>12 minutes, 44 seconds</strong>
-          </div>
-          <div className="info-key-val">
-            <span>Autonomous Computer:</span>
-            <strong>
-              Clinical Decision Engine Active (<span className="status-good-text">Ready</span>)
-            </strong>
-          </div>
+          <details className="view-accordion">
+            <summary>Deep-Space Link Details</summary>
+            <div className="accordion-body">
+              <div className="info-key-val">
+                <span>Distance from Earth:</span>
+                <strong>142 million miles away</strong>
+              </div>
+              <div className="info-key-val">
+                <span>Radio Delay to Houston:</span>
+                <strong>12 minutes, 44 seconds</strong>
+              </div>
+              <div className="info-key-val">
+                <span>Autonomous Computer:</span>
+                <strong>
+                  Clinical Decision Engine Active (<span className="status-good-text">Ready</span>)
+                </strong>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
     </div>

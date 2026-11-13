@@ -300,6 +300,7 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
             <strong>NASA Houston Desk</strong>
             <small>Deep-Space Health Console</small>
           </div>
+          <span className="dashboard-location-badge">Ground Side</span>
         </div>
 
         {/* Radio Link Status Box in Sidebar */}
@@ -312,9 +313,9 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
           <small className="radio-range-text">Distance: 142M miles</small>
         </div>
 
-        {/* Navigation Buttons Dividing Content into Views */}
+        {/* Navigation Buttons Grouped by Relationship */}
         <nav className="earth-nav-list">
-          <span className="earth-group-title">Mission Control Views</span>
+          <span className="earth-group-title">Crew Monitoring</span>
 
           <button
             type="button"
@@ -340,6 +341,8 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
             </div>
           </button>
 
+          <span className="earth-group-title" style={{ marginTop: '12px' }}>Habitat &amp; Comms</span>
+
           <button
             type="button"
             className={`earth-nav-item ${activeTab === 'environment' ? 'active' : ''}`}
@@ -363,6 +366,8 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               <small>Incident Log &amp; Uplink</small>
             </div>
           </button>
+
+          <span className="earth-group-title" style={{ marginTop: '12px' }}>Simulation</span>
 
           <button
             type="button"
@@ -444,6 +449,7 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
           </div>
 
           <div className="earth-header-meta">
+            <span className="side-confirmation-tag earth">Earth Mission Control (Ground Side)</span>
             <span className="earth-clock-pill">UTC Ground: {currentTime} · Stream Active</span>
             <div className="delay-chip">
               <Clock size={13} strokeWidth={2} />
@@ -457,6 +463,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
           {/* VIEW 1: CREW ROSTER MATRIX */}
           {activeTab === 'crew' && (
             <div className="earth-view-pane crew-pane">
+              <div className="vitals-group-heading">
+                <Users size={14} strokeWidth={2} />
+                <span>Crew Roster Matrix</span>
+              </div>
+
               <div className="crew-matrix-grid">
                 {crewData.map((astro) => {
                   const currentVitals = astro.currentMetrics || astro.baseline[missionPhase]
@@ -528,9 +539,12 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 })}
               </div>
 
-              <div className="crew-matrix-footer">
-                <p>Telemetry stream active across all 3 crew members. Click any card to inspect their live biometrics.</p>
-              </div>
+              <details className="view-accordion">
+                <summary>Telemetry Stream Status Notes</summary>
+                <div className="accordion-body">
+                  <p>Telemetry stream active across all 3 crew members. Click any card to inspect their live biometrics.</p>
+                </div>
+              </details>
             </div>
           )}
 
@@ -569,6 +583,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               </div>
 
               {/* 8 Gauges Grid */}
+              <div className="vitals-group-heading">
+                <Activity size={14} strokeWidth={2} />
+                <span>Primary Circulatory Vitals</span>
+              </div>
+
               <div className="eight-gauges-grid">
                 <article className="clinical-gauge-box">
                   <span className="g-title">Heart Rate</span>
@@ -605,7 +624,14 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   </div>
                   <p className="g-desc">Normal core body warmth. Circadian regulation is functioning well.</p>
                 </article>
+              </div>
 
+              <div className="vitals-group-heading">
+                <ShieldCheck size={14} strokeWidth={2} />
+                <span>Respiration &amp; Physiological Biomarkers</span>
+              </div>
+
+              <div className="eight-gauges-grid">
                 <article className="clinical-gauge-box">
                   <span className="g-title">Breathing Rate</span>
                   <div className="g-val-line">
@@ -642,12 +668,25 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">Daily resistive exercise countermeasure preserving bone density.</p>
                 </article>
               </div>
+
+              <details className="view-accordion">
+                <summary>Flight Surgeon Clinical Notes</summary>
+                <div className="accordion-body">
+                  <p>Resting pulse and circulatory pressure required to supply the brain in microgravity. Autonomic rhythm fluctuates dynamically.</p>
+                  <p>Daily resistive exercise countermeasure preserving bone density (BMD).</p>
+                </div>
+              </details>
             </div>
           )}
 
           {/* VIEW 3: CABIN AIR & SYSTEMS */}
           {activeTab === 'environment' && (
             <div className="earth-view-pane environment-pane">
+              <div className="vitals-group-heading">
+                <Wind size={14} strokeWidth={2} />
+                <span>Atmosphere &amp; Pressure</span>
+              </div>
+
               <div className="cabin-systems-grid">
                 <div className="system-metric-card">
                   <span className="sys-label">Cabin Oxygen (O2)</span>
@@ -666,7 +705,14 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <strong>{cabinEnv.pressure} kPa</strong>
                   <small>Standard sea-level atmospheric equivalent</small>
                 </div>
+              </div>
 
+              <div className="vitals-group-heading">
+                <Shield size={14} strokeWidth={2} />
+                <span>Habitat Systems &amp; Environment</span>
+              </div>
+
+              <div className="cabin-systems-grid">
                 <div className="system-metric-card">
                   <span className="sys-label">Room Temperature</span>
                   <strong>{cabinEnv.temp} °C</strong>
@@ -686,6 +732,13 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 </div>
               </div>
 
+              <details className="view-accordion">
+                <summary>Environmental Life Support Diagnostics</summary>
+                <div className="accordion-body">
+                  <p>Closed-loop water filters functioning at peak capacity. Safe CO2 limit is below 0.50%.</p>
+                </div>
+              </details>
+
               <div className="systems-summary-banner">
                 <ShieldCheck size={18} strokeWidth={2} />
                 <strong>Spacecraft Life Support Status: ALL SYSTEMS NOMINAL (Dynamic Telemetry Link Active)</strong>
@@ -701,7 +754,7 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 <div className="comms-feed-column">
                   <h3>Recent Medical Events Received</h3>
                   <div className="incident-card-feed">
-                    {INCIDENT_LOGS.map((inc) => (
+                    {INCIDENT_LOGS.slice(0, 1).map((inc) => (
                       <div key={inc.id} className="feed-incident-box">
                         <div className="incident-box-header">
                           <strong>{inc.title}</strong>
@@ -722,6 +775,35 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                         </p>
                       </div>
                     ))}
+
+                    {INCIDENT_LOGS.length > 1 && (
+                      <details className="view-accordion">
+                        <summary>Earlier Incident Logs ({INCIDENT_LOGS.length - 1} earlier record)</summary>
+                        <div className="accordion-body">
+                          {INCIDENT_LOGS.slice(1).map((inc) => (
+                            <div key={inc.id} className="feed-incident-box" style={{ marginTop: '8px' }}>
+                              <div className="incident-box-header">
+                                <strong>{inc.title}</strong>
+                                <span className="status-pill good">
+                                  <ShieldCheck size={13} strokeWidth={2.5} />
+                                  <span>Resolved</span>
+                                </span>
+                              </div>
+                              <div className="incident-time-stamp">
+                                <span><Clock size={12} strokeWidth={2} /> {inc.timeOccurred}</span>
+                                <span><Radio size={12} strokeWidth={2} /> {inc.delayNote}</span>
+                              </div>
+                              <p className="incident-quote">
+                                <strong>Onboard Computer Action:</strong> {inc.whatShipDid}
+                              </p>
+                              <p className="incident-quote doc">
+                                <strong>Houston Doctor Confirmation:</strong> {inc.doctorAdvice}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                   </div>
                 </div>
 
@@ -770,9 +852,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
             <div className="earth-view-pane simulator-pane">
               <div className="sim-lab-card">
                 <h3>Test How the Clinical Brain Responds to Emergencies</h3>
-                <p>
-                  Click any scenario below to inject a simulated physiological surge. Watch how the vital numbers adapt and how the system alerts the crew in real time.
-                </p>
+
+                <div className="vitals-group-heading">
+                  <FlaskConical size={14} strokeWidth={2} />
+                  <span>Simulation Scenarios</span>
+                </div>
 
                 <div className="scenario-buttons-grid">
                   <button
@@ -819,6 +903,13 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 <div className="sim-current-status-box">
                   <strong>Selected Astronaut for Test:</strong> {selectedAstro.fullName} ({selectedAstro.astronautId}) · Current Health Status: <span className="status-highlight">{selectedAstro.healthStatus}</span>
                 </div>
+
+                <details className="view-accordion">
+                  <summary>How This Simulation Operates</summary>
+                  <div className="accordion-body">
+                    <p>Click any scenario above to inject a simulated physiological surge. Watch how the vital numbers adapt and how the system alerts the crew in real time.</p>
+                  </div>
+                </details>
               </div>
             </div>
           )}

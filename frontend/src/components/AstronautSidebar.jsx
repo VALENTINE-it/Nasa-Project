@@ -32,6 +32,7 @@ export function AstronautSidebar({
           <strong>AURA-MED</strong>
           <small>Astronaut Health Desk</small>
         </div>
+        <span className="dashboard-location-badge">Crew Side</span>
       </div>
 
       {/* Current Crew Badge in Sidebar */}
@@ -47,7 +48,7 @@ export function AstronautSidebar({
 
       {/* Navigation Buttons Dividing Content into Views (No Scrolling) */}
       <nav className="sidebar-nav-menu">
-        <span className="nav-group-title">Workstation Views</span>
+        <span className="nav-group-title">Biometrics</span>
 
         <button
           type="button"
@@ -73,6 +74,8 @@ export function AstronautSidebar({
           </div>
         </button>
 
+        <span className="nav-group-title" style={{ marginTop: '12px' }}>Clinical &amp; History</span>
+
         <button
           type="button"
           className={`nav-menu-button ${activeTab === 'notices' ? 'active' : ''}`}
@@ -96,6 +99,8 @@ export function AstronautSidebar({
             <small>Past Logs &amp; Rest Times</small>
           </div>
         </button>
+
+        <span className="nav-group-title" style={{ marginTop: '12px' }}>Spacecraft</span>
 
         <button
           type="button"

@@ -567,6 +567,7 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
           </div>
 
           <div className="top-header-stats">
+            <span className="side-confirmation-tag astronaut">Astronaut Workstation (Crew Side)</span>
             <div className={`status-pill ${statusClass}`}>
               {isPulseElevated ? (
                 <AlertTriangle size={14} strokeWidth={2.5} />

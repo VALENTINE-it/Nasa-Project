@@ -55,6 +55,11 @@ export function DailyVitalsView({
         </div>
       </div>
 
+      <div className="vitals-group-heading">
+        <Activity size={14} strokeWidth={2} />
+        <span>Primary Circulatory Vitals</span>
+      </div>
+
       <div className="vitals-matrix-row">
         <article className={`vital-block ${latest.heartRate > 90 ? 'warning' : 'good'}`}>
           <div className="block-head">
@@ -113,6 +118,11 @@ export function DailyVitalsView({
         </article>
       </div>
 
+      <div className="vitals-group-heading">
+        <ShieldCheck size={14} strokeWidth={2} />
+        <span>Respiration &amp; Daily Activity</span>
+      </div>
+
       <div className="vitals-matrix-row secondary-row">
         <article className="vital-block good">
           <div className="block-head">
@@ -155,6 +165,16 @@ export function DailyVitalsView({
           <p className="block-desc">Live accelerometer count accumulating across current flight shift.</p>
         </article>
       </div>
+
+      <details className="view-accordion">
+        <summary>Sensor Measurement &amp; Reference Notes</summary>
+        <div className="accordion-body">
+          <p>Continuous optical pulse sensor. Blood gently shifts upward in microgravity.</p>
+          <p>Healthy circulatory pressure supplied to the cerebral cortex.</p>
+          <p>Pulse oximeter reading from cabin air respiration.</p>
+          <p>Circadian thermoregulation steady. Microgravity core temp nominal.</p>
+        </div>
+      </details>
 
       <div className="vitals-footer-strip">
         <div className="strip-info">

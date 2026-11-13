@@ -5,6 +5,11 @@ export function MedicalAdviceView({ dynamicAlerts = [] }) {
   return (
     <div className="view-pane notices-pane">
       <div className="pane-scrollable-safe">
+        <div className="vitals-group-heading">
+          <AlertTriangle size={14} strokeWidth={2} />
+          <span>Clinical Guidance</span>
+        </div>
+
         <div className="notices-grid-layout">
           {dynamicAlerts && dynamicAlerts.length ? (
             dynamicAlerts.map((alert) => (
@@ -52,6 +57,13 @@ export function MedicalAdviceView({ dynamicAlerts = [] }) {
             </div>
           )}
         </div>
+
+        <details className="view-accordion">
+          <summary>Standard Flight Medical Guidance</summary>
+          <div className="accordion-body">
+            <p>Continue your scheduled flight activities, stay hydrated, and complete your 45-minute exercise cycle.</p>
+          </div>
+        </details>
       </div>
     </div>
   )

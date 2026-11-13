@@ -1225,3 +1225,85 @@
 .ground-link:hover {
   text-decoration: underline;
 }
+
+/* Dashboard distinction label */
+.dashboard-location-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+}
+
+.side-confirmation-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+
+/* Headings for grouped areas */
+.vitals-group-heading {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  margin: 10px 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Accordions for secondary content */
+.view-accordion {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.view-accordion summary {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.view-accordion summary:hover {
+  background: var(--bg-surface-secondary);
+  color: var(--text-primary);
+}
+
+.view-accordion .accordion-body {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.view-accordion .accordion-body p {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.view-accordion .accordion-body p:last-child {
+  margin-bottom: 0;
+}
+
