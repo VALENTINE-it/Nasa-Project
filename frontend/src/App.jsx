@@ -9,7 +9,6 @@ import HealthTrendsView from './components/HealthTrendsView'
 import MedicalAdviceView from './components/MedicalAdviceView'
 import CheckupHistoryView from './components/CheckupHistoryView'
 import MissionProfileView from './components/MissionProfileView'
-import BioDigitalTwin3D from './components/BioDigitalTwin3D'
 import useWearableBluetooth from './hooks/useWearableBluetooth'
 import './App.css'
 
@@ -618,7 +617,6 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               <span>{profile.fullName}</span> &rsaquo;{' '}
               <strong className="active-view-name">
                 {activeTab === 'vitals' && 'Daily Vitals Overview'}
-                {activeTab === 'bioscan' && '3D Bio-Scan Digital Twin'}
                 {activeTab === 'trends' && 'Health Trends & Comparison Charts'}
                 {activeTab === 'notices' && 'Medical Notices & Automated Advice'}
                 {activeTab === 'history' && 'Checkup History & Recent Logs'}
@@ -627,7 +625,6 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
             </div>
             <h1>
               {activeTab === 'vitals' && `${profile.fullName}'s Dynamic Health Telemetry`}
-              {activeTab === 'bioscan' && '3D Muscular Anatomy & Real-Time Bio-Scan'}
               {activeTab === 'trends' && 'Vital Sign Changes Over Time'}
               {activeTab === 'notices' && 'Onboard Medical Recommendations'}
               {activeTab === 'history' && 'Chronological Medical Check History'}
@@ -697,10 +694,6 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               setActivityMode={setActivityMode}
               onJumpToTrends={() => setActiveTab('trends')}
             />
-          )}
-
-          {activeTab === 'bioscan' && (
-            <BioDigitalTwin3D latest={latest} isStreaming={isStreaming} />
           )}
 
           {activeTab === 'trends' && (
