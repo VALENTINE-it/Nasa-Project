@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import {
   RotateCcw,
   Layers,
@@ -110,17 +111,20 @@ export function BioDigitalTwin3D({ latest = {} }) {
   const controlsRef = useRef(null)
   const animFrameRef = useRef(null)
 
-  // Meshes that animate dynamically with telemetry
+  // Dynamic mesh references
   const heartMeshRef = useRef(null)
   const leftLungRef = useRef(null)
   const rightLungRef = useRef(null)
-  const muscularGroupRef = useRef(null)
-  const raycastObjectsRef = useRef([])
+  const modelRootRef = useRef(null)
+  const originalMaterialsMapRef = useRef(new Map())
 
   // State
   const [activeLayer, setActiveLayer] = useState('muscular') // 'muscular' | 'xray' | 'heatmap'
   const [selectedRegion, setSelectedRegion] = useState('heart')
+  const [customInspectedMuscle, setCustomInspectedMuscle] = useState(null)
   const [autoRotate, setAutoRotate] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [isLoaded, setIsLoaded] = useState(false)
 
   // Always keep fresh references for animation loop without recreating scene
   const latestRef = useRef(latest)
@@ -133,7 +137,7 @@ export function BioDigitalTwin3D({ latest = {} }) {
     autoRotateRef.current = autoRotate
   }, [autoRotate])
 
-  // 1. Initialize Three.js Scene
+  // 1. Initialize Three.js Scene and Load Sculpted 3D GLB Model
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -147,7 +151,7 @@ export function BioDigitalTwin3D({ latest = {} }) {
 
     // CAMERA
     const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 50)
-    camera.position.set(0, 1.25, 2.8)
+    camera.position.set(0, 1.25, 2.7)
     cameraRef.current = camera
 
     // RENDERER
@@ -158,9 +162,8 @@ export function BioDigitalTwin3D({ latest = {} }) {
     })
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-    renderer.shadowMap.enabled = false
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.15
+    renderer.toneMappingExposure = 1.2
     container.innerHTML = ''
     container.appendChild(renderer.domElement)
     rendererRef.current = renderer
@@ -169,28 +172,32 @@ export function BioDigitalTwin3D({ latest = {} }) {
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
     controls.dampingFactor = 0.05
-    controls.target.set(0, 1.1, 0)
+    controls.target.set(0, 1.05, 0)
     controls.minDistance = 0.8
     controls.maxDistance = 4.5
     controls.maxPolarAngle = Math.PI * 0.95
     controls.minPolarAngle = Math.PI * 0.05
     controlsRef.current = controls
 
-    // LIGHTING (Studio Medical Lighting)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85)
+    // STUDIO MEDICAL LIGHTING (Accentuates sculpted muscle curves and organic striations)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95)
     scene.add(ambientLight)
 
-    const keyLight = new THREE.DirectionalLight(0xfff6ed, 1.4)
-    keyLight.position.set(2.5, 3.5, 2.5)
+    const keyLight = new THREE.DirectionalLight(0xfff5eb, 1.6)
+    keyLight.position.set(3, 4, 3)
     scene.add(keyLight)
 
-    const fillLight = new THREE.DirectionalLight(0xdbeafe, 0.9)
-    fillLight.position.set(-2.5, 2.0, 2.0)
+    const fillLight = new THREE.DirectionalLight(0xe0f2fe, 1.1)
+    fillLight.position.set(-3, 2.5, 2)
     scene.add(fillLight)
 
-    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.2) // Holographic Cyan Rim
-    rimLight.position.set(0, 2.5, -2.5)
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.4) // Cyan medical rim light
+    rimLight.position.set(0, 3, -3)
     scene.add(rimLight)
+
+    const bottomBounce = new THREE.DirectionalLight(0xffffff, 0.4)
+    bottomBounce.position.set(0, -2, 1)
+    scene.add(bottomBounce)
 
     // Holographic Circular Platform
     const platformGroup = new THREE.Group()
@@ -218,41 +225,40 @@ export function BioDigitalTwin3D({ latest = {} }) {
     platformGroup.add(innerDiscMesh)
     scene.add(platformGroup)
 
-    // PROCEDURAL TEXTURES (Muscle Striations & Fibrous Tendons)
-    const muscleTexture = createMuscleStriationTexture()
-    const tendonTexture = createTendonTexture()
+    // 2. INTERNAL ORGANS (Cardiac Heart & Pulmonary Lungs)
+    const organsGroup = new THREE.Group()
 
-    // 2. BUILD ANATOMICAL MUSCULAR BODY (Matching the User's Ecorché Reference Image)
-    const bodyGroup = new THREE.Group()
-    const clickableList = []
-
-    // Materials
-    const muscleMaterial = new THREE.MeshStandardMaterial({
-      color: 0xb9493a, // Terracotta/crimson muscle tissue
-      roughness: 0.45,
-      metalness: 0.08,
-      map: muscleTexture,
-      bumpMap: muscleTexture,
-      bumpScale: 0.025,
-    })
-
-    const tendonMaterial = new THREE.MeshStandardMaterial({
-      color: 0xe8e1d5, // Ivory fibrous tendon / aponeurosis
-      roughness: 0.35,
-      metalness: 0.05,
-      map: tendonTexture,
-    })
-
-    const organMaterial = new THREE.MeshStandardMaterial({
-      color: 0xef4444, // Beating Heart
+    // 3D Heart Mesh (Left Mediastinum)
+    const heartGeo = new THREE.SphereGeometry(0.052, 20, 20)
+    heartGeo.scale(1, 1.35, 0.9)
+    const heartMat = new THREE.MeshStandardMaterial({
+      color: 0x10b981,
       roughness: 0.3,
       metalness: 0.1,
-      emissive: 0xef4444,
+      emissive: 0x059669,
       emissiveIntensity: 0.35,
     })
+    const heartMesh = new THREE.Mesh(heartGeo, heartMat)
+    heartMesh.name = 'heart'
+    heartMesh.position.set(-0.04, 1.36, 0.04)
+    heartMesh.rotation.z = -0.2
 
-    const lungMaterial = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8, // Lungs (SpO2 Cyan)
+    const aortaGeo = new THREE.TorusGeometry(0.02, 0.008, 12, 24, Math.PI)
+    const aortaMesh = new THREE.Mesh(
+      aortaGeo,
+      new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3 })
+    )
+    aortaMesh.position.set(-0.04, 1.42, 0.04)
+    aortaMesh.rotation.x = Math.PI / 2
+    organsGroup.add(aortaMesh)
+    organsGroup.add(heartMesh)
+    heartMeshRef.current = heartMesh
+
+    // 3D Bilateral Lungs
+    const lungGeo = new THREE.SphereGeometry(0.058, 16, 16)
+    lungGeo.scale(0.85, 1.6, 0.95)
+    const lungMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
       roughness: 0.4,
       metalness: 0.05,
       transparent: true,
@@ -261,239 +267,69 @@ export function BioDigitalTwin3D({ latest = {} }) {
       emissiveIntensity: 0.2,
     })
 
-    // --- HEAD & CRANIAL REGION ---
-    const headGroup = new THREE.Group()
-    headGroup.name = 'brain'
-    clickableList.push(headGroup)
-
-    const craniumGeo = new THREE.SphereGeometry(0.13, 24, 20)
-    craniumGeo.scale(1, 1.25, 1.08)
-    const craniumMesh = new THREE.Mesh(craniumGeo, muscleMaterial)
-    craniumMesh.position.set(0, 1.82, 0)
-    headGroup.add(craniumMesh)
-
-    // Facial muscles / Jaw
-    const jawGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.1, 16)
-    const jawMesh = new THREE.Mesh(jawGeo, muscleMaterial)
-    jawMesh.position.set(0, 1.71, 0.02)
-    headGroup.add(jawMesh)
-
-    // Neck (Sternocleidomastoid & Trapezius)
-    const neckGeo = new THREE.CylinderGeometry(0.065, 0.085, 0.12, 16)
-    const neckMesh = new THREE.Mesh(neckGeo, muscleMaterial)
-    neckMesh.position.set(0, 1.62, 0)
-    headGroup.add(neckMesh)
-    bodyGroup.add(headGroup)
-
-    // --- TORSO / PECTORALS & ABDOMINALS ---
-    const torsoGroup = new THREE.Group()
-    torsoGroup.name = 'torso'
-
-    // Pectoralis Major (Left & Right)
-    const pecGeo = new THREE.BoxGeometry(0.16, 0.14, 0.09)
-    const leftPec = new THREE.Mesh(pecGeo, muscleMaterial)
-    leftPec.position.set(-0.09, 1.45, 0.06)
-    leftPec.rotation.set(0.05, 0.1, -0.08)
-    torsoGroup.add(leftPec)
-
-    const rightPec = new THREE.Mesh(pecGeo, muscleMaterial)
-    rightPec.position.set(0.09, 1.45, 0.06)
-    rightPec.rotation.set(0.05, -0.1, 0.08)
-    torsoGroup.add(rightPec)
-
-    // Sternal Tendon & Linea Alba
-    const sternumGeo = new THREE.BoxGeometry(0.03, 0.16, 0.095)
-    const sternumMesh = new THREE.Mesh(sternumGeo, tendonMaterial)
-    sternumMesh.position.set(0, 1.45, 0.062)
-    torsoGroup.add(sternumMesh)
-
-    // Rectus Abdominis (Six-Pack Segments matching reference image)
-    const absGroup = new THREE.Group()
-    for (let row = 0; row < 3; row++) {
-      const yPos = 1.32 - row * 0.08
-      const abLeft = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.065, 0.08), muscleMaterial)
-      abLeft.position.set(-0.045, yPos, 0.05)
-      absGroup.add(abLeft)
-
-      const abRight = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.065, 0.08), muscleMaterial)
-      abRight.position.set(0.045, yPos, 0.05)
-      absGroup.add(abRight)
-
-      // Tendinous intersection
-      const tendSep = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.012, 0.082), tendonMaterial)
-      tendSep.position.set(0, yPos - 0.035, 0.051)
-      absGroup.add(tendSep)
-    }
-    torsoGroup.add(absGroup)
-
-    // Linea Alba (Vertical tendon down the abdomen)
-    const lineaAlba = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.28, 0.085), tendonMaterial)
-    lineaAlba.position.set(0, 1.24, 0.052)
-    torsoGroup.add(lineaAlba)
-
-    // External Obliques & Serratus
-    const obliqueGeo = new THREE.CylinderGeometry(0.17, 0.15, 0.32, 16)
-    const obliqueMesh = new THREE.Mesh(obliqueGeo, muscleMaterial)
-    obliqueMesh.position.set(0, 1.25, 0)
-    torsoGroup.add(obliqueMesh)
-
-    // Latissimus Dorsi & Back Spine
-    const backGeo = new THREE.BoxGeometry(0.32, 0.36, 0.1)
-    const backMesh = new THREE.Mesh(backGeo, muscleMaterial)
-    backMesh.position.set(0, 1.38, -0.06)
-    torsoGroup.add(backMesh)
-
-    bodyGroup.add(torsoGroup)
-
-    // --- INTERNAL ORGANS (Heart & Lungs inside Mediastinum) ---
-    // 3D Heart
-    const heartGroup = new THREE.Group()
-    heartGroup.name = 'heart'
-    clickableList.push(heartGroup)
-
-    const heartGeo = new THREE.SphereGeometry(0.055, 18, 18)
-    heartGeo.scale(1, 1.35, 0.9)
-    const heartMesh = new THREE.Mesh(heartGeo, organMaterial)
-    heartMesh.position.set(-0.04, 1.43, 0.03)
-    heartMesh.rotation.z = -0.2
-
-    // Aortic Arch
-    const aortaGeo = new THREE.TorusGeometry(0.022, 0.009, 12, 24, Math.PI)
-    const aortaMesh = new THREE.Mesh(
-      aortaGeo,
-      new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3 })
-    )
-    aortaMesh.position.set(-0.04, 1.49, 0.03)
-    aortaMesh.rotation.x = Math.PI / 2
-    heartGroup.add(aortaMesh)
-    heartGroup.add(heartMesh)
-    heartMeshRef.current = heartMesh
-    bodyGroup.add(heartGroup)
-
-    // 3D Lungs (Bilateral)
-    const lungsGroup = new THREE.Group()
-    lungsGroup.name = 'lungs'
-    clickableList.push(lungsGroup)
-
-    const lungGeo = new THREE.SphereGeometry(0.06, 16, 16)
-    lungGeo.scale(0.85, 1.7, 0.95)
-
-    const leftLung = new THREE.Mesh(lungGeo, lungMaterial)
-    leftLung.position.set(-0.11, 1.42, 0.01)
-    lungsGroup.add(leftLung)
+    const leftLung = new THREE.Mesh(lungGeo, lungMat)
+    leftLung.name = 'lungs'
+    leftLung.position.set(-0.105, 1.35, 0.02)
+    organsGroup.add(leftLung)
     leftLungRef.current = leftLung
 
-    const rightLung = new THREE.Mesh(lungGeo, lungMaterial)
-    rightLung.position.set(0.11, 1.42, 0.01)
-    lungsGroup.add(rightLung)
+    const rightLung = new THREE.Mesh(lungGeo, lungMat)
+    rightLung.name = 'lungs'
+    rightLung.position.set(0.105, 1.35, 0.02)
+    organsGroup.add(rightLung)
     rightLungRef.current = rightLung
 
-    bodyGroup.add(lungsGroup)
+    scene.add(organsGroup)
 
-    // --- ARMS & SHOULDERS ---
-    const buildArm = (isLeft) => {
-      const armGroup = new THREE.Group()
-      const sign = isLeft ? -1 : 1
+    // 3. LOAD SCULPTED ANATOMICAL GLB MODEL (177 Individually Sculpted Muscles & Tendons)
+    const loader = new GLTFLoader()
+    loader.load(
+      '/models/muscles.glb',
+      (gltf) => {
+        const model = gltf.scene
+        modelRootRef.current = model
 
-      // Deltoid
-      const deltoid = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 16), muscleMaterial)
-      deltoid.position.set(sign * 0.23, 1.51, 0)
-      armGroup.add(deltoid)
+        // Calculate model bounding box and normalize height to 2.05m
+        const box = new THREE.Box3().setFromObject(model)
+        const size = box.getSize(new THREE.Vector3())
+        const center = box.getCenter(new THREE.Vector3())
 
-      // Biceps / Triceps
-      const bicepGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.22, 16)
-      const bicep = new THREE.Mesh(bicepGeo, muscleMaterial)
-      bicep.position.set(sign * 0.27, 1.34, 0)
-      bicep.rotation.z = sign * -0.22
-      armGroup.add(bicep)
+        const targetHeight = 2.05
+        const scale = targetHeight / size.y
+        model.scale.setScalar(scale)
 
-      // Elbow Tendon
-      const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 12), tendonMaterial)
-      elbow.position.set(sign * 0.31, 1.21, 0)
-      armGroup.add(elbow)
+        // Center on X and Z, align feet with ground (y = 0)
+        model.position.x = -center.x * scale
+        model.position.y = -box.min.y * scale
+        model.position.z = -center.z * scale
 
-      // Forearm flexors & extensors
-      const forearmGeo = new THREE.CylinderGeometry(0.04, 0.03, 0.22, 16)
-      const forearm = new THREE.Mesh(forearmGeo, muscleMaterial)
-      forearm.position.set(sign * 0.37, 1.07, 0.02)
-      forearm.rotation.z = sign * -0.32
-      armGroup.add(forearm)
+        // Enhance material aesthetics (PBR metallic/roughness tuning for organic muscle look)
+        model.traverse((child) => {
+          if (child.isMesh && child.material) {
+            // Save original material
+            originalMaterialsMapRef.current.set(child, child.material.clone())
 
-      // Hand & wrist tendons
-      const hand = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.09, 0.02), tendonMaterial)
-      hand.position.set(sign * 0.44, 0.94, 0.02)
-      hand.rotation.z = sign * -0.32
-      armGroup.add(hand)
+            child.material.roughness = 0.55
+            child.material.metalness = 0.05
+            child.castShadow = false
+            child.receiveShadow = false
+          }
+        })
 
-      return armGroup
-    }
-    bodyGroup.add(buildArm(true))
-    bodyGroup.add(buildArm(false))
+        scene.add(model)
+        setIsLoaded(true)
+      },
+      (xhr) => {
+        if (xhr.total > 0) {
+          setLoadingProgress(Math.round((xhr.loaded / xhr.total) * 100))
+        }
+      },
+      (error) => {
+        console.error('Error loading sculpted anatomical GLB model:', error)
+      }
+    )
 
-    // --- PELVIS & LEGS (Quads, Calves, Tendons matching reference image) ---
-    const pelvisGroup = new THREE.Group()
-    pelvisGroup.name = 'thighs'
-    clickableList.push(pelvisGroup)
-
-    const pelvisMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.13, 0.16, 16), muscleMaterial)
-    pelvisMesh.position.set(0, 1.02, 0)
-    pelvisGroup.add(pelvisMesh)
-    bodyGroup.add(pelvisGroup)
-
-    const legsGroup = new THREE.Group()
-    legsGroup.name = 'muscles_legs'
-    clickableList.push(legsGroup)
-
-    const buildLeg = (isLeft) => {
-      const legGroup = new THREE.Group()
-      const sign = isLeft ? -1 : 1
-
-      // Quadriceps (Rectus femoris & vastus lateralis)
-      const quadGeo = new THREE.CylinderGeometry(0.075, 0.055, 0.38, 16)
-      const quad = new THREE.Mesh(quadGeo, muscleMaterial)
-      quad.position.set(sign * 0.095, 0.76, 0.01)
-      legGroup.add(quad)
-
-      // Vastus Medialis (Teardrop muscle above knee)
-      const vmGeo = new THREE.SphereGeometry(0.045, 12, 12)
-      vmGeo.scale(0.8, 1.2, 0.8)
-      const vm = new THREE.Mesh(vmGeo, muscleMaterial)
-      vm.position.set(sign * 0.065, 0.62, 0.04)
-      legGroup.add(vm)
-
-      // Patellar Tendon / Knee
-      const knee = new THREE.Mesh(new THREE.SphereGeometry(0.045, 14, 14), tendonMaterial)
-      knee.position.set(sign * 0.095, 0.54, 0.02)
-      legGroup.add(knee)
-
-      // Tibialis anterior & Gastrocnemius (Calf bellies)
-      const calfGeo = new THREE.CylinderGeometry(0.055, 0.035, 0.4, 16)
-      const calf = new THREE.Mesh(calfGeo, muscleMaterial)
-      calf.position.set(sign * 0.095, 0.31, -0.01)
-      legGroup.add(calf)
-
-      // Achilles Tendon & Ankle
-      const achilles = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.028, 0.14, 12), tendonMaterial)
-      achilles.position.set(sign * 0.095, 0.12, -0.015)
-      legGroup.add(achilles)
-
-      // Foot
-      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.15), tendonMaterial)
-      foot.position.set(sign * 0.095, 0.025, 0.04)
-      legGroup.add(foot)
-
-      return legGroup
-    }
-
-    legsGroup.add(buildLeg(true))
-    legsGroup.add(buildLeg(false))
-    bodyGroup.add(legsGroup)
-
-    muscularGroupRef.current = bodyGroup
-    raycastObjectsRef.current = clickableList
-    scene.add(bodyGroup)
-
-    // RAYCASTING FOR CLICK-TO-INSPECT
+    // RAYCASTING FOR CLICK-TO-INSPECT ANY SCULPTED MUSCLE OR ORGAN
     const raycaster = new THREE.Raycaster()
     const mouse = new THREE.Vector2()
 
@@ -503,17 +339,46 @@ export function BioDigitalTwin3D({ latest = {} }) {
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
 
       raycaster.setFromCamera(mouse, camera)
-      const intersects = raycaster.intersectObjects(bodyGroup.children, true)
+      const targets = []
+      if (modelRootRef.current) targets.push(modelRootRef.current)
+      targets.push(organsGroup)
+
+      const intersects = raycaster.intersectObjects(targets, true)
 
       if (intersects.length > 0) {
-        let hitObj = intersects[0].object
-        while (hitObj && hitObj.parent && hitObj.parent !== bodyGroup && !hitObj.name) {
-          hitObj = hitObj.parent
+        const hit = intersects[0].object
+        const rawName = hit.name || hit.parent?.name || ''
+
+        // Organ check
+        if (rawName.includes('heart')) {
+          setSelectedRegion('heart')
+          setCustomInspectedMuscle(null)
+          return
         }
-        const regionKey = hitObj?.name || 'heart'
-        if (REGION_DEFINITIONS[regionKey]) {
-          setSelectedRegion(regionKey)
-          setIsInspecting(true)
+        if (rawName.includes('lung')) {
+          setSelectedRegion('lungs')
+          setCustomInspectedMuscle(null)
+          return
+        }
+
+        // Muscular classification
+        if (rawName) {
+          const formatted = rawName
+            .split('-')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ')
+
+          setCustomInspectedMuscle(formatted)
+
+          if (rawName.includes('soleus') || rawName.includes('gastrocnemius') || rawName.includes('quad') || rawName.includes('femoris')) {
+            setSelectedRegion('muscles_legs')
+          } else if (rawName.includes('frontalis') || rawName.includes('tempor') || rawName.includes('occipital')) {
+            setSelectedRegion('brain')
+          } else if (rawName.includes('gluteus') || rawName.includes('iliac') || rawName.includes('pectineus')) {
+            setSelectedRegion('thighs')
+          } else {
+            setSelectedRegion('heart')
+          }
         }
       }
     }
@@ -531,31 +396,29 @@ export function BioDigitalTwin3D({ latest = {} }) {
     }
     window.addEventListener('resize', handleResize)
 
-    // 3. ANIMATION RENDER LOOP (60 FPS Dynamic WebGL Engine)
+    // 4. ANIMATION RENDER LOOP (60 FPS Dynamic Engine)
     let clock = new THREE.Clock()
     const animate = () => {
       animFrameRef.current = requestAnimationFrame(animate)
       const elapsedTime = clock.getElapsedTime()
 
-      // Dynamic Heartbeat Animation linked to BPM
+      // Dynamic Heartbeat Animation linked to current BPM
       if (heartMeshRef.current) {
         const currentHr = latestRef.current.heartRate || 75
         const beatsPerSecond = currentHr / 60
-        // Cardiac systolic contraction curve
         const pulsePhase = (elapsedTime * beatsPerSecond * Math.PI * 2) % (Math.PI * 2)
         const scaleVal = 1 + Math.pow(Math.sin(pulsePhase), 4) * 0.16
         heartMeshRef.current.scale.set(scaleVal, scaleVal * 1.35, scaleVal * 0.9)
 
-        // Color modulation based on heart rate
         if (currentHr > 115) {
-          organMaterial.color.setHex(0xdc2626) // Critical Crimson
-          organMaterial.emissive.setHex(0xb91c1c)
+          heartMat.color.setHex(0xdc2626) // Critical Crimson
+          heartMat.emissive.setHex(0xb91c1c)
         } else if (currentHr > 90) {
-          organMaterial.color.setHex(0xf59e0b) // Amber Alert
-          organMaterial.emissive.setHex(0xd97706)
+          heartMat.color.setHex(0xf59e0b) // Amber Alert
+          heartMat.emissive.setHex(0xd97706)
         } else {
-          organMaterial.color.setHex(0x10b981) // Emerald Nominal
-          organMaterial.emissive.setHex(0x059669)
+          heartMat.color.setHex(0x10b981) // Emerald Nominal
+          heartMat.emissive.setHex(0x059669)
         }
       }
 
@@ -565,23 +428,23 @@ export function BioDigitalTwin3D({ latest = {} }) {
         const respCyclesPerSec = respRate / 60
         const respPhase = Math.sin(elapsedTime * respCyclesPerSec * Math.PI * 2)
         const lungScale = 1 + respPhase * 0.08
-        leftLungRef.current.scale.set(0.85 * lungScale, 1.7 * lungScale, 0.95 * lungScale)
-        rightLungRef.current.scale.set(0.85 * lungScale, 1.7 * lungScale, 0.95 * lungScale)
+        leftLungRef.current.scale.set(0.85 * lungScale, 1.6 * lungScale, 0.95 * lungScale)
+        rightLungRef.current.scale.set(0.85 * lungScale, 1.6 * lungScale, 0.95 * lungScale)
 
-        // SpO2 lung color modulation
         const o2 = latestRef.current.bloodOxygen || 98
         if (o2 < 93) {
-          lungMaterial.color.setHex(0xa855f7) // Purple hypoxia
-          lungMaterial.emissive.setHex(0x9333ea)
+          lungMat.color.setHex(0xa855f7) // Purple hypoxia
+          lungMat.emissive.setHex(0x9333ea)
         } else {
-          lungMaterial.color.setHex(0x38bdf8) // Cyan nominal
-          lungMaterial.emissive.setHex(0x0284c7)
+          lungMat.color.setHex(0x38bdf8) // Cyan nominal
+          lungMat.emissive.setHex(0x0284c7)
         }
       }
 
       // Auto-Rotation
-      if (autoRotateRef.current && bodyGroup) {
-        bodyGroup.rotation.y += 0.005
+      if (autoRotateRef.current) {
+        if (modelRootRef.current) modelRootRef.current.rotation.y += 0.005
+        organsGroup.rotation.y += 0.005
       }
 
       // Platform subtle holographic pulse
@@ -603,35 +466,39 @@ export function BioDigitalTwin3D({ latest = {} }) {
       }
       renderer.dispose()
     }
-  }, []) // Initialize Three.js scene once on mount
+  }, [])
 
-  // Update Materials based on Active Layer
+  // Update Materials based on Active Layer Mode
   useEffect(() => {
-    if (!muscularGroupRef.current) return
+    if (!modelRootRef.current) return
 
-    muscularGroupRef.current.traverse((child) => {
-      if (child.isMesh && child.name !== 'heart' && child.name !== 'lungs') {
+    modelRootRef.current.traverse((child) => {
+      if (child.isMesh && child.material) {
+        const originalMat = originalMaterialsMapRef.current.get(child)
+
         if (activeLayer === 'xray') {
-          // X-Ray Mode: muscle becomes semi-translucent glass, revealing organs
-          child.material.transparent = true
-          child.material.opacity = 0.22
-          child.material.color.setHex(0x38bdf8)
-          child.material.wireframe = false
+          // X-Ray Mode: muscles become translucent holographic shell
+          child.material = new THREE.MeshStandardMaterial({
+            color: 0x38bdf8,
+            transparent: true,
+            opacity: 0.22,
+            roughness: 0.2,
+            metalness: 0.1,
+            wireframe: false,
+          })
         } else if (activeLayer === 'heatmap') {
-          // Heatmap Mode: highlights spaceflight risk zones
-          child.material.transparent = false
-          child.material.opacity = 1.0
-          child.material.color.setHex(0x0284c7)
-          child.material.wireframe = true
+          // Risk Heatmap Mode: cyan wireframe highlighting microgravity risk zones
+          child.material = new THREE.MeshStandardMaterial({
+            color: 0x0284c7,
+            wireframe: true,
+            roughness: 0.5,
+          })
         } else {
-          // Default Ecorché Muscular mode (matching reference image)
-          child.material.transparent = false
-          child.material.opacity = 1.0
-          child.material.wireframe = false
-          if (child.material.name === 'tendon') {
-            child.material.color.setHex(0xe8e1d5)
-          } else {
-            child.material.color.setHex(0xb9493a) // Terracotta muscle
+          // Default Ecorché Muscular mode: Restore original sculpted biological materials
+          if (originalMat) {
+            child.material = originalMat.clone()
+            child.material.roughness = 0.55
+            child.material.metalness = 0.05
           }
         }
       }
@@ -644,24 +511,23 @@ export function BioDigitalTwin3D({ latest = {} }) {
     if (!def || !cameraRef.current || !controlsRef.current) return
 
     setSelectedRegion(regionKey)
-    setIsInspecting(true)
+    setCustomInspectedMuscle(null)
 
     const targetPos = def.cameraPos
     const lookAtTarget = def.cameraTarget
 
-    // Smooth camera reposition
     cameraRef.current.position.copy(targetPos)
     controlsRef.current.target.copy(lookAtTarget)
     controlsRef.current.update()
   }
 
   const resetCamera = () => {
-    if (!cameraRef.current || !controlsRef.current || !muscularGroupRef.current) return
-    muscularGroupRef.current.rotation.set(0, 0, 0)
-    cameraRef.current.position.set(0, 1.25, 2.8)
-    controlsRef.current.target.set(0, 1.1, 0)
+    if (!cameraRef.current || !controlsRef.current) return
+    if (modelRootRef.current) modelRootRef.current.rotation.set(0, 0, 0)
+    cameraRef.current.position.set(0, 1.25, 2.7)
+    controlsRef.current.target.set(0, 1.05, 0)
     controlsRef.current.update()
-    setIsInspecting(false)
+    setCustomInspectedMuscle(null)
   }
 
   const activeDef = REGION_DEFINITIONS[selectedRegion] || REGION_DEFINITIONS.heart
@@ -671,12 +537,20 @@ export function BioDigitalTwin3D({ latest = {} }) {
     <div className="bio-digital-twin-wrapper">
       {/* 3D WebGL Canvas Viewport */}
       <div className="twin-canvas-container" ref={containerRef}>
+        {/* Loading Indicator */}
+        {!isLoaded && (
+          <div className="twin-loading-overlay">
+            <div className="clean-spinner" />
+            <p>Loading Sculpted Anatomical Mesh ({loadingProgress}%)...</p>
+          </div>
+        )}
+
         {/* Floating Top Controls Overlay */}
         <div className="twin-viewport-hud-top">
           <div className="hud-badge-group">
             <span className="hud-pill live">
               <span className="hud-pulsing-dot" />
-              <span>3D BIO-SCAN: ACTIVE TWIN</span>
+              <span>3D SCULPTED ECORCHÉ TWIN</span>
             </span>
             <span className="hud-pill mode">
               <Layers size={13} strokeWidth={2} />
@@ -711,7 +585,7 @@ export function BioDigitalTwin3D({ latest = {} }) {
               onClick={() => setActiveLayer('muscular')}
             >
               <Activity size={13} />
-              <span>Muscular (Ecorché)</span>
+              <span>Sculpted Muscular</span>
             </button>
             <button
               type="button"
@@ -734,7 +608,7 @@ export function BioDigitalTwin3D({ latest = {} }) {
 
         {/* 3D Orbit Helper Hint */}
         <div className="twin-canvas-instructions">
-          <small>Left-drag to rotate 360° · Scroll to zoom · Click body part to inspect</small>
+          <small>Left-drag to rotate 360° · Scroll to zoom · Click any sculpted muscle to inspect</small>
         </div>
       </div>
 
@@ -743,8 +617,12 @@ export function BioDigitalTwin3D({ latest = {} }) {
         <div className="inspector-card">
           <div className="inspector-card-header">
             <div className="inspector-title-area">
-              <span className="inspector-tag">TARGETED ORGAN INSPECTION</span>
-              <h3>{activeDef.name}</h3>
+              <span className="inspector-tag">TARGETED ORGAN &amp; MUSCLE INSPECTION</span>
+              <h3>
+                {customInspectedMuscle
+                  ? `${customInspectedMuscle} (Musculus)`
+                  : activeDef.name}
+              </h3>
             </div>
             <span className={`inspector-status-badge ${activeTele.status}`}>
               {activeTele.status === 'nominal' ? 'NOMINAL' : 'ALERT'}
@@ -755,7 +633,7 @@ export function BioDigitalTwin3D({ latest = {} }) {
           <div className="region-quick-dock">
             {Object.keys(REGION_DEFINITIONS).map((key) => {
               const def = REGION_DEFINITIONS[key]
-              const isSelected = selectedRegion === key
+              const isSelected = selectedRegion === key && !customInspectedMuscle
               return (
                 <button
                   key={key}
@@ -872,63 +750,6 @@ export function BioDigitalTwin3D({ latest = {} }) {
       </div>
     </div>
   )
-}
-
-// Procedural Canvas Texture Generators for Authentic Anatomical Look
-function createMuscleStriationTexture() {
-  const canvas = document.createElement('canvas')
-  canvas.width = 256
-  canvas.height = 256
-  const ctx = canvas.getContext('2d')
-
-  // Terracotta muscle base
-  ctx.fillStyle = '#b9493a'
-  ctx.fillRect(0, 0, 256, 256)
-
-  // Longitudinal fiber striations
-  ctx.fillStyle = '#9e3a2d'
-  for (let i = 0; i < 256; i += 4) {
-    const alpha = 0.15 + Math.random() * 0.25
-    ctx.globalAlpha = alpha
-    ctx.fillRect(i, 0, 2, 256)
-  }
-
-  // Cross fascial streaks
-  ctx.fillStyle = '#e8e1d5'
-  ctx.globalAlpha = 0.12
-  for (let y = 0; y < 256; y += 18) {
-    ctx.fillRect(0, y, 256, 1)
-  }
-
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.wrapS = THREE.RepeatWrapping
-  texture.wrapT = THREE.RepeatWrapping
-  texture.repeat.set(2, 4)
-  return texture
-}
-
-function createTendonTexture() {
-  const canvas = document.createElement('canvas')
-  canvas.width = 128
-  canvas.height = 128
-  const ctx = canvas.getContext('2d')
-
-  // Ivory fibrous tendon base
-  ctx.fillStyle = '#e8e1d5'
-  ctx.fillRect(0, 0, 128, 128)
-
-  // Soft pearl sheen lines
-  ctx.fillStyle = '#d6cbbe'
-  for (let y = 0; y < 128; y += 3) {
-    ctx.globalAlpha = 0.18
-    ctx.fillRect(0, y, 128, 1.5)
-  }
-
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.wrapS = THREE.RepeatWrapping
-  texture.wrapT = THREE.RepeatWrapping
-  texture.repeat.set(1, 2)
-  return texture
 }
 
 export default BioDigitalTwin3D
