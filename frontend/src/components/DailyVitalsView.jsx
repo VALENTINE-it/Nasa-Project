@@ -1,5 +1,5 @@
 import React from 'react'
-import { Activity, ShieldCheck, ArrowRight } from 'lucide-react'
+import { Activity, Bluetooth, BluetoothOff, ShieldCheck, ArrowRight } from 'lucide-react'
 
 export function DailyVitalsView({
   latest,
@@ -8,6 +8,8 @@ export function DailyVitalsView({
   activityMode,
   setActivityMode,
   onJumpToTrends,
+  smartwatch,
+  onConnectWatch,
 }) {
   return (
     <div className="view-pane vitals-pane">
@@ -17,8 +19,11 @@ export function DailyVitalsView({
           <span className={`stream-live-indicator ${isStreaming ? 'live' : 'paused'}`}>
             <Activity size={14} strokeWidth={2} />
             <span>
-              Oraimo Stream: <strong>{isStreaming ? 'LIVE (Dynamic 2s Stream)' : 'PAUSED'}</strong>
+              Demo simulator: <strong>{isStreaming ? 'LIVE' : 'PAUSED'}</strong>
             </span>
+          </span>
+          <span className={`device-source-badge ${smartwatch.heartRateSupported ? 'connected' : ''}`}>
+            {smartwatch.heartRateSupported ? 'Heart rate from watch' : 'Demo readings'}
           </span>
         </div>
 
@@ -50,17 +55,50 @@ export function DailyVitalsView({
             className="telemetry-stream-toggle"
             onClick={() => setIsStreaming((s) => !s)}
           >
-            {isStreaming ? 'Pause' : 'Resume'}
+            {isStreaming ? 'Pause demo' : 'Resume demo'}
+          </button>
+          <button
+            type="button"
+            className="watch-connect-button"
+            onClick={smartwatch.status === 'connected' ? smartwatch.disconnect : onConnectWatch}
+            disabled={smartwatch.status === 'connecting'}
+          >
+            {smartwatch.status === 'connected' ? (
+              <>
+                <BluetoothOff size={15} />
+                <span>Disconnect watch</span>
+              </>
+            ) : (
+              <>
+                <Bluetooth size={15} />
+                <span>{smartwatch.status === 'connecting' ? 'Connecting…' : 'Connect watch'}</span>
+              </>
+            )}
           </button>
         </div>
       </div>
+
+      {smartwatch.error ? <p className="watch-connection-message error">{smartwatch.error}</p> : null}
+      {smartwatch.status === 'connected' && !smartwatch.heartRateSupported ? (
+        <p className="watch-connection-message">
+          {smartwatch.deviceName} connected, but it does not expose the standard Bluetooth heart-rate
+          service. Readings remain simulated. SpO2 and steps require a compatible service or a
+          manufacturer/Android Health Connect integration.
+        </p>
+      ) : null}
+      {!smartwatch.supported || !smartwatch.secureContext ? (
+        <p className="watch-connection-message">
+          iPhone can use the dashboard, but its browsers do not support Web Bluetooth. Direct pairing
+          requires Chrome on Android, HTTPS, and a watch that exposes the standard heart-rate service.
+        </p>
+      ) : null}
 
       <div className="vitals-matrix-row">
         <article className={`vital-block ${latest.heartRate > 90 ? 'warning' : 'good'}`}>
           <div className="block-head">
             <span className="block-title">Heart Rate</span>
             <span className={`vital-tag ${latest.heartRate > 90 ? 'warning' : 'nominal'}`}>
-              {latest.heartRate > 90 ? 'ELEVATED' : 'NOMINAL'}
+              {smartwatch.heartRateSupported ? 'WATCH' : latest.heartRate > 90 ? 'ELEVATED' : 'DEMO'}
             </span>
           </div>
           <div className="block-val-group">
@@ -160,7 +198,8 @@ export function DailyVitalsView({
         <div className="strip-info">
           <ShieldCheck size={16} strokeWidth={2} />
           <span>
-            <strong>Autonomous Medical Engine:</strong> Real-time biometrics streaming. Zero anomalies.
+            <strong>Test mode:</strong> Values are simulated unless labeled as watch data. This is not
+            a medical device.
           </span>
         </div>
         <button type="button" className="jump-tab-btn" onClick={onJumpToTrends}>
