@@ -1383,4 +1383,263 @@
   opacity: 0.9;
 }
 
+/* ==========================================================================
+   SCHEDULED MEASUREMENT REMINDERS (content.md Line 12)
+   ========================================================================== */
+
+.measurement-reminder-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: var(--accent-bg, rgba(2, 132, 199, 0.1));
+  border: 1px solid var(--accent-color, #0284c7);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.measurement-reminder-banner.completed {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.reminder-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reminder-icon {
+  color: var(--accent-color, #0284c7);
+  flex-shrink: 0;
+}
+
+.reminder-icon.success {
+  color: #10b981;
+}
+
+.reminder-left strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.reminder-left small {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.reminder-complete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--accent-color, #0284c7);
+  color: #ffffff;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 120ms ease;
+}
+
+.reminder-complete-btn:hover {
+  opacity: 0.9;
+}
+
+/* ==========================================================================
+   HOW & WHY EDUCATIONAL GUIDES (content.md Lines 8-11)
+   ========================================================================== */
+
+.block-head-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vital-edu-info-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-default);
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.vital-edu-info-btn:hover {
+  background: var(--bg-surface-hover);
+  color: var(--accent-color, #0284c7);
+  border-color: var(--border-focus);
+}
+
+.vital-edu-drawer {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  animation: fadeInDrawer 120ms ease;
+}
+
+@keyframes fadeInDrawer {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.vital-edu-drawer strong {
+  color: var(--text-primary);
+}
+
+.environment-context-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-default);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   MISSION FLIGHT PHASE BENCHMARK COMPARISON (content.md Line 47)
+   ========================================================================== */
+
+.phase-benchmark-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.phase-selector-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface-secondary);
+}
+
+.phase-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.phase-tab-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-hover);
+}
+
+.phase-tab-btn.active {
+  color: var(--accent-color, #0284c7);
+  border-bottom-color: var(--accent-color, #0284c7);
+  background: var(--bg-surface);
+}
+
+.phase-benchmark-content {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.phase-benchmark-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.phase-benchmark-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.phase-condition-tag {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--accent-bg, rgba(2, 132, 199, 0.12));
+  color: var(--accent-color, #0284c7);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+}
+
+.phase-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .phase-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.phase-stat-box {
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.stat-box-lbl {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+}
+
+.phase-stat-box strong {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.phase-note-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 8px 10px;
+  background: var(--bg-surface-secondary);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-color, #0284c7);
+}
+
+
 

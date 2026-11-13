@@ -1,5 +1,5 @@
-import React from 'react'
-import { TrendingUp } from 'lucide-react'
+import { useState } from 'react'
+import { TrendingUp, GitCompare, Compass, Info } from 'lucide-react'
 
 export function HealthTrendsView({
   latest,
@@ -8,8 +8,42 @@ export function HealthTrendsView({
   heartPoints,
   oxygenPoints,
 }) {
+  const [selectedPhase, setSelectedPhase] = useState('inflight') // 'preflight' | 'inflight' | 'postflight'
+
+  // NASA HRP Phase Benchmark Baselines
+  const phaseBenchmarks = {
+    preflight: {
+      title: 'Pre-Flight Terrestrial Baseline (Johnson Space Center - 1.0G)',
+      restingHr: '66 bpm',
+      restingBp: '118/74 mmHg',
+      spO2: '99% SpO2',
+      sleepAvg: '7.8 hrs / night',
+      circadianStability: '98% (Earth Circadian Normal)',
+      note: 'Certified astronaut baseline established during 60-day quarantine and pre-launch medical evaluation.',
+    },
+    inflight: {
+      title: 'Active In-Flight Telemetry (Deep-Space Mars Transit - 0.0G)',
+      restingHr: `${latest.heartRate || 76} bpm (+8 bpm cephalic shift)`,
+      restingBp: `${latest.bloodPressure || '124/80'} mmHg`,
+      spO2: `${latest.bloodOxygen || 98}% SpO2`,
+      sleepAvg: `${latest.sleepDuration || 7.2} hrs / night (-0.6h)`,
+      circadianStability: '86% (45-min orbital photoperiod shift)',
+      note: 'Microgravity cardiovascular deconditioning and thoracic blood volume expansion observed.',
+    },
+    postflight: {
+      title: 'Post-Mission Orthostatic Target & Recovery (Re-entry Protocol)',
+      restingHr: '72 – 82 bpm (Expected orthostatic elevation)',
+      restingBp: '115/72 mmHg (Hypovolemia recovery)',
+      spO2: '99% SpO2',
+      sleepAvg: '8.0+ hrs (Target regenerative rest)',
+      circadianStability: 'Recalibrating to 24h solar diurnal cycle',
+      note: 'Immediate fluid loading (1.0 L saline + salt tablets) required prior to re-entering 1G gravitational field.',
+    },
+  }[selectedPhase]
+
   return (
     <div className="view-pane trends-pane">
+      {/* Time Window Controls */}
       <div className="pane-control-bar">
         <span className="pane-intro">Streaming history dynamically updating:</span>
         <div className="timeframe-selector">
@@ -30,9 +64,78 @@ export function HealthTrendsView({
         </div>
       </div>
 
+      {/* 1. MISSION FLIGHT PHASE COMPARISON (content.md Line 47) */}
       <div className="vitals-group-heading">
+        <GitCompare size={14} strokeWidth={2} />
+        <span>Flight Phase Baseline Comparison (NASA HRP Standard Measures)</span>
+      </div>
+
+      <div className="phase-benchmark-card">
+        <div className="phase-selector-tabs">
+          <button
+            type="button"
+            className={`phase-tab-btn ${selectedPhase === 'preflight' ? 'active' : ''}`}
+            onClick={() => setSelectedPhase('preflight')}
+          >
+            <Compass size={13} />
+            <span>Pre-Flight Baseline (Earth 1G)</span>
+          </button>
+          <button
+            type="button"
+            className={`phase-tab-btn ${selectedPhase === 'inflight' ? 'active' : ''}`}
+            onClick={() => setSelectedPhase('inflight')}
+          >
+            <TrendingUp size={13} />
+            <span>Active In-Flight (Zero-G)</span>
+          </button>
+          <button
+            type="button"
+            className={`phase-tab-btn ${selectedPhase === 'postflight' ? 'active' : ''}`}
+            onClick={() => setSelectedPhase('postflight')}
+          >
+            <GitCompare size={13} />
+            <span>Post-Mission Recovery</span>
+          </button>
+        </div>
+
+        <div className="phase-benchmark-content">
+          <div className="phase-benchmark-header">
+            <h4>{phaseBenchmarks.title}</h4>
+            <span className="phase-condition-tag">
+              {selectedPhase === 'inflight' ? 'CURRENT FLIGHT STREAM' : 'REFERENCE BENCHMARK'}
+            </span>
+          </div>
+
+          <div className="phase-metrics-grid">
+            <div className="phase-stat-box">
+              <span className="stat-box-lbl">Heart Rate</span>
+              <strong>{phaseBenchmarks.restingHr}</strong>
+            </div>
+            <div className="phase-stat-box">
+              <span className="stat-box-lbl">Blood Pressure</span>
+              <strong>{phaseBenchmarks.restingBp}</strong>
+            </div>
+            <div className="phase-stat-box">
+              <span className="stat-box-lbl">Blood Oxygen</span>
+              <strong>{phaseBenchmarks.spO2}</strong>
+            </div>
+            <div className="phase-stat-box">
+              <span className="stat-box-lbl">Sleep Rest Cycle</span>
+              <strong>{phaseBenchmarks.sleepAvg}</strong>
+            </div>
+          </div>
+
+          <div className="phase-note-line">
+            <Info size={13} />
+            <span>{phaseBenchmarks.note}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. DYNAMIC TELEMETRY CHARTS */}
+      <div className="vitals-group-heading" style={{ marginTop: '16px' }}>
         <TrendingUp size={14} strokeWidth={2} />
-        <span>Telemetry Trends</span>
+        <span>Live Telemetry Polylines</span>
       </div>
 
       <div className="charts-full-grid">
@@ -54,7 +157,7 @@ export function HealthTrendsView({
             <polyline points={heartPoints} fill="none" stroke="currentColor" strokeWidth="2.5" />
           </svg>
           <div className="chart-labels-row">
-            <span>Baseline History</span>
+            <span>Pre-Flight Baseline: 66 bpm</span>
             <span>Live Telemetry Stream</span>
           </div>
         </div>
@@ -77,7 +180,7 @@ export function HealthTrendsView({
             <polyline points={oxygenPoints} fill="none" stroke="currentColor" strokeWidth="2.5" />
           </svg>
           <div className="chart-labels-row">
-            <span>Baseline History</span>
+            <span>Pre-Flight Baseline: 99%</span>
             <span>Live Telemetry Stream</span>
           </div>
         </div>
@@ -86,7 +189,9 @@ export function HealthTrendsView({
       <details className="view-accordion">
         <summary>Trend Information &amp; Time Window Notes</summary>
         <div className="accordion-body">
-          <p>Dynamic polyline advancing with sensor stream. Comparison against baseline history.</p>
+          <p>
+            <strong>Longitudinal Flight Shift Data:</strong> Telemetry streams are plotted against each astronaut’s pre-flight Earth baseline to monitor slow adaptation drift, bone demineralization, and cardiovascular reconditioning over extended spaceflight missions.
+          </p>
         </div>
       </details>
     </div>

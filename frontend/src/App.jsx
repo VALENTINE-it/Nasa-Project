@@ -364,6 +364,16 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   const [activeTab, setActiveTab] = useState('vitals')
   const [timeframe, setTimeframe] = useState('week')
   const [scenarioMode, setScenarioMode] = useState('nominal') // 'nominal' | 'tachycardia' | 'hypoxia' | 'radiation'
+  const [environmentMode, setEnvironmentMode] = useState('spacecraft') // 'spacecraft' | 'lunar_base' | 'mars_eva'
+
+  // Scheduled measurement reminder protocol (content.md line 12)
+  const [upcomingReminder, setUpcomingReminder] = useState({
+    id: 'rem-1',
+    title: 'Mid-Shift Salivary Biomarker & Blood Pressure Check',
+    dueIn: '25 mins',
+    protocol: 'Passive drool collection into cryo-vial; seated BP reading.',
+    taken: false,
+  })
 
   const baseProfile = dashboardData || getFallbackDashboard(astronautId)
   const [liveVitals, setLiveVitals] = useState(() => ({ ...baseProfile.latest }))
@@ -635,6 +645,21 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
           <div className="top-header-stats">
             <span className="side-confirmation-tag astronaut">Astronaut Workstation (Crew Side)</span>
 
+            {/* Environmental Mission Context Switcher (content.md line 14) */}
+            <div className="scenario-selector-pill">
+              <span className="scenario-label">Environment:</span>
+              <select
+                className="scenario-select"
+                value={environmentMode}
+                onChange={(e) => setEnvironmentMode(e.target.value)}
+                title="Adapt telemetry to different space environments"
+              >
+                <option value="spacecraft">Transit Spacecraft (0.00g)</option>
+                <option value="lunar_base">Lunar Outpost (0.16g)</option>
+                <option value="mars_eva">Mars Surface EVA (0.38g)</option>
+              </select>
+            </div>
+
             {/* Scenario Anomaly Simulation Switcher */}
             <div className="scenario-selector-pill">
               <span className="scenario-label">Scenario:</span>
@@ -692,6 +717,10 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               setIsStreaming={setIsStreaming}
               activityMode={activityMode}
               setActivityMode={setActivityMode}
+              environmentMode={environmentMode}
+              scenarioMode={scenarioMode}
+              upcomingReminder={upcomingReminder}
+              onCompleteReminder={() => setUpcomingReminder((prev) => ({ ...prev, taken: true }))}
               onJumpToTrends={() => setActiveTab('trends')}
             />
           )}
@@ -715,7 +744,12 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
 
           {activeTab === 'history' && <CheckupHistoryView records={records} />}
 
-          {activeTab === 'profile' && <MissionProfileView profile={profile} />}
+          {activeTab === 'profile' && (
+            <MissionProfileView
+              profile={profile}
+              environmentMode={environmentMode}
+            />
+          )}
         </div>
       </div>
     </div>
