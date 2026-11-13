@@ -542,6 +542,12 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
 
   const heartPoints = buildChartPoints(chartSeries.map((r) => r.heartRate))
   const oxygenPoints = buildChartPoints(chartSeries.map((r) => r.bloodOxygen))
+  const handleConnectWatch = () => smartwatch.connect()
+
+  if (!session) return <Navigate to="/" replace />
+  if (session.astronautId !== astronautId) {
+    return <Navigate to={`/astronaut/dashboard/${session.astronautId}`} replace />
+  }
 
   return (
     <div className="workstation-app-layout">
