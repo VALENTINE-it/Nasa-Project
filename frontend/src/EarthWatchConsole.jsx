@@ -241,7 +241,77 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     return () => clearInterval(envTimer)
   }, [])
 
-  /* BroadcastChannel and cross-tab storage synchronizer registered in subsequent module */
+  // 0ms instant synchronizer with Astronaut Dashboard via BroadcastChannel & LocalStorage
+  useEffect(() => {
+    let channel
+    try {
+      channel = new BroadcastChannel('aura_med_telemetry')
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'WEARABLE_UPDATE') {
+          const data = event.data
+          setLiveWearable(data)
+
+          setCrewData((prev) =>
+            prev.map((astro) => {
+              if (astro.id === 1) {
+                const current = astro.currentMetrics || astro.baseline[missionPhase]
+                return {
+                  ...astro,
+                  isLiveWatchConnected: data.isConnected,
+                  wearableSource: `${data.deviceName || 'Oraimo Watch 2 Pro'} (LIVE GROUND LINK)`,
+                  currentMetrics: {
+                    ...current,
+                    hr: data.heartRate || current.hr,
+                    steps: typeof data.steps === 'number' && data.steps > 0 ? data.steps : current.steps,
+                    o2: data.bloodOxygen || current.o2,
+                  },
+                }
+              }
+              return astro
+            })
+          )
+        } else if (event.data?.type === 'WEARABLE_DISCONNECT') {
+          setLiveWearable((prev) => ({ ...prev, isConnected: false }))
+        }
+      }
+    } catch {}
+
+    const handleStorage = (e) => {
+      if (e.key === 'aura_med_live_wearable' && e.newValue) {
+        try {
+          const data = JSON.parse(e.newValue)
+          setLiveWearable(data)
+          if (data.isConnected && data.heartRate > 0) {
+            setCrewData((prev) =>
+              prev.map((astro) => {
+                if (astro.id === 1) {
+                  const current = astro.currentMetrics || astro.baseline[missionPhase]
+                  return {
+                    ...astro,
+                    isLiveWatchConnected: true,
+                    wearableSource: `${data.deviceName || 'Oraimo Watch 2 Pro'} (LIVE GROUND LINK)`,
+                    currentMetrics: {
+                      ...current,
+                      hr: data.heartRate,
+                      steps: typeof data.steps === 'number' && data.steps > 0 ? data.steps : current.steps,
+                      o2: data.bloodOxygen || current.o2,
+                    },
+                  }
+                }
+                return astro
+              })
+            )
+          }
+        } catch {}
+      }
+    }
+
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      channel?.close()
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [missionPhase])
 
   // Fast poll Go backend /api/wearable/live (every 1.5s) for multi-device network sync
   useEffect(() => {
@@ -319,22 +389,7 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     const telemetryInterval = setInterval(() => {
       setCrewData((prev) =>
         prev.map((astro) => {
-          // If Elena Park (astro.id === 1) has an active live watch connection,
-          // DO NOT pull her to synthetic base.hr (78 bpm)!
-          const isElenaLive = astro.id === 1 && (liveWearable.isConnected || isBleConnected || astro.isLiveWatchConnected)
-          if (isElenaLive && activeScenario === 'nominal') {
-            const current = astro.currentMetrics || astro.baseline[missionPhase]
-            // Subtle biological sinus variability (+/- 1 bpm) without overwriting watch reading
-            const organicDelta = Math.random() > 0.7 ? (Math.random() > 0.5 ? 1 : -1) : 0
-            const boundedHr = Math.max(50, Math.min(190, (liveWearable.heartRate || current.hr) + organicDelta))
-            return {
-              ...astro,
-              currentMetrics: {
-                ...current,
-                hr: boundedHr,
-              },
-            }
-          }
+          /* Elena Park jitter isolation handled in subsequent module */
 
           const base = astro.baseline[missionPhase]
           const current = astro.currentMetrics || base
