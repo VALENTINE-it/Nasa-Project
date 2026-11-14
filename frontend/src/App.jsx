@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
-import { AlertTriangle, CheckCircle2, Watch } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Watch, Radio } from 'lucide-react'
 import EarthWatchConsole from './EarthWatchConsole'
 import PublicLoginPage from './components/PublicLoginPage'
 import AstronautSidebar from './components/AstronautSidebar'
@@ -377,7 +377,26 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
 
   const baseProfile = dashboardData || getFallbackDashboard(astronautId)
   const [liveVitals, setLiveVitals] = useState(() => ({ ...baseProfile.latest }))
-  const [liveHistory, setLiveHistory] = useState(() => [...baseProfile.history])
+  const [liveHistory, setLiveHistory] = useState(() => {
+    const raw = baseProfile.history || []
+    if (raw.length >= 16) return [...raw]
+    const baseHr = baseProfile.latest?.heartRate || 74
+    const baseO2 = baseProfile.latest?.bloodOxygen || 98
+    const baseBp = baseProfile.latest?.bloodPressure || '120/78'
+    const now = Date.now()
+    const expanded = []
+    for (let i = 16; i >= 1; i--) {
+      expanded.push({
+        id: `init-${i}`,
+        recordedAt: new Date(now - i * 3000).toISOString(),
+        heartRate: baseHr + (i % 2 === 0 ? 1 : -1),
+        bloodPressure: baseBp,
+        bloodOxygen: baseO2,
+        sleepDuration: baseProfile.latest?.sleepDuration || 7.0,
+      })
+    }
+    return expanded
+  })
   const [activityMode, setActivityMode] = useState('nominal') // 'nominal' | 'exercise' | 'stress'
   const [isStreaming, setIsStreaming] = useState(true)
 
@@ -393,6 +412,71 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
       setLiveVitals((prev) => (prev ? { ...prev, heartRate } : prev))
     },
   })
+
+  // Live Wearable Relay Bridge (MacroDroid / Direct Device HTTP push)
+  const [wearableBridge, setWearableBridge] = useState({
+    isConnected: false,
+    deviceName: 'oraimo watch 2 pro_4ED7',
+    heartRate: 0,
+    steps: 0,
+    spO2: 0,
+    lastSeen: '',
+  })
+
+  useEffect(() => {
+    let active = true
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/wearable/live')
+        if (!res.ok) return
+        const data = await res.json()
+        if (active && data) {
+          setWearableBridge(data)
+          if (data.isConnected && data.heartRate > 0) {
+            setLiveVitals((prev) => ({
+              ...prev,
+              heartRate: data.heartRate,
+              ...(typeof data.steps === 'number' ? { physicalActivity: data.steps } : {}),
+              ...(data.spO2 ? { bloodOxygen: data.spO2 } : {}),
+            }))
+          }
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    }, 2000)
+    return () => {
+      active = false
+      clearInterval(interval)
+    }
+  }, [])
+
+  // Ingest deep-space radio advisory notes from Houston ground station (NVIDIA QA Fix)
+  const [houstonMessages, setHoustonMessages] = useState([])
+  const [dismissedMessages, setDismissedMessages] = useState([])
+
+  useEffect(() => {
+    let active = true
+    const fetchComms = async () => {
+      try {
+        const res = await fetch('/api/comms/messages')
+        if (res.ok) {
+          const list = await res.json()
+          if (active && Array.isArray(list)) {
+            setHoustonMessages(list)
+          }
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    }
+    fetchComms()
+    const interval = setInterval(fetchComms, 4000)
+    return () => {
+      active = false
+      clearInterval(interval)
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -447,6 +531,18 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
         let targetDiastolic = 80
         let baseTemp = 36.8
 
+        // Environmental Physics Calibration (Microgravity 0g vs Lunar 0.16g vs Mars EVA 0.38g)
+        if (environmentMode === 'lunar_base') {
+          targetHr = 72
+          targetSystolic = 118
+          targetDiastolic = 76
+        } else if (environmentMode === 'mars_eva') {
+          targetHr = 84
+          targetResp = 18
+          targetSystolic = 128
+          targetDiastolic = 82
+        }
+
         // Activity mode adjustments
         if (activityMode === 'exercise') {
           targetHr = 138
@@ -482,10 +578,13 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
           targetResp = 18
         }
 
-        // If Oraimo BLE watch is connected, live pulse overrides synthetic HR
-        const hrStep = isBleConnected ? 0 : Math.round((targetHr - prev.heartRate) * 0.15)
-        const hrJitter = isBleConnected ? 0 : Math.floor(Math.random() * 5) - 2
-        const newHr = isBleConnected ? prev.heartRate : Math.max(55, Math.min(185, prev.heartRate + hrStep + hrJitter))
+        // If Oraimo BLE watch or Mobile Relay bridge is connected, live pulse tracks watch with organic sinus arrhythmia
+        const isWatchActive = isBleConnected || wearableBridge.isConnected
+        const hrStep = isWatchActive ? 0 : Math.round((targetHr - prev.heartRate) * 0.15)
+        const hrJitter = isWatchActive
+          ? (Math.random() > 0.65 ? (Math.random() > 0.5 ? 1 : -1) : 0)
+          : Math.floor(Math.random() * 5) - 2
+        const newHr = Math.max(55, Math.min(185, prev.heartRate + hrStep + hrJitter))
 
         const o2Step = Math.round((targetO2 - prev.bloodOxygen) * 0.2)
         const o2Jitter = Math.random() > 0.6 ? (Math.random() > 0.5 ? 1 : -1) : 0
@@ -524,29 +623,39 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [activityMode, scenarioMode, isStreaming, isBleConnected])
+  }, [activityMode, scenarioMode, environmentMode, isStreaming, isBleConnected, wearableBridge.isConnected])
+
+  // Stable ref for latest vitals so history timer is never prematurely reset by 2s vitals updates
+  const liveVitalsRef = useRef(liveVitals)
+  useEffect(() => {
+    liveVitalsRef.current = liveVitals
+  }, [liveVitals])
 
   // Periodically append live readings to dynamic history so graphs advance in real time
   useEffect(() => {
     if (!isStreaming) return
 
     const historyInterval = setInterval(() => {
+      const current = liveVitalsRef.current
+      if (!current) return
+
       setLiveHistory((prev) => {
-        if (!prev || !prev.length) return prev
+        const safePrev = prev && prev.length ? prev : []
         const newRecord = {
           id: Date.now(),
           recordedAt: new Date().toISOString(),
-          heartRate: liveVitals.heartRate,
-          bloodPressure: liveVitals.bloodPressure,
-          bloodOxygen: liveVitals.bloodOxygen,
-          sleepDuration: liveVitals.sleepDuration,
+          heartRate: current.heartRate,
+          bloodPressure: current.bloodPressure,
+          bloodOxygen: current.bloodOxygen,
+          sleepDuration: current.sleepDuration,
         }
-        return [...prev.slice(-14), newRecord]
+        // Keep a rolling buffer of 24 points so the waveform scrolls smoothly across the screen
+        return [...safePrev.slice(-23), newRecord]
       })
-    }, 6000)
+    }, 2500)
 
     return () => clearInterval(historyInterval)
-  }, [isStreaming, liveVitals])
+  }, [isStreaming])
 
   const { profile, alerts } = baseProfile
   const latest = liveVitals || baseProfile.latest
@@ -604,12 +713,40 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     })
   }
 
-  const records = [...(liveHistory || [])].reverse()
-  const limit = timeframe === 'daily' ? 3 : timeframe === 'week' ? 7 : Math.min(records.length, 12)
-  const chartSeries = liveHistory.slice(-limit)
+  // Microgravity Musculoskeletal & Bone Loss Warning (Directly tied to Oraimo Watch steps)
+  if ((latest?.physicalActivity ?? 6000) < 3000 && environmentMode === 'spacecraft') {
+    dynamicAlerts.push({
+      id: 'live-alert-musculoskeletal',
+      metricName: 'Microgravity Bone & Muscle Loss: Under Exercise Target',
+      severity: 'warning',
+      questionTrigger: 'Has the astronaut logged fewer than 3,000 steps during this shift?',
+      description: `Only ${(latest?.physicalActivity ?? 0).toLocaleString()} steps detected by Oraimo wrist sensor. In zero-G, lack of impact forces causes 1.0–1.5% bone mineral loss per month into the kidneys (kidney stone risk).`,
+      observedValue: `${(latest?.physicalActivity ?? 0).toLocaleString()} steps`,
+      threshold: '6,000+ steps (NASA T2 Exercise Target)',
+      countermeasure: 'Strap into the T2 treadmill bungee harness or CEVIS cycle ergometer in the service module for a 45-minute mechanical loading session to protect bone mineral density.',
+    })
+  }
 
-  const heartPoints = buildChartPoints(chartSeries.map((r) => r.heartRate))
-  const oxygenPoints = buildChartPoints(chartSeries.map((r) => r.bloodOxygen))
+  const records = [...(liveHistory || [])].reverse()
+  // Maintain a rich 16-20 point sample window so polyline waveform is smooth and continuous
+  const chartSeries = liveHistory.length > 0 ? liveHistory.slice(-20) : []
+
+  const heartPoints = buildChartPoints(
+    chartSeries.map((r) => r.heartRate),
+    { defaultMin: 50, defaultMax: 140, minSpan: 30 }
+  )
+  const oxygenPoints = buildChartPoints(
+    chartSeries.map((r) => r.bloodOxygen),
+    { defaultMin: 88, defaultMax: 100, minSpan: 12 }
+  )
+
+  // Find incoming Houston flight surgeon advisory for this astronaut (NVIDIA QA Fix)
+  const activeHoustonMsg = houstonMessages.find((m) => {
+    if (dismissedMessages.includes(m.id)) return false
+    const astroName = (profile?.fullName || '').toLowerCase()
+    const target = (m.to || '').toLowerCase()
+    return target.includes('crew') || target.includes('commander') || target.includes('officer') || (astroName && target.includes(astroName.split(' ')[0]))
+  })
 
   return (
     <div className="workstation-app-layout">
@@ -691,28 +828,64 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               <strong>{statusLabel}</strong>
             </div>
 
-            {/* Interactive Wearable Bluetooth Pairing Button */}
-            <button
-              type="button"
-              className={`wearable-connect-btn ${isBleConnected ? 'connected' : ''}`}
-              onClick={isBleConnected ? disconnectBleWatch : connectBleWatch}
-              title={
-                isBleConnected
-                  ? 'Click to disconnect Oraimo Watch'
-                  : 'Click to pair Oraimo Watch via Web Bluetooth'
-              }
-            >
-              <Watch size={14} strokeWidth={2} />
-              <span>
-                {isBleConnected
-                  ? `${bleDeviceName || 'Oraimo Watch'} (Live BLE)`
-                  : bleStatus === 'connecting'
-                  ? 'Pairing BLE...'
-                  : 'Pair Oraimo Watch'}
-              </span>
-            </button>
+            {/* Interactive Wearable Bluetooth / Mobile Relay Status */}
+            {wearableBridge.isConnected ? (
+              <div
+                className="wearable-connect-btn connected"
+                style={{ cursor: 'pointer' }}
+                title="Live hardware telemetry streaming from Oraimo Watch via Mobile Relay. Click to view bridge details."
+                onClick={() => alert(`Oraimo Watch Live Relay:\nDevice: ${wearableBridge.deviceName}\nHeart Rate: ${wearableBridge.heartRate} bpm\nSteps: ${wearableBridge.steps}\nLast Ping: ${wearableBridge.lastSeen}`)}
+              >
+                <Watch size={14} strokeWidth={2} />
+                <span>
+                  {wearableBridge.deviceName} ({wearableBridge.heartRate} bpm LIVE)
+                </span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={`wearable-connect-btn ${isBleConnected ? 'connected' : ''}`}
+                onClick={isBleConnected ? disconnectBleWatch : connectBleWatch}
+                title={
+                  isBleConnected
+                    ? 'Click to disconnect Oraimo Watch'
+                    : 'Pair via Web Bluetooth or stream live via phone MacroDroid'
+                }
+              >
+                <Watch size={14} strokeWidth={2} />
+                <span>
+                  {isBleConnected
+                    ? `${bleDeviceName || 'Oraimo Watch'} (Live BLE)`
+                    : bleStatus === 'connecting'
+                    ? 'Pairing BLE...'
+                    : 'Pair Oraimo Watch'}
+                </span>
+              </button>
+            )}
           </div>
         </header>
+
+        {/* Incoming Houston Flight Surgeon Advisory Banner (Closed-Loop Telemedicine) */}
+        {activeHoustonMsg && (
+          <div className="houston-uplink-banner">
+            <div className="uplink-badge">
+              <Radio size={14} strokeWidth={2.5} />
+              <span>Houston Ground Advisory · 12m 44s Light Delay</span>
+            </div>
+            <div className="uplink-body">
+              <strong>{activeHoustonMsg.from}:</strong> "{activeHoustonMsg.text}"
+              <span className="uplink-meta">Sent {activeHoustonMsg.timeSent} · Target: {activeHoustonMsg.to}</span>
+            </div>
+            <button
+              type="button"
+              className="uplink-ack-btn"
+              onClick={() => setDismissedMessages((prev) => [...prev, activeHoustonMsg.id])}
+              title="Acknowledge reception and log into flight records"
+            >
+              Acknowledge &amp; Log
+            </button>
+          </div>
+        )}
 
         {/* Viewport Screen Body - Modularized Views */}
         <div className="viewport-screen-body">
@@ -762,19 +935,41 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   )
 }
 
-function buildChartPoints(values) {
-  if (!values.length) return '0,120 320,120'
+function buildChartPoints(values, options = {}) {
+  const {
+    defaultMin = 50,
+    defaultMax = 140,
+    minSpan = 30,
+    width = 320,
+    height = 120,
+    paddingTop = 16,
+    paddingBottom = 16,
+  } = options
 
-  const width = 320
-  const height = 120
-  const min = Math.min(...values)
-  const max = Math.max(...values)
+  if (!values || !values.length) return '0,60 320,60'
+
+  const rawMin = Math.min(...values)
+  const rawMax = Math.max(...values)
+
+  // Physiological anchor bounds prevent 0-range collapse or 1-bpm vertical blowout
+  let min = Math.min(rawMin, defaultMin)
+  let max = Math.max(rawMax, defaultMax)
+
+  if (max - min < minSpan) {
+    const mid = (max + min) / 2
+    min = Math.floor(mid - minSpan / 2)
+    max = Math.ceil(mid + minSpan / 2)
+  }
+
   const range = max - min || 1
+  const usableHeight = height - paddingTop - paddingBottom
 
   return values
     .map((value, index) => {
       const x = (index / Math.max(values.length - 1, 1)) * width
-      const y = height - ((value - min) / range) * (height - 30) - 15
+      const normalized = (value - min) / range
+      const clamped = Math.max(0, Math.min(1, normalized))
+      const y = height - paddingBottom - clamped * usableHeight
       return `${x.toFixed(1)},${y.toFixed(1)}`
     })
     .join(' ')
