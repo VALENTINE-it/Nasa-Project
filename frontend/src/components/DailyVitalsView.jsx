@@ -122,7 +122,65 @@ export function DailyVitalsView({
       whatIfAbnormal:
         'If core temperature > 38.0°C: Don the Liquid Cooling and Ventilation Garment (LCVG), consume chilled electrolyte pouches, and inspect for subclinical infection in Medical Advice.',
     },
-    /* Secondary & biomarker details registered in subsequent modules */
+    resp: {
+      title: 'Breathing Rate (Thoracic Frequency)',
+      unit: 'breaths / min',
+      getValue: () => latest.respiratoryRate,
+      range: 'Normal: 12 – 20 breaths/min',
+      isAbnormal: () => latest.respiratoryRate > 20 || latest.respiratoryRate < 10,
+      statusText: () =>
+        latest.respiratoryRate > 20 || latest.respiratoryRate < 10 ? 'ABNORMAL' : 'STEADY',
+      whyItMatters:
+        'Direct indicator of metabolic acidosis, respiratory compensation, and hypercapnia. Astronauts in microgravity frequently hyperventilate when exhaled CO2 forms a bubble around their head while asleep.',
+      howToMeasure:
+        'Monitored via thoracic bio-impedance chest strap or optical pulse wave analysis on the smart wearable during quiet baseline rest.',
+      whatIfAbnormal:
+        'If >20 breaths/min at rest: Check cabin ventilation fans and CO2 monitors immediately. If headache or dizziness is present, review hypercapnia protocol in Medical Advice.',
+    },
+    sleep: {
+      title: 'Sleep Duration & Circadian Cycle',
+      unit: 'hours',
+      getValue: () => `${Number(latest.sleepDuration).toFixed(1)}`,
+      range: 'Target: 7.0 – 8.5 hours',
+      isAbnormal: () => Number(latest.sleepDuration) < 6.0,
+      statusText: () => (Number(latest.sleepDuration) < 6.0 ? 'SLEEP DEFICIT' : 'SUFFICIENT'),
+      whyItMatters:
+        'Experiencing 16 sunrises/day dismantles natural circadian rhythm. Chronic sleep deprivation severely impairs executive cognition, crew reaction time, and cellular immune competence.',
+      howToMeasure:
+        'Wrist actigraphy tracking tri-axial motion, micro-movements, and nocturnal heart rate variability inside the sound-dampened sleep quarters.',
+      whatIfAbnormal:
+        'If sleep < 6 hours: Shift circadian lighting spectrum to blue-depleted warm light, engage sleep berth acoustic baffling, and consider low-dose melatonin in Medical Advice.',
+    },
+    steps: {
+      title: 'Daily Exercise Steps (Mechanical Loading)',
+      unit: 'steps / 24h',
+      getValue: () => (latest?.physicalActivity ?? 6000).toLocaleString(),
+      range: 'NASA HRP Target: 6,000+ daily steps',
+      isAbnormal: () => (latest?.physicalActivity ?? 6000) < 3000,
+      statusText: () =>
+        (latest?.physicalActivity ?? 6000) < 3000 ? 'UNDER TARGET (CRITICAL)' : 'ACTIVE',
+      whyItMatters:
+        "Wolff's Law dictates that bones remodel in response to mechanical impact. Without daily cyclic footfall impacts (6,000 steps), microgravity triggers 1.0–1.5% bone mineral density loss per month (osteopenia), skeletal calcium leaching into blood, kidney stone formation, and soleus muscle atrophy.",
+      howToMeasure:
+        'Live Oraimo tri-axial accelerometer wrist counting combined with T2 Treadmill bungee-harness stride load sensors.',
+      whatIfAbnormal:
+        'If < 3,000 steps: Critical musculoskeletal deconditioning risk. Complete mandatory 45-min bungee-loaded resistance treadmill session immediately to preserve skeletal density.',
+    },
+    nutrition: {
+      title: 'Nutrition & Fluid Balance',
+      unit: 'kcal · Liters',
+      getValue: () => '2,840 kcal · 2.4 L',
+      range: 'Target: 2,700–3,000 kcal · 2.0–2.5 L',
+      isAbnormal: () => false,
+      statusText: () => 'BALANCED',
+      whyItMatters:
+        'Negative energy balance accelerates spaceflight muscle loss. Controlled sodium intake (<2,300 mg) prevents intracranial fluid pressure buildup (SANS vision risk), while adequate potassium prevents arrhythmias.',
+      howToMeasure:
+        'Galley RFID barcode scanner on meal pouches logged alongside water dispenser volumetric flow telemetry.',
+      whatIfAbnormal:
+        'If hydration < 1.8 L: Intravascular dehydration risk. Rehydrate with 1 electrolyte pack and review nutritional guidance in Medical Advice.',
+    },
+    /* Salivary immune and viral biomarkers registered in subsequent module */
   }
 
   const activeModalData = activeModalKey ? VITAL_MODAL_DETAILS[activeModalKey] : null
