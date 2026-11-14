@@ -1,0 +1,15 @@
+# Default owners for all files
+* @VALENTINE-it @ClayMichael2004 @its-ryann @Moraa021 @nyabokegrace @mmicbee
+
+# Backend
+/backend/ @VALENTINE-it @ClayMichael2004 @mmicbee
+
+# Frontend
+/frontend/ @VALENTINE-it @its-ryann @Moraa021 @nyabokegrace
+
+# CI/CD
+/.github/workflows/ @mmicbee @ClayMichael2004
+
+# Documentation
+/docs/ @nyabokegrace @Moraa021
+*.md @nyabokegrace @Moraa021

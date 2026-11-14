@@ -1,0 +1,48 @@
+# Git
+.git/
+.github/
+
+# Dependencies
+node_modules/
+backend/vendor/
+
+# Build outputs
+dist/
+build/
+*.exe
+backend/aura-med-backend
+backend/server
+
+# Environment
+.env
+.env.*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+backend/data/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.tmp
+*.temp
+.tmp/
+.temp/
+.agents/
+Makefile
+docker-compose.yml
+*.md
+!README.md

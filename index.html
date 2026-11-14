@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AURA-MED</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">NASA Deep-Space Clinical Decision Support</p>
+          <h1>AURA-MED</h1>
+        </div>
+        <div class="status-wrap">
+          <span class="mission-pill">Mars Transit · Crew 3</span>
+          <span id="statusBadge" class="status-badge stable">STABLE</span>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="hero">
+          <div>
+            <p class="label">Autonomous Exploration Readiness &amp; Medical Engine</p>
+            <h2>Crew health command view</h2>
+          </div>
+          <button id="resetButton" class="secondary-button">Reset telemetry</button>
+        </section>
+
+        <section class="stats-grid">
+          <article class="stat-card accent-blue">
+            <span class="label">Heart Rate</span>
+            <strong id="heartRate">72</strong>
+            <small>bpm</small>
+          </article>
+          <article class="stat-card accent-green">
+            <span class="label">SpO2</span>
+            <strong id="oxygen">98</strong>
+            <small>%</small>
+          </article>
+          <article class="stat-card accent-yellow">
+            <span class="label">Fatigue</span>
+            <strong id="fatigue">38</strong>
+            <small>/100</small>
+          </article>
+          <article class="stat-card accent-red">
+            <span class="label">Immune Risk</span>
+            <strong id="immune">19</strong>
+            <small>%</small>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <div class="panel large-panel">
+            <div class="panel-header">
+              <h3>Emergency scenario controls</h3>
+            </div>
+            <div class="button-grid">
+              <button class="scenario-button" data-scenario="tachycardia">Acute Tachycardia</button>
+              <button class="scenario-button" data-scenario="hypoxia">Cabin Hypoxia</button>
+              <button class="scenario-button" data-scenario="immune">Immune Flare</button>
+              <button class="scenario-button" data-scenario="fatigue">Sleep Debt</button>
+            </div>
+
+            <div id="alertBox" class="alert-box info">
+              No active anomaly. Crew is in routine monitoring mode.
+            </div>
+
+            <div class="checklist-wrap">
+              <h4>Immediate mission checklist</h4>
+              <ul id="checklist" class="checklist">
+                <li>Confirm symptoms and time of onset.</li>
+                <li>Check heart rate, oxygenation, and fatigue.</li>
+                <li>Assess environment and isolate hazards.</li>
+                <li>Follow emergency response sequence.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Clinical guidance</h3>
+            </div>
+            <div id="guidance" class="guidance-box">
+              Crew remains stable. Continue environmental monitoring and maintain routine exercise and sleep cycles.
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
