@@ -2,10 +2,13 @@ import { useState, useCallback, useRef } from 'react'
 
 /**
  * useWearableBluetooth
- * Connects to consumer smartwatches (Oraimo, Apple, Polar, Garmin, etc.)
- * via the standard Web Bluetooth GATT Heart Rate Service (0x180D).
+ * Connects directly to smartwatches (Oraimo Watch 2 Pro, Polar, Garmin, etc.)
+ * via Chrome Web Bluetooth API (navigator.bluetooth).
  * 
- * Falls back gracefully if Web Bluetooth is unavailable or device disconnects.
+ * Approach 3 Improvements:
+ * 1. acceptAllDevices: true to discover watches that do not advertise standard SIG UUIDs.
+ * 2. Extensive optionalServices whitelist for vendor GATT inspection (0xFEE0, 0xFFE0, etc.).
+ * 3. Diagnostic probe that inspects all discovered primary services & characteristics.
  */
 export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
   const [connectionStatus, setConnectionStatus] = useState(() => {
@@ -17,8 +20,15 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
   const [deviceName, setDeviceName] = useState(null)
   const [batteryLevel, setBatteryLevel] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
+  const [discoveredServices, setDiscoveredServices] = useState([])
+  const [diagnosticLogs, setDiagnosticLogs] = useState([])
 
   const serverRef = useRef(null)
+
+  const logDiag = useCallback((msg) => {
+    console.log(`[WebBluetooth Probe] ${msg}`)
+    setDiagnosticLogs((prev) => [...prev.slice(-49), `[${new Date().toLocaleTimeString()}] ${msg}`])
+  }, [])
 
   const handleHeartRateChanged = useCallback((event) => {
     const dataView = event.target.value
@@ -39,64 +49,154 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
       }
     }
 
+    logDiag(`Live HR reading received: ${heartRate} bpm`)
+
     if (onHeartRateUpdate) {
       onHeartRateUpdate({ heartRate, rrInterval, timestamp: Date.now() })
     }
-  }, [onHeartRateUpdate])
+  }, [onHeartRateUpdate, logDiag])
 
   const handleDeviceDisconnected = useCallback(() => {
+    logDiag('Device disconnected.')
     setConnectionStatus('disconnected')
     setDeviceName(null)
     serverRef.current = null
     if (onDisconnect) onDisconnect()
-  }, [onDisconnect])
+  }, [onDisconnect, logDiag])
 
   const connectDevice = useCallback(async () => {
     if (typeof navigator === 'undefined' || !navigator.bluetooth) {
-      setErrorMessage('Web Bluetooth is not supported in this browser. Please use Chrome or Edge.')
+      const err = 'Web Bluetooth is not supported in this browser. Please open Chrome or Edge on localhost.'
+      setErrorMessage(err)
+      logDiag(err)
+      alert(err)
       return
     }
 
     setErrorMessage(null)
     setConnectionStatus('connecting')
+    logDiag('Prompting Chrome Bluetooth device pairing picker (acceptAllDevices: true)...')
 
     try {
       const selectedDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ services: ['heart_rate'] }],
-        optionalServices: ['battery_service', 'device_information'],
+        acceptAllDevices: true,
+        optionalServices: [
+          'heart_rate',
+          'battery_service',
+          'device_information',
+          'generic_access',
+          '0000fee0-0000-1000-8000-00805f9b34fb', // Da Fit / Micro-mutual vendor UUID
+          '0000fee1-0000-1000-8000-00805f9b34fb',
+          '0000fee7-0000-1000-8000-00805f9b34fb',
+          '0000feea-0000-1000-8000-00805f9b34fb',
+          '0000ffe0-0000-1000-8000-00805f9b34fb', // Common BLE UART Service
+          '0000ffe1-0000-1000-8000-00805f9b34fb',
+          '0000180a-0000-1000-8000-00805f9b34fb', // Device Info (16-bit hex)
+          '0000180f-0000-1000-8000-00805f9b34fb', // Battery (16-bit hex)
+          '0000180d-0000-1000-8000-00805f9b34fb', // Heart Rate (16-bit hex)
+          '00001822-0000-1000-8000-00805f9b34fb', // Pulse Oximeter SpO2
+        ],
       })
 
+      logDiag(`Selected device: ${selectedDevice.name || 'Unnamed Device'} (ID: ${selectedDevice.id})`)
       selectedDevice.addEventListener('gattserverdisconnected', handleDeviceDisconnected)
 
+      logDiag('Connecting to GATT Server...')
       const server = await selectedDevice.gatt.connect()
       serverRef.current = server
+      setDeviceName(selectedDevice.name || 'Oraimo Wearable')
+      logDiag('GATT Server connected! Starting service discovery probe...')
 
-      const hrService = await server.getPrimaryService('heart_rate')
-      const hrCharacteristic = await hrService.getCharacteristic('heart_rate_measurement')
+      const foundServiceUuids = []
 
-      await hrCharacteristic.startNotifications()
-      hrCharacteristic.addEventListener('characteristicvaluechanged', handleHeartRateChanged)
+      // 1. Try to enumerate all primary services if browser supports it
+      try {
+        if (server.getPrimaryServices) {
+          const allServices = await server.getPrimaryServices()
+          for (const s of allServices) {
+            foundServiceUuids.push(s.uuid)
+          }
+          logDiag(`Discovered ${allServices.length} total primary services: ${foundServiceUuids.join(', ')}`)
+        }
+      } catch (enumErr) {
+        logDiag(`Service enumeration note: ${enumErr.message}`)
+      }
 
+      setDiscoveredServices(foundServiceUuids)
+
+      // 2. Check Standard Heart Rate Service (0x180D)
+      let hrFound = false
+      try {
+        const hrService = await server.getPrimaryService('heart_rate')
+        logDiag('Found Primary Service: heart_rate (0x180D)')
+        const hrCharacteristic = await hrService.getCharacteristic('heart_rate_measurement')
+        await hrCharacteristic.startNotifications()
+        hrCharacteristic.addEventListener('characteristicvaluechanged', handleHeartRateChanged)
+        hrFound = true
+        logDiag('SUCCESS: Subscribed to live heart_rate_measurement (0x2A37) notifications!')
+      } catch (hrErr) {
+        logDiag(`Standard heart_rate service not available: ${hrErr.message}`)
+      }
+
+      // 3. Check Battery Service
       try {
         const batService = await server.getPrimaryService('battery_service')
         const batChar = await batService.getCharacteristic('battery_level')
         const batVal = await batChar.readValue()
-        setBatteryLevel(batVal.getUint8(0))
+        const bLevel = batVal.getUint8(0)
+        setBatteryLevel(bLevel)
+        logDiag(`Battery level: ${bLevel}%`)
       } catch {
-        // Battery service optional
+        // optional
       }
 
-      setDeviceName(selectedDevice.name || 'Oraimo Wearable')
+      // 4. Check Device Information
+      try {
+        const infoService = await server.getPrimaryService('device_information')
+        const chars = await infoService.getCharacteristics()
+        logDiag(`Device Information service exposed ${chars.length} characteristics.`)
+      } catch {
+        // optional
+      }
+
+      // 5. Probe Vendor Services (0xFEE0, 0xFFE0, etc.)
+      const vendorCandidates = [
+        '0000fee0-0000-1000-8000-00805f9b34fb',
+        '0000ffe0-0000-1000-8000-00805f9b34fb',
+      ]
+      for (const vUuid of vendorCandidates) {
+        try {
+          const vService = await server.getPrimaryService(vUuid)
+          logDiag(`Vendor Service detected: ${vUuid}`)
+          const vChars = await vService.getCharacteristics()
+          const charSummary = vChars
+            .map((c) => `${c.uuid.slice(4, 8)}(read:${c.properties.read},write:${c.properties.write},notify:${c.properties.notify})`)
+            .join(', ')
+          logDiag(`Vendor Characteristics: ${charSummary}`)
+        } catch {
+          // not present
+        }
+      }
+
       setConnectionStatus('connected')
+      logDiag('Device connection setup complete.')
+
+      if (!hrFound) {
+        alert(`Connected to ${selectedDevice.name || 'Oraimo Watch'}!\n\nGATT Discovery Report:\n- Standard Heart Rate (0x180D): Not advertised\n- Discovered Services: ${foundServiceUuids.length ? foundServiceUuids.join('\n') : 'Vendor proprietary'}\n\nCheck Chrome Developer Console (F12) for detailed characteristic descriptors.`)
+      }
     } catch (err) {
       if (err.name === 'NotFoundError') {
+        logDiag('User cancelled Bluetooth device selection dialog.')
         setConnectionStatus('disconnected')
       } else {
-        setErrorMessage(err.message || 'Failed to connect to Bluetooth device.')
+        const msg = err.message || 'Failed to connect to Bluetooth device.'
+        setErrorMessage(msg)
+        logDiag(`Connection error: ${msg}`)
         setConnectionStatus('disconnected')
+        alert(`Bluetooth Connection Error:\n${msg}`)
       }
     }
-  }, [handleHeartRateChanged, handleDeviceDisconnected])
+  }, [handleHeartRateChanged, handleDeviceDisconnected, logDiag])
 
   const disconnectDevice = useCallback(() => {
     if (serverRef.current && serverRef.current.connected) {
@@ -111,6 +211,8 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
     deviceName,
     batteryLevel,
     errorMessage,
+    discoveredServices,
+    diagnosticLogs,
     connectDevice,
     disconnectDevice,
     isConnected: connectionStatus === 'connected',
