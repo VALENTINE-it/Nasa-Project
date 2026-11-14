@@ -597,11 +597,91 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: border-color 120ms ease;
+  transition: border-color 120ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
 .clinical-gauge-box:hover {
   border-color: var(--border-focus);
+}
+
+/* Cream warning and spike indicators (matching astronaut side) */
+.clinical-gauge-box.warning {
+  border-color: var(--status-warn-border, #f59e0b);
+  background: var(--status-warn-bg, #fef3c7);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2);
+}
+
+.clinical-gauge-box.danger {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.08);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.25);
+}
+
+.crew-profile-card.warning {
+  border-color: var(--status-warn-border, #f59e0b);
+  background: var(--status-warn-bg, #fef3c7);
+}
+
+.crew-profile-card.selected.warning {
+  border-color: var(--status-warn-border, #f59e0b);
+  box-shadow: 0 0 0 2px var(--status-warn-border, #f59e0b);
+  background: var(--status-warn-bg, #fef3c7);
+}
+
+.crew-profile-card.danger {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.crew-profile-card.selected.danger {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.gauge-spike-tag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--status-warn-bg, #fef3c7);
+  border: 1px solid var(--status-warn-border, #f59e0b);
+  color: var(--status-warn-text, #b45309);
+  text-transform: uppercase;
+}
+
+.gauge-spike-tag.danger {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+}
+
+.v-card-cell.cell-spike {
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid var(--status-warn-border, #f59e0b);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.v-card-cell.cell-spike strong {
+  color: var(--status-warn-text, #b45309);
+}
+
+.v-card-cell.cell-danger {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.v-card-cell.cell-danger strong {
+  color: #ef4444;
+}
+
+.system-metric-card.warning {
+  border-color: var(--status-warn-border, #f59e0b);
+  background: var(--status-warn-bg, #fef3c7);
 }
 
 .g-title {
