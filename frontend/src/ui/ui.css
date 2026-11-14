@@ -1260,4 +1260,308 @@
   margin-top: 1rem;
 }
 
+/* --------------------------------------------------------------------------
+   Habitat Systems, Comms & Simulation (.hd-sys-*, .hd-comms-*, .hd-sim-*)
+   -------------------------------------------------------------------------- */
+.hd-sys-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.hd-sys-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--hd-radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: transform var(--hd-transition-fast), box-shadow var(--hd-transition-fast);
+}
+
+.hd-sys-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hd-shadow-sm);
+}
+
+.hd-sys-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hd-sys-card__label {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hd-sys-card__val {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.hd-sys-card__desc {
+  font-size: 0.775rem;
+  color: var(--text-tertiary);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.hd-comms-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .hd-comms-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hd-comms-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hd-comms-col h3 {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.hd-incident-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--hd-radius-md);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-shadow: var(--hd-shadow-sm);
+}
+
+.hd-incident-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.hd-incident-card__title {
+  font-size: 0.925rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.hd-incident-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  flex-wrap: wrap;
+}
+
+.hd-incident-card__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.hd-incident-quote {
+  font-size: 0.825rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  background-color: var(--bg-surface-secondary);
+  border-left: 3px solid var(--accent-color);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 var(--hd-radius-sm) var(--hd-radius-sm) 0;
+  margin: 0;
+}
+
+.hd-incident-quote--doc {
+  border-left-color: var(--hd-green);
+  background-color: var(--hd-green-bg);
+  color: var(--hd-green-text);
+}
+
+.hd-dispatch-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--hd-radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hd-dispatch-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hd-dispatch-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.hd-dispatch-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  background-color: var(--bg-app);
+  border: 1px solid var(--border-default);
+  border-radius: var(--hd-radius-md);
+  color: var(--text-primary);
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+  transition: border-color var(--hd-transition-fast), box-shadow var(--hd-transition-fast);
+}
+
+.hd-dispatch-textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: var(--hd-shadow-focus);
+}
+
+.hd-transit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.hd-transit-item {
+  padding: 0.85rem 1rem;
+  background-color: var(--accent-bg);
+  border: 1px solid var(--hd-cobalt-border);
+  border-radius: var(--hd-radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.hd-transit-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.hd-transit-item__text {
+  font-size: 0.825rem;
+  color: var(--text-primary);
+  margin: 0;
+  font-style: italic;
+}
+
+.hd-transit-item__eta {
+  font-size: 0.725rem;
+  color: var(--text-tertiary);
+}
+
+.hd-sim-lab-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--hd-radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.hd-sim-lab-card h3 {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.hd-sim-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.hd-sim-btn {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--hd-radius-md);
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--hd-transition-fast);
+}
+
+.hd-sim-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hd-shadow-sm);
+  border-color: var(--border-strong);
+}
+
+.hd-sim-btn--active-danger {
+  background-color: var(--status-alert-bg);
+  border-color: var(--status-alert-border);
+}
+
+.hd-sim-btn--active-warning {
+  background-color: var(--status-warn-bg);
+  border-color: var(--status-warn-border);
+}
+
+.hd-sim-btn--reset {
+  background-color: var(--bg-surface-secondary);
+}
+
+.hd-sim-btn__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.hd-sim-btn__desc {
+  font-size: 0.775rem;
+  color: var(--text-tertiary);
+  line-height: 1.35;
+}
+
+.hd-sim-status-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-surface-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--hd-radius-md);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+
 
