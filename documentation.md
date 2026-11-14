@@ -12,7 +12,7 @@ The current browser integration:
 - Reads **heart rate only** from the standard Bluetooth Heart Rate Service.
 - Does not read SpO2, steps, sleep, or other watch metrics.
 - Does not currently connect to Oraimo's app, Health Connect, Google Fit, or a watch manufacturer's cloud.
-- Keeps watch readings in the active browser session; it does not send them to or save them in the backend.
+- Keeps watch readings in the ctive browser session; it does not send them to or save them in the backend.
 
 If a device connects but does not expose the standard heart-rate service, the app can report that Bluetooth is connected while continuing to show demo readings. A Bluetooth connection by itself does not mean that live measurements are available.
 
