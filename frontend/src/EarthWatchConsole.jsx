@@ -814,19 +814,19 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                       </div>
 
                       <div className="card-vitals-row">
-                        <div className="v-card-cell">
+                        <div className={`v-card-cell ${currentVitals.hr > 140 ? 'cell-danger' : currentVitals.hr > 90 ? 'cell-spike' : ''}`}>
                           <span className="v-cell-lbl">Heart Rate</span>
                           <strong>{currentVitals.hr} <small>bpm</small></strong>
                         </div>
-                        <div className="v-card-cell">
+                        <div className={`v-card-cell ${currentVitals.o2 < 90 ? 'cell-danger' : currentVitals.o2 < 95 ? 'cell-spike' : ''}`}>
                           <span className="v-cell-lbl">Oxygen</span>
                           <strong>{currentVitals.o2} <small>%</small></strong>
                         </div>
-                        <div className="v-card-cell">
+                        <div className={`v-card-cell ${(parseInt(currentVitals.bp) > 135 || parseInt((currentVitals.bp || '').split('/')[1]) > 88) ? 'cell-spike' : ''}`}>
                           <span className="v-cell-lbl">Pressure</span>
                           <strong>{currentVitals.bp}</strong>
                         </div>
-                        <div className="v-card-cell">
+                        <div className={`v-card-cell ${currentVitals.fatigue > 60 ? 'cell-danger' : currentVitals.fatigue > 45 ? 'cell-spike' : ''}`}>
                           <span className="v-cell-lbl">Tiredness</span>
                           <strong>{currentVitals.fatigue} <small>/100</small></strong>
                         </div>
