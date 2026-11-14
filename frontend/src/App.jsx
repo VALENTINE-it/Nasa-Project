@@ -828,8 +828,8 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               <strong>{statusLabel}</strong>
             </div>
 
-            {/* Interactive Wearable Bluetooth / Mobile Relay Status */}
-            {wearableBridge.isConnected ? (
+            {/* Interactive Wearable Bluetooth & Mobile Relay Controls */}
+            {wearableBridge.isConnected && (
               <div
                 className="wearable-connect-btn connected"
                 style={{ cursor: 'pointer' }}
@@ -838,30 +838,30 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               >
                 <Watch size={14} strokeWidth={2} />
                 <span>
-                  {wearableBridge.deviceName} ({wearableBridge.heartRate} bpm LIVE)
+                  {wearableBridge.deviceName} ({wearableBridge.heartRate} bpm Relay)
                 </span>
               </div>
-            ) : (
-              <button
-                type="button"
-                className={`wearable-connect-btn ${isBleConnected ? 'connected' : ''}`}
-                onClick={isBleConnected ? disconnectBleWatch : connectBleWatch}
-                title={
-                  isBleConnected
-                    ? 'Click to disconnect Oraimo Watch'
-                    : 'Pair via Web Bluetooth or stream live via phone MacroDroid'
-                }
-              >
-                <Watch size={14} strokeWidth={2} />
-                <span>
-                  {isBleConnected
-                    ? `${bleDeviceName || 'Oraimo Watch'} (Live BLE)`
-                    : bleStatus === 'connecting'
-                    ? 'Pairing BLE...'
-                    : 'Pair Oraimo Watch'}
-                </span>
-              </button>
             )}
+
+            <button
+              type="button"
+              className={`wearable-connect-btn ${isBleConnected ? 'connected' : ''}`}
+              onClick={isBleConnected ? disconnectBleWatch : connectBleWatch}
+              title={
+                isBleConnected
+                  ? 'Click to disconnect Oraimo Watch'
+                  : 'Pair directly via Chrome Web Bluetooth (GATT Discovery Probe)'
+              }
+            >
+              <Watch size={14} strokeWidth={2} />
+              <span>
+                {isBleConnected
+                  ? `${bleDeviceName || 'Oraimo Watch'} (Direct BLE)`
+                  : bleStatus === 'connecting'
+                  ? 'Scanning BLE...'
+                  : 'Pair Oraimo Watch (BLE)'}
+              </span>
+            </button>
           </div>
         </header>
 
