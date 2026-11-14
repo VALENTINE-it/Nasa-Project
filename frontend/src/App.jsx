@@ -414,6 +414,7 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     packetCount: blePacketCount,
   } = useWearableBluetooth({
     onHeartRateUpdate: ({ heartRate, steps, bloodOxygen, stress }) => {
+      // 1. Update Astronaut UI local vitals
       setLiveVitals((prev) => {
         if (!prev) return prev
         return {
@@ -424,8 +425,106 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
           ...(stress ? { mentalStrain: stress } : {}),
         }
       })
+
+      // 2. Uplink live watch telemetry to Go backend so Earth Center and DB receive it
+      const payload = {
+        device: bleDeviceName || 'Oraimo Watch 2 Pro',
+        heartRate: heartRate || 0,
+        steps: typeof steps === 'number' ? steps : 0,
+        spO2: bloodOxygen || 98,
+        rawText: `Web Bluetooth GATT Stream · HR ${heartRate} bpm · Steps ${steps || 0}`,
+      }
+
+      fetch('/api/wearable/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).catch(() => {})
+
+      // 3. 0ms instant tab-to-tab broadcast to Earth Watch Console
+      try {
+        const bc = new BroadcastChannel('aura_med_telemetry')
+        bc.postMessage({
+          type: 'WEARABLE_UPDATE',
+          astronautId,
+          isConnected: true,
+          deviceName: bleDeviceName || 'Oraimo Watch 2 Pro',
+          heartRate: heartRate || 0,
+          steps: steps || 0,
+          bloodOxygen: bloodOxygen || 98,
+          timestamp: Date.now(),
+        })
+        bc.close()
+      } catch {}
+
+      // 4. Persist in localStorage for instant cross-view recovery
+      try {
+        localStorage.setItem(
+          'aura_med_live_wearable',
+          JSON.stringify({
+            astronautId,
+            isConnected: true,
+            deviceName: bleDeviceName || 'Oraimo Watch 2 Pro',
+            heartRate: heartRate || 0,
+            steps: steps || 0,
+            bloodOxygen: bloodOxygen || 98,
+            timestamp: Date.now(),
+          })
+        )
+      } catch {}
+    },
+    onDisconnect: () => {
+      try {
+        const bc = new BroadcastChannel('aura_med_telemetry')
+        bc.postMessage({
+          type: 'WEARABLE_DISCONNECT',
+          astronautId,
+          isConnected: false,
+          timestamp: Date.now(),
+        })
+        bc.close()
+      } catch {}
+      try {
+        localStorage.removeItem('aura_med_live_wearable')
+      } catch {}
     },
   })
+
+  // Listen for telemetry or comms updates broadcast from Earth Watch Console or other tabs
+  useEffect(() => {
+    let telemetryChannel
+    let commsChannel
+
+    try {
+      telemetryChannel = new BroadcastChannel('aura_med_telemetry')
+      telemetryChannel.onmessage = (event) => {
+        if (event.data?.type === 'WEARABLE_UPDATE' && event.data.heartRate > 0) {
+          setLiveVitals((prev) => ({
+            ...prev,
+            heartRate: event.data.heartRate,
+            ...(typeof event.data.steps === 'number' && event.data.steps > 0
+              ? { physicalActivity: event.data.steps }
+              : {}),
+            ...(event.data.bloodOxygen ? { bloodOxygen: event.data.bloodOxygen } : {}),
+          }))
+        }
+      }
+    } catch {}
+
+    try {
+      commsChannel = new BroadcastChannel('aura_med_comms')
+      commsChannel.onmessage = (event) => {
+        if (event.data?.type === 'NEW_ADVISORY' && event.data.message) {
+          setHoustonMessages((prev) => [event.data.message, ...prev])
+        }
+      }
+    } catch {}
+
+    return () => {
+      telemetryChannel?.close()
+      commsChannel?.close()
+    }
+  }, [])
 
   // Live Wearable Relay Bridge (MacroDroid / Direct Device HTTP push)
   const [wearableBridge, setWearableBridge] = useState({
