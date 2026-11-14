@@ -1,20 +1,17 @@
 import { useState } from 'react'
 import {
   Activity,
-  ArrowRight,
-  Dna,
-  Globe2,
-  Info,
   ShieldCheck,
+  ArrowRight,
+  Clock,
+  Dna,
+  Info,
+  Globe2,
+  CheckCircle2,
+  X,
+  AlertTriangle,
+  ExternalLink,
 } from 'lucide-react'
-import {
-  Alert,
-  Button,
-  StatusChip,
-  MeterBar,
-  SegmentedControl,
-  Accordion,
-} from '../ui'
 
 export function DailyVitalsView({
   latest,
@@ -25,14 +22,11 @@ export function DailyVitalsView({
   environmentMode = 'spacecraft',
   scenarioMode = 'nominal',
   onJumpToTrends,
+  onJumpToMedicalAdvice,
   upcomingReminder,
   onCompleteReminder,
 }) {
-  const [activeEduCard, setActiveEduCard] = useState(null)
-
-  const toggleEdu = (id) => {
-    setActiveEduCard((prev) => (prev === id ? null : id))
-  }
+  const [activeModalKey, setActiveModalKey] = useState(null)
 
   // Environmental context parameters
   const envDetails = {
@@ -62,10 +56,7 @@ export function DailyVitalsView({
   }
 
   // Dynamic Salivary Immune & Viral Reactivation Biomarkers (NASA GeneLab OSDR-379)
-  const isStressOrRadiation =
-    scenarioMode === 'stress' ||
-    scenarioMode === 'radiation' ||
-    scenarioMode === 'tachycardia'
+  const isStressOrRadiation = scenarioMode === 'stress' || scenarioMode === 'radiation' || scenarioMode === 'tachycardia'
   const salivaryCortisol = isStressOrRadiation ? '28.4 nmol/L' : '14.2 nmol/L'
   const cortisolStatus = isStressOrRadiation ? 'ELEVATED' : 'NOMINAL'
   const viralShedding = isStressOrRadiation ? '480 copies/mL' : '< 50 copies/mL'
@@ -73,596 +64,600 @@ export function DailyVitalsView({
   const secretoryIgA = isStressOrRadiation ? '142 µg/mL' : '198 µg/mL'
   const tCellRatio = isStressOrRadiation ? '1.42 (Shifted)' : '1.85 (Balanced)'
 
-  const systolicBp = latest.bloodPressure
-    ? parseInt(String(latest.bloodPressure).split('/')[0], 10)
-    : 120
+  // Comprehensive Metric Guide & Clinical SOP dictionary (Addressing content.md lines 8-12)
+  const VITAL_MODAL_DETAILS = {
+    hr: {
+      title: 'Heart Rate (Pulse Telemetry)',
+      unit: 'beats / min',
+      getValue: () => latest.heartRate,
+      range: 'Normal: 60 – 100 bpm (Resting in 0g)',
+      isAbnormal: () => latest.heartRate > 90,
+      statusText: () => (latest.heartRate > 90 ? 'ELEVATED (>90 bpm)' : 'NOMINAL'),
+      whyItMatters:
+        'In microgravity, hydrostatic blood pressure disappears and ~2 Liters of venous fluid shifts cephalad (toward the head and chest). This alters baroreceptor responsiveness, reduces stroke volume over time, and alters cardiac workload.',
+      howToMeasure:
+        'Wear the optical sensor (Oraimo smart band) 1 finger-width above the wrist styloid process. Fasten securely and rest arm motionless across the chest for 30 seconds during active sampling.',
+      whatIfAbnormal:
+        'If resting heart rate >100 bpm or irregular rhythm: Recline in crew berth, consume 500 mL of chilled electrolyte solution to maintain circulating plasma volume, and review clinical cardiac countermeasures.',
+    },
+    bp: {
+      title: 'Blood Pressure (Arterial Perfusion)',
+      unit: 'mmHg',
+      getValue: () => latest.bloodPressure,
+      range: 'Standard: 120 / 80 mmHg',
+      isAbnormal: () => false,
+      statusText: () => 'NOMINAL (OPTIMAL)',
+      whyItMatters:
+        'Essential for monitoring cerebral perfusion pressure and preventing orthostatic intolerance. Fluid shifts can increase intracranial pressure (SANS risk) or lead to cerebral hypoperfusion during high-G maneuvers.',
+      howToMeasure:
+        'Fit the pneumatic cuff over the brachial artery at heart level. Sit calmly, breathe slowly without speaking, and allow the oscillometric sensor to complete inflation and linear deflation.',
+      whatIfAbnormal:
+        'If systolic >140 or diastolic >90: Verify cuff position, practice slow 6-breath/min diaphragmatic respiration for 5 minutes, and verify cabin CO2 levels in Medical Advice.',
+    },
+    o2: {
+      title: 'Blood Oxygen (SpO2 Oximetry)',
+      unit: '% SpO2',
+      getValue: () => `${latest.bloodOxygen}%`,
+      range: 'Safe Threshold: 95% – 100%',
+      isAbnormal: () => latest.bloodOxygen < 95,
+      statusText: () => (latest.bloodOxygen < 95 ? 'HYPOXIC RISK' : 'NOMINAL'),
+      whyItMatters:
+        'In closed spacecraft environments, stagnant air pockets can form without natural buoyancy convection. Low SpO2 is the primary early warning for localized carbon dioxide accumulation or ECLSS scrubber failure.',
+      howToMeasure:
+        'Ensure fingertip or wrist optical photoplethysmography sensor is dry and warm. Keep sensor shielded from high cabin ambient light and hold stationary for 15 seconds.',
+      whatIfAbnormal:
+        'If SpO2 < 95%: Don portable emergency oxygen mask immediately, verify cabin oxygen partial pressure (ppO2) and LiOH CO2 scrubbers, and check Medical Advice protocols.',
+    },
+    temp: {
+      title: 'Core Body Temperature',
+      unit: 'Celsius',
+      getValue: () => `${Number(latest.bodyTemperature).toFixed(1)}°`,
+      range: 'Normal: 36.5° – 37.5°C',
+      isAbnormal: () => Number(latest.bodyTemperature) > 37.5,
+      statusText: () => (Number(latest.bodyTemperature) > 37.5 ? 'SPACE FEVER' : 'NOMINAL'),
+      whyItMatters:
+        'Zero-G impairs natural air convection and sweat evaporation from the skin. Astronauts baseline core temperature increases by ~1°C ("Space Fever") during rest and spikes rapidly during physical exertion.',
+      howToMeasure:
+        'Use the tympanic infrared probe inserted gently into the ear canal or continuous double-sensor forehead heat-flux wearable.',
+      whatIfAbnormal:
+        'If core temperature > 38.0°C: Don the Liquid Cooling and Ventilation Garment (LCVG), consume chilled electrolyte pouches, and inspect for subclinical infection in Medical Advice.',
+    },
+    /* Secondary & biomarker details registered in subsequent modules */
+  }
+
+  const activeModalData = activeModalKey ? VITAL_MODAL_DETAILS[activeModalKey] : null
 
   return (
     <div className="view-pane vitals-pane">
-      {/* 1. SCHEDULED MEASUREMENT REMINDER PROMPT */}
+      {/* 1. SCHEDULED MEASUREMENT REMINDER PROMPT (content.md Line 12) */}
       {upcomingReminder && (
-        <Alert
-          variant={upcomingReminder.taken ? 'good' : 'warning'}
-          title={
-            upcomingReminder.taken
-              ? '✓ Measurement Protocol Completed:'
-              : `Scheduled Task: ${upcomingReminder.title}`
-          }
-          action={
-            !upcomingReminder.taken && (
-              <Button variant="outline" size="sm" onClick={onCompleteReminder}>
-                ✓ Mark Taken
-              </Button>
-            )
-          }
-          style={{ marginBottom: '1.25rem' }}
-        >
-          {upcomingReminder.taken
-            ? 'Data logged into mission medical telemetry log.'
-            : `Due: ${upcomingReminder.dueIn} · Protocol: ${upcomingReminder.protocol}`}
-        </Alert>
+        <div className={`measurement-reminder-banner ${upcomingReminder.taken ? 'completed' : ''}`}>
+          <div className="reminder-left">
+            {upcomingReminder.taken ? (
+              <CheckCircle2 size={18} className="reminder-icon success" />
+            ) : (
+              <Clock size={18} className="reminder-icon" />
+            )}
+            <div>
+              <strong>
+                {upcomingReminder.taken ? '✓ Measurement Protocol Completed' : `Scheduled Task: ${upcomingReminder.title}`}
+              </strong>
+              <small>
+                {upcomingReminder.taken
+                  ? 'Data logged into mission medical telemetry log.'
+                  : `Due: ${upcomingReminder.dueIn} · Protocol: ${upcomingReminder.protocol}`}
+              </small>
+            </div>
+          </div>
+          {!upcomingReminder.taken && (
+            <button
+              type="button"
+              className="reminder-complete-btn"
+              onClick={onCompleteReminder}
+            >
+              ✓ Mark Taken
+            </button>
+          )}
+        </div>
       )}
 
       {/* Dynamic Telemetry Stream Bar & Environmental Context */}
-      <div className="hd-vitals-control-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
-          <StatusChip variant={isStreaming ? 'good' : 'neutral'}>
-            Oraimo Stream: {isStreaming ? 'LIVE (Dynamic 2s Stream)' : 'PAUSED'}
-          </StatusChip>
+      <div className="telemetry-live-control-strip">
+        <div className="stream-status-group">
+          <span className={`stream-live-indicator ${isStreaming ? 'live' : 'paused'}`}>
+            <Activity size={14} strokeWidth={2} />
+            <span>
+              Oraimo Stream: <strong>{isStreaming ? 'LIVE (Dynamic 2s Stream)' : 'PAUSED'}</strong>
+            </span>
+          </span>
           <span className="environment-context-tag">
             <Globe2 size={13} strokeWidth={2} />
-            <span>
-              {envDetails.gravity} · {envDetails.pressure}
-            </span>
+            <span>{envDetails.gravity} · {envDetails.pressure}</span>
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>
-            Exertion:
-          </span>
-          <SegmentedControl
-            options={[
-              { value: 'nominal', label: 'Rest' },
-              { value: 'exercise', label: 'Treadmill' },
-              { value: 'stress', label: 'Surge' },
-            ]}
-            value={activityMode}
-            onChange={setActivityMode}
-            ariaLabel="Exertion Mode Selector"
-          />
-          <Button
-            variant="outline"
-            size="sm"
+        <div className="telemetry-mode-selector">
+          <span className="mode-selector-lbl">Exertion Mode:</span>
+          <button
+            type="button"
+            className={`telemetry-mode-btn ${activityMode === 'nominal' ? 'active' : ''}`}
+            onClick={() => setActivityMode('nominal')}
+          >
+            Nominal Rest
+          </button>
+          <button
+            type="button"
+            className={`telemetry-mode-btn ${activityMode === 'exercise' ? 'active' : ''}`}
+            onClick={() => setActivityMode('exercise')}
+          >
+            Treadmill Workout
+          </button>
+          <button
+            type="button"
+            className={`telemetry-mode-btn ${activityMode === 'stress' ? 'active' : ''}`}
+            onClick={() => setActivityMode('stress')}
+          >
+            Zero-G Fluid Surge
+          </button>
+          <button
+            type="button"
+            className="telemetry-stream-toggle"
             onClick={() => setIsStreaming((s) => !s)}
           >
             {isStreaming ? 'Pause' : 'Resume'}
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* 2. PRIMARY CIRCULATORY VITALS */}
-      <div className="hd-section-heading">
-        <Activity size={16} strokeWidth={2} />
+      <div className="vitals-group-heading">
+        <Activity size={14} strokeWidth={2} />
         <span>Primary Circulatory Vitals</span>
       </div>
 
-      <div className="hd-vitals-grid hd-stagger">
+      <div className="vitals-matrix-row">
         {/* Heart Rate Card */}
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">Heart Rate</span>
-            <div className="hd-vital-card__head-right">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleEdu('hr')}
-                title="View How & Why measurement guide"
-                style={{ padding: '0.15rem 0.4rem', minHeight: '28px', fontSize: '0.75rem' }}
-              >
-                <Info size={12} />
-                <span>Guide</span>
-              </Button>
-              <StatusChip variant={latest.heartRate > 90 ? 'warning' : 'good'}>
+        <article
+          className={`vital-block clickable ${latest.heartRate > 90 ? 'warning' : 'good'}`}
+          onClick={() => setActiveModalKey('hr')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('hr')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">Heart Rate</span>
+            <div className="block-head-right">
+              <span className={`vital-tag ${latest.heartRate > 90 ? 'warning' : 'nominal'}`}>
                 {latest.heartRate > 90 ? 'ELEVATED' : 'NOMINAL'}
-              </StatusChip>
+              </span>
             </div>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">{latest.heartRate}</strong>
-            <span className="hd-vital-card__unit">beats / min</span>
+          <div className="block-val-group">
+            <strong className="block-num">{latest.heartRate}</strong>
+            <span className="block-unit">beats / min</span>
           </div>
-          <MeterBar
-            value={latest.heartRate}
-            min={40}
-            max={150}
-            variant={latest.heartRate > 90 ? 'warning' : 'good'}
-            showValue={false}
-          />
-          <span className="hd-vital-card__range">Normal Range: 60 – 100 bpm</span>
-          <p className="hd-vital-card__desc">
-            Continuous optical pulse sensor. Blood gently shifts upward in microgravity.
-          </p>
-
-          {activeEduCard === 'hr' && (
-            <div className="hd-vital-edu-drawer">
-              <div>
-                <strong>How to Measure:</strong> Wear watch optical sensor 1 finger-width above wrist bone. Keep arm stationary against chest for 30s.
-              </div>
-              <div>
-                <strong>Why it Matters:</strong> Microgravity fluid shift increases thoracic blood volume, altering baroreceptor reflex and cardiac output.
-              </div>
-              <div>
-                <strong>If Abnormal (&gt;100):</strong> Recline against cabin wall, drink 500 mL fluid with sodium electrolyte pouch.
-              </div>
-            </div>
-          )}
+          <span className="block-range">Normal: 60 – 100 bpm</span>
+          <p className="block-desc">Continuous optical pulse sensor. Blood gently shifts upward in microgravity.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
 
         {/* Blood Pressure Card */}
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">Blood Pressure</span>
-            <div className="hd-vital-card__head-right">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleEdu('bp')}
-                title="View How & Why measurement guide"
-                style={{ padding: '0.15rem 0.4rem', minHeight: '28px', fontSize: '0.75rem' }}
-              >
-                <Info size={12} />
-                <span>Guide</span>
-              </Button>
-              <StatusChip variant={systolicBp > 135 ? 'warning' : 'good'}>
-                {systolicBp > 135 ? 'ELEVATED' : 'NORMAL'}
-              </StatusChip>
+        <article
+          className="vital-block clickable good"
+          onClick={() => setActiveModalKey('bp')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('bp')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">Blood Pressure</span>
+            <div className="block-head-right">
+              <span className="vital-tag nominal">NORMAL</span>
             </div>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">{latest.bloodPressure}</strong>
-            <span className="hd-vital-card__unit">mmHg</span>
+          <div className="block-val-group">
+            <strong className="block-num">{latest.bloodPressure}</strong>
+            <span className="block-unit">mmHg</span>
           </div>
-          <MeterBar
-            value={systolicBp}
-            min={90}
-            max={160}
-            variant={systolicBp > 135 ? 'warning' : 'good'}
-            showValue={false}
-          />
-          <span className="hd-vital-card__range">Standard Target: 120 / 80 mmHg</span>
-          <p className="hd-vital-card__desc">
-            Healthy circulatory pressure supplied to the cerebral cortex.
-          </p>
-
-          {activeEduCard === 'bp' && (
-            <div className="hd-vital-edu-drawer">
-              <div>
-                <strong>How to Measure:</strong> Secure arm cuff at heart level. Inhale slowly and remain silent during oscillometric measurement.
-              </div>
-              <div>
-                <strong>Why it Matters:</strong> Monitors arterial perfusion pressure to prevent cephalic hypertension or orthostatic blackout.
-              </div>
-              <div>
-                <strong>If Abnormal (&gt;140/90):</strong> Verify cuff tightness, repeat measurement after 5 mins of calm breathing.
-              </div>
-            </div>
-          )}
+          <span className="block-range">Standard: 120 / 80</span>
+          <p className="block-desc">Healthy circulatory pressure supplied to the cerebral cortex.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
 
         {/* Blood Oxygen Card */}
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">Blood Oxygen</span>
-            <div className="hd-vital-card__head-right">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleEdu('o2')}
-                title="View How & Why measurement guide"
-                style={{ padding: '0.15rem 0.4rem', minHeight: '28px', fontSize: '0.75rem' }}
-              >
-                <Info size={12} />
-                <span>Guide</span>
-              </Button>
-              <StatusChip variant={latest.bloodOxygen < 95 ? 'warning' : 'good'}>
+        <article
+          className={`vital-block clickable ${latest.bloodOxygen < 95 ? 'warning' : 'good'}`}
+          onClick={() => setActiveModalKey('o2')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('o2')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">Blood Oxygen</span>
+            <div className="block-head-right">
+              <span className={`vital-tag ${latest.bloodOxygen < 95 ? 'warning' : 'nominal'}`}>
                 {latest.bloodOxygen < 95 ? 'LOW' : 'NOMINAL'}
-              </StatusChip>
+              </span>
             </div>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">{latest.bloodOxygen}</strong>
-            <span className="hd-vital-card__unit">% SpO2</span>
+          <div className="block-val-group">
+            <strong className="block-num">{latest.bloodOxygen}</strong>
+            <span className="block-unit">% SpO2</span>
           </div>
-          <MeterBar
-            value={latest.bloodOxygen}
-            min={80}
-            max={100}
-            variant={latest.bloodOxygen < 95 ? 'warning' : 'good'}
-            showValue={false}
-          />
-          <span className="hd-vital-card__range">Safe Threshold: Above 95%</span>
-          <p className="hd-vital-card__desc">
-            Pulse oximeter reading from cabin air respiration.
-          </p>
-
-          {activeEduCard === 'o2' && (
-            <div className="hd-vital-edu-drawer">
-              <div>
-                <strong>How to Measure:</strong> Place index fingertip clean and dry into optical chamber. Await stable reading without movement.
-              </div>
-              <div>
-                <strong>Why it Matters:</strong> Spacecraft closed atmosphere ventilation-perfusion matching; early indicator of CO2 scrubber exhaustion.
-              </div>
-              <div>
-                <strong>If Abnormal (&lt;95%):</strong> Don emergency oxygen mask, verify cabin pO2 sensor, check LiOH scrubber canister.
-              </div>
-            </div>
-          )}
+          <span className="block-range">Safe: Above 95%</span>
+          <p className="block-desc">Pulse oximeter reading from cabin air respiration.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
 
         {/* Body Temperature Card */}
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">Body Temperature</span>
-            <div className="hd-vital-card__head-right">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleEdu('temp')}
-                title="View How & Why measurement guide"
-                style={{ padding: '0.15rem 0.4rem', minHeight: '28px', fontSize: '0.75rem' }}
-              >
-                <Info size={12} />
-                <span>Guide</span>
-              </Button>
-              <StatusChip
-                variant={
-                  latest.bodyTemperature > 37.5 || latest.bodyTemperature < 36.0
-                    ? 'warning'
-                    : 'good'
-                }
-              >
-                NORMAL
-              </StatusChip>
+        <article
+          className="vital-block clickable good"
+          onClick={() => setActiveModalKey('temp')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('temp')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">Body Temperature</span>
+            <div className="block-head-right">
+              <span className="vital-tag nominal">NORMAL</span>
             </div>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">
-              {Number(latest.bodyTemperature).toFixed(1)}°
-            </strong>
-            <span className="hd-vital-card__unit">Celsius</span>
+          <div className="block-val-group">
+            <strong className="block-num">{Number(latest.bodyTemperature).toFixed(1)}°</strong>
+            <span className="block-unit">Celsius</span>
           </div>
-          <MeterBar
-            value={latest.bodyTemperature}
-            min={35.0}
-            max={39.0}
-            variant={
-              latest.bodyTemperature > 37.5 || latest.bodyTemperature < 36.0
-                ? 'warning'
-                : 'good'
-            }
-            showValue={false}
-          />
-          <span className="hd-vital-card__range">Normal Baseline: 36.5° – 37.5°C</span>
-          <p className="hd-vital-card__desc">
-            Circadian thermoregulation steady. Microgravity core temp nominal.
-          </p>
-
-          {activeEduCard === 'temp' && (
-            <div className="hd-vital-edu-drawer">
-              <div>
-                <strong>How to Measure:</strong> Tympanic infrared ear probe or continuous double-sensor forehead heat-flux wearable.
-              </div>
-              <div>
-                <strong>Why it Matters:</strong> Zero-G eliminates natural air convection cooling; astronauts experience higher baseline core temp ("Space Fever").
-              </div>
-              <div>
-                <strong>If Abnormal (&gt;38.0°C):</strong> Initiate active cooling garment, hydrate with chilled electrolyte pouches.
-              </div>
-            </div>
-          )}
+          <span className="block-range">Normal: 36.5° – 37.5°C</span>
+          <p className="block-desc">Circadian thermoregulation steady. Microgravity core temp nominal.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
       </div>
 
       {/* 3. RESPIRATION & DAILY ACTIVITY */}
-      <div className="hd-section-heading">
-        <ShieldCheck size={16} strokeWidth={2} />
+      <div className="vitals-group-heading">
+        <ShieldCheck size={14} strokeWidth={2} />
         <span>Respiration &amp; Daily Activity</span>
       </div>
 
-      <div className="hd-vitals-grid hd-stagger">
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">Breathing Rate</span>
-            <StatusChip variant="good">STEADY</StatusChip>
+      <div className="vitals-matrix-row secondary-row">
+        {/* Breathing Rate Card */}
+        <article
+          className="vital-block clickable good"
+          onClick={() => setActiveModalKey('resp')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('resp')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">Breathing Rate</span>
+            <span className="vital-tag nominal">STEADY</span>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">{latest.respiratoryRate}</strong>
-            <span className="hd-vital-card__unit">breaths / min</span>
+          <div className="block-val-group">
+            <strong className="block-num">{latest.respiratoryRate}</strong>
+            <span className="block-unit">breaths / min</span>
           </div>
-          <MeterBar
-            value={latest.respiratoryRate}
-            min={8}
-            max={28}
-            variant={latest.respiratoryRate > 22 ? 'warning' : 'good'}
-            showValue={false}
-          />
-          <span className="hd-vital-card__range">Normal Target: 12 – 20 breaths</span>
-          <p className="hd-vital-card__desc">
-            Thoracic bio-impedance respiration sensor on smart strap.
-          </p>
+          <span className="block-range">Normal: 12 – 20 breaths</span>
+          <p className="block-desc">Thoracic bio-impedance respiration sensor on smart strap.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
 
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">Sleep Last Night</span>
-            <StatusChip variant={latest.sleepDuration < 6 ? 'warning' : 'good'}>
+        {/* Sleep Duration Card */}
+        <article
+          className={`vital-block clickable ${latest.sleepDuration < 6 ? 'warning' : 'good'}`}
+          onClick={() => setActiveModalKey('sleep')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('sleep')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">Sleep Last Night</span>
+            <span className={`vital-tag ${latest.sleepDuration < 6 ? 'warning' : 'nominal'}`}>
               {latest.sleepDuration < 6 ? 'LOW' : 'SUFFICIENT'}
-            </StatusChip>
+            </span>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">
-              {Number(latest.sleepDuration).toFixed(1)}
-            </strong>
-            <span className="hd-vital-card__unit">hours</span>
+          <div className="block-val-group">
+            <strong className="block-num">{Number(latest.sleepDuration).toFixed(1)}</strong>
+            <span className="block-unit">hours</span>
           </div>
-          <MeterBar
-            value={latest.sleepDuration}
-            min={0}
-            max={10}
-            variant={latest.sleepDuration < 6 ? 'warning' : 'good'}
-            showValue={false}
-          />
-          <span className="hd-vital-card__range">Mission Goal: 7 – 8 hours</span>
-          <p className="hd-vital-card__desc">
-            Sleep cycle recorded. REM and deep rest architecture complete.
-          </p>
+          <span className="block-range">Goal: 7 – 8 hours</span>
+          <p className="block-desc">Sleep cycle recorded. REM and deep rest architecture complete.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
 
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">Daily Exercise Steps</span>
-            <div className="hd-vital-card__head-right">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleEdu('steps')}
-                title="View How & Why measurement guide"
-                style={{ padding: '0.15rem 0.4rem', minHeight: '28px', fontSize: '0.75rem' }}
-              >
-                <Info size={12} />
-                <span>Guide</span>
-              </Button>
-              <StatusChip
-                variant={(latest?.physicalActivity ?? 6000) < 3000 ? 'warning' : 'good'}
-              >
+        {/* Daily Exercise Steps Card */}
+        <article
+          className={`vital-block clickable ${(latest?.physicalActivity ?? 6000) < 3000 ? 'warning' : 'good'}`}
+          onClick={() => setActiveModalKey('steps')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('steps')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">Daily Exercise Steps</span>
+            <div className="block-head-right">
+              <span className={`vital-tag ${(latest?.physicalActivity ?? 6000) < 3000 ? 'warning' : 'nominal'}`}>
                 {(latest?.physicalActivity ?? 6000) < 3000 ? 'UNDER TARGET' : 'ACTIVE'}
-              </StatusChip>
+              </span>
             </div>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">
-              {(latest?.physicalActivity ?? 6000).toLocaleString()}
-            </strong>
-            <span className="hd-vital-card__unit">steps</span>
+          <div className="block-val-group">
+            <strong className="block-num">{(latest?.physicalActivity ?? 6000).toLocaleString()}</strong>
+            <span className="block-unit">steps</span>
           </div>
-          <MeterBar
-            value={latest?.physicalActivity ?? 6000}
-            min={0}
-            max={10000}
-            variant={(latest?.physicalActivity ?? 6000) < 3000 ? 'warning' : 'good'}
-            showValue={false}
-          />
-          <span className="hd-vital-card__range">Goal: 6,000+ steps</span>
-          <p className="hd-vital-card__desc">
-            Live Oraimo wrist accelerometer count &amp; T2 treadmill loading strides.
-          </p>
-
-          {activeEduCard === 'steps' && (
-            <div className="hd-vital-edu-drawer">
-              <div>
-                <strong>How to Measure:</strong> Wrist optical accelerometer (Oraimo) or T2 treadmill bungee harness stride sensor.
-              </div>
-              <div>
-                <strong>Why it Matters (NASA HRP Hazard):</strong> Microgravity eliminates mechanical ground impact. Without daily steps, astronauts lose 1.0–1.5% bone mineral density per month (osteopenia), triggering calcium leakage, kidney stones, and muscle atrophy.
-              </div>
-              <div>
-                <strong>If Abnormal (&lt;3,000 steps):</strong> Microgravity musculoskeletal deconditioning risk. Complete mandatory 45-min bungee-loaded resistance/treadmill protocol.
-              </div>
-            </div>
-          )}
+          <span className="block-range">Goal: 6,000+ steps</span>
+          <p className="block-desc">Live Oraimo wrist accelerometer count &amp; T2 treadmill loading strides.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
 
-        {/* Nutrition & Fluid Balance Card */}
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">Nutrition &amp; Hydration</span>
-            <div className="hd-vital-card__head-right">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleEdu('nutrition')}
-                title="View How & Why measurement guide"
-                style={{ padding: '0.15rem 0.4rem', minHeight: '28px', fontSize: '0.75rem' }}
-              >
-                <Info size={12} />
-                <span>Guide</span>
-              </Button>
-              <StatusChip variant="good">BALANCED</StatusChip>
+        {/* Nutrition & Fluid Balance (NASA Artemis Standard Measure) */}
+        <article
+          className="vital-block clickable good"
+          onClick={() => setActiveModalKey('nutrition')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('nutrition')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">Nutrition &amp; Hydration</span>
+            <div className="block-head-right">
+              <span className="vital-tag nominal">BALANCED</span>
             </div>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">2,840</strong>
-            <span className="hd-vital-card__unit">kcal · 2.4 L</span>
+          <div className="block-val-group">
+            <strong className="block-num">2,840</strong>
+            <span className="block-unit">kcal · 2.4 L</span>
           </div>
-          <MeterBar value={2840} min={1500} max={3500} variant="good" showValue={false} />
-          <span className="hd-vital-card__range">Goal: 2,700–3,000 kcal</span>
-          <p className="hd-vital-card__desc">
-            Galley RFID nutritional tracking. Low-sodium electrolyte pouch balance nominal.
-          </p>
-
-          {activeEduCard === 'nutrition' && (
-            <div className="hd-vital-edu-drawer">
-              <div>
-                <strong>How to Measure:</strong> Galley barcode scanner on freeze-dried meal packs and RFID metered water dispenser port.
-              </div>
-              <div>
-                <strong>Why it Matters (NASA Standard Measure):</strong> Microgravity increases bone calcium resorption. Controlled sodium (&lt;2,300 mg) prevents intracranial fluid pressure (SANS vision damage), while adequate potassium protects heart rhythms.
-              </div>
-              <div>
-                <strong>If Abnormal (&lt;2,200 kcal or &lt;1.8 L):</strong> Fluid deficit warning. Drink 1 chilled electrolyte hydration pouch immediately to preserve circulating plasma volume.
-              </div>
-            </div>
-          )}
+          <span className="block-range">Goal: 2,700–3,000 kcal</span>
+          <p className="block-desc">Galley RFID nutritional tracking. Low-sodium electrolyte pouch balance nominal.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
       </div>
 
-      {/* 4. SALIVARY IMMUNE BIOMARKERS */}
-      <div className="hd-section-heading">
-        <Dna size={16} strokeWidth={2} />
+      {/* 4. SALIVARY IMMUNE BIOMARKERS & LATENT VIRAL SURVEILLANCE (content.md Lines 33-36 & NASA OSDR-379) */}
+      <div className="vitals-group-heading">
+        <Dna size={14} strokeWidth={2} />
         <span>Salivary Immune Biomarkers &amp; Viral Surveillance (NASA GeneLab OSDR-379)</span>
       </div>
 
-      <div className="hd-vitals-grid hd-stagger">
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">Salivary Cortisol</span>
-            <div className="hd-vital-card__head-right">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleEdu('cortisol')}
-                title="View How & Why measurement guide"
-                style={{ padding: '0.15rem 0.4rem', minHeight: '28px', fontSize: '0.75rem' }}
-              >
-                <Info size={12} />
-                <span>Guide</span>
-              </Button>
-              <StatusChip variant={cortisolStatus === 'ELEVATED' ? 'warning' : 'good'}>
+      <div className="vitals-matrix-row secondary-row">
+        {/* Salivary Cortisol Card */}
+        <article
+          className={`vital-block clickable ${cortisolStatus === 'ELEVATED' ? 'warning' : 'good'}`}
+          onClick={() => setActiveModalKey('cortisol')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('cortisol')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">Salivary Cortisol</span>
+            <div className="block-head-right">
+              <span className={`vital-tag ${cortisolStatus === 'ELEVATED' ? 'warning' : 'nominal'}`}>
                 {cortisolStatus}
-              </StatusChip>
+              </span>
             </div>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">{salivaryCortisol}</strong>
+          <div className="block-val-group">
+            <strong className="block-num">{salivaryCortisol}</strong>
           </div>
-          <MeterBar
-            value={parseFloat(salivaryCortisol)}
-            min={5}
-            max={35}
-            variant={cortisolStatus === 'ELEVATED' ? 'warning' : 'good'}
-            showValue={false}
-          />
-          <span className="hd-vital-card__range">Nominal Baseline: 10.0 – 22.0 nmol/L</span>
-          <p className="hd-vital-card__desc">
-            Salivary neuroendocrine stress &amp; circadian rhythm alignment biomarker.
-          </p>
-
-          {activeEduCard === 'cortisol' && (
-            <div className="hd-vital-edu-drawer">
-              <div>
-                <strong>How to Measure:</strong> Passive drool for 2 minutes into cryo-vial immediately upon waking before meals.
-              </div>
-              <div>
-                <strong>Why it Matters (NASA HRP Stress):</strong> High cortisol (&gt;22 nmol/L) suppresses T-cell immune activation and accelerates muscle protein breakdown.
-              </div>
-              <div>
-                <strong>If Abnormal (&gt;25 nmol/L):</strong> High neuroendocrine strain. Schedule 30-min relaxation in sleep berth, dim cabin lighting, adjust shift duties.
-              </div>
-            </div>
-          )}
+          <span className="block-range">Nominal: 10.0 – 22.0 nmol/L</span>
+          <p className="block-desc">Salivary neuroendocrine stress &amp; circadian rhythm alignment biomarker.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
 
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">Latent Viral Shedding</span>
-            <div className="hd-vital-card__head-right">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleEdu('viral')}
-                title="View How & Why measurement guide"
-                style={{ padding: '0.15rem 0.4rem', minHeight: '28px', fontSize: '0.75rem' }}
-              >
-                <Info size={12} />
-                <span>Guide</span>
-              </Button>
-              <StatusChip variant={viralStatus.includes('FLARE') ? 'warning' : 'good'}>
+        {/* Latent Viral Shedding Card */}
+        <article
+          className={`vital-block clickable ${viralStatus.includes('FLARE') ? 'warning' : 'good'}`}
+          onClick={() => setActiveModalKey('viral')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('viral')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">Latent Viral Shedding (EBV/HSV)</span>
+            <div className="block-head-right">
+              <span className={`vital-tag ${viralStatus.includes('FLARE') ? 'warning' : 'nominal'}`}>
                 {viralStatus.includes('FLARE') ? 'VIRAL FLARE' : 'NOMINAL'}
-              </StatusChip>
+              </span>
             </div>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">{viralShedding}</strong>
+          <div className="block-val-group">
+            <strong className="block-num">{viralShedding}</strong>
           </div>
-          <MeterBar
-            value={viralStatus.includes('FLARE') ? 480 : 30}
-            min={0}
-            max={500}
-            variant={viralStatus.includes('FLARE') ? 'warning' : 'good'}
-            showValue={false}
-          />
-          <span className="hd-vital-card__range">Safe Threshold: &lt; 50 copies/mL</span>
-          <p className="hd-vital-card__desc">
-            Epstein-Barr and Varicella Zoster latent virus reactivation in spaceflight.
-          </p>
-
-          {activeEduCard === 'viral' && (
-            <div className="hd-vital-edu-drawer">
-              <div>
-                <strong>How to Measure:</strong> Handheld miniPCR cartridge analyzer reads viral DNA copy count from saliva swab.
-              </div>
-              <div>
-                <strong>Why it Matters (NASA OSDR-379):</strong> Dormant childhood herpesviruses re-awaken when deep-space radiation and zero-G suppress T-cell surveillance.
-              </div>
-              <div>
-                <strong>If Abnormal (&gt;50 copies/mL):</strong> Viral flare detected. Administer oral Valacyclovir (500mg 2x daily from Bulkhead Med Locker 3), enforce sleep rest.
-              </div>
-            </div>
-          )}
+          <span className="block-range">Safe Threshold: &lt; 50 copies/mL</span>
+          <p className="block-desc">Epstein-Barr and Varicella Zoster latent virus reactivation in spaceflight.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
 
-        <article className="hd-vital-card">
-          <div className="hd-vital-card__head">
-            <span className="hd-vital-card__title">T-Cell Ratio (CD4+/CD8+)</span>
-            <StatusChip variant="good">SURVEILLANCE</StatusChip>
+        {/* T-Cell Ratio Card */}
+        <article
+          className={`vital-block clickable ${isStressOrRadiation ? 'warning' : 'good'}`}
+          onClick={() => setActiveModalKey('tcell')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveModalKey('tcell')}
+          title="Click to view How to Measure, Why it Matters, and Clinical SOP"
+        >
+          <div className="block-head">
+            <span className="block-title">T-Cell Ratio (CD4+/CD8+)</span>
+            <span className="vital-tag nominal">SURVEILLANCE</span>
           </div>
-          <div className="hd-vital-card__val-group">
-            <strong className="hd-vital-card__num">{tCellRatio}</strong>
+          <div className="block-val-group">
+            <strong className="block-num">{tCellRatio}</strong>
           </div>
-          <MeterBar value={parseFloat(tCellRatio)} min={1.0} max={2.5} variant="good" showValue={false} />
-          <span className="hd-vital-card__range">Standard Normal: 1.5 – 2.2</span>
-          <p className="hd-vital-card__desc">
-            Secretory IgA: {secretoryIgA} · Immune surveillance active against pathogens.
-          </p>
+          <span className="block-range">Standard: 1.5 – 2.2</span>
+          <p className="block-desc">Secretory IgA: {secretoryIgA} · Immune surveillance active against pathogens.</p>
+          <span className="vital-tap-hint">
+            <Info size={11} /> Tap card for Measurement SOP &amp; Rationale
+          </span>
         </article>
       </div>
 
-      <Accordion
-        title="NASA Human Research Program & GeneLab Immune Notes"
-        defaultOpen={false}
-      >
-        <p>
-          <strong>Immune Alterations in Space:</strong> NASA HRP research demonstrates that prolonged exposure to microgravity and cosmic radiation impairs T-cell function and reactivates dormant childhood herpesviruses (EBV, CMV, VZV) shed into saliva.
-        </p>
-        <p>
-          <strong>Measurement Protocol:</strong> Collect 1.5 mL passive-drool saliva using cryo-stabilized Salivette swab after waking and before meals.
-        </p>
-      </Accordion>
+      <details className="view-accordion">
+        <summary>NASA Human Research Program &amp; GeneLab Immune Notes</summary>
+        <div className="accordion-body">
+          <p>
+            <strong>Immune Alterations in Space:</strong> NASA HRP research demonstrates that prolonged exposure to microgravity and cosmic radiation impairs T-cell function and reactivates dormant childhood herpesviruses (EBV, CMV, VZV) shed into saliva.
+          </p>
+          <p>
+            <strong>Measurement Protocol:</strong> Collect 1.5 mL passive-drool saliva using cryo-stabilized Salivette swab after waking and before meals.
+          </p>
+        </div>
+      </details>
 
-      <div className="hd-vitals-footer">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <ShieldCheck size={18} strokeWidth={2} style={{ color: 'var(--hd-green)' }} />
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+      <div className="vitals-footer-strip">
+        <div className="strip-info">
+          <ShieldCheck size={16} strokeWidth={2} />
+          <span>
             <strong>Autonomous Medical Engine:</strong> Real-time biometrics streaming. Zero anomalies.
           </span>
         </div>
-        <Button variant="primary" onClick={onJumpToTrends}>
+        <button type="button" className="jump-tab-btn" onClick={onJumpToTrends}>
           <span>View Live Trends &amp; Flight Phases</span>
           <ArrowRight size={14} strokeWidth={2} />
-        </Button>
+        </button>
       </div>
+
+      {/* 5. AURA-MED COMPACT MEDICAL METRIC MODAL (Addressing content.md Lines 8-12) */}
+      {activeModalData && (
+        <div
+          className="vital-modal-backdrop"
+          onClick={() => setActiveModalKey(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-vital-title"
+        >
+          <div
+            className="vital-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <header className="vital-modal-header">
+              <div className="modal-title-group">
+                <ShieldCheck size={18} className="text-accent" />
+                <h3 id="modal-vital-title" className="modal-title">
+                  {activeModalData.title}
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setActiveModalKey(null)}
+                aria-label="Close dialog"
+              >
+                <X size={18} />
+              </button>
+            </header>
+
+            {/* Reading Status Bar */}
+            <div className="modal-reading-bar">
+              <div className="modal-reading-val">
+                <strong>{activeModalData.getValue()}</strong>
+                <span className="modal-reading-unit">{activeModalData.unit}</span>
+              </div>
+              <span className="modal-reading-range">{activeModalData.range}</span>
+            </div>
+
+            {/* Modal Body: Why, How, What to do if abnormal */}
+            <div className="vital-modal-body">
+              {/* Section 1: Why it matters */}
+              <div className="vital-modal-section">
+                <div className="section-head">
+                  <Info size={14} className="section-icon info" />
+                  <span>Why It Matters (Spaceflight Physiology)</span>
+                </div>
+                <p className="section-text">{activeModalData.whyItMatters}</p>
+              </div>
+
+              {/* Section 2: How to measure */}
+              <div className="vital-modal-section">
+                <div className="section-head">
+                  <Activity size={14} className="section-icon activity" />
+                  <span>How to Measure (Operational SOP)</span>
+                </div>
+                <p className="section-text">{activeModalData.howToMeasure}</p>
+              </div>
+
+              {/* Section 3: What to do if abnormal + Redirect to Medical Advice */}
+              <div
+                className={`vital-modal-section abnormal-section ${
+                  activeModalData.isAbnormal() ? 'flagged' : ''
+                }`}
+              >
+                <div className="section-head">
+                  <AlertTriangle size={14} className="section-icon alert" />
+                  <span>What to Do if Reading is Abnormal</span>
+                </div>
+                <p className="section-text">{activeModalData.whatIfAbnormal}</p>
+
+                {/* Direct CTA button redirecting to Medical Advice */}
+                <button
+                  type="button"
+                  className="modal-redirect-btn"
+                  onClick={() => {
+                    setActiveModalKey(null)
+                    onJumpToMedicalAdvice?.()
+                  }}
+                >
+                  <ExternalLink size={14} />
+                  <span>View Protocols in Medical Advice</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <footer className="vital-modal-footer">
+              <button
+                type="button"
+                className="modal-reminder-btn"
+                onClick={() => {
+                  alert(`Scheduled: Reminder logged for next shift measurement (${activeModalData.title}).`)
+                  setActiveModalKey(null)
+                }}
+              >
+                <Clock size={13} />
+                <span>Set Shift Reminder</span>
+              </button>
+              <button
+                type="button"
+                className="modal-dismiss-btn"
+                onClick={() => setActiveModalKey(null)}
+              >
+                Close
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
