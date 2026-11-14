@@ -1004,8 +1004,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               </div>
 
               <div className="eight-gauges-grid">
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Breathing Rate</span>
+                <article className={`clinical-gauge-box ${(metrics.resp > 20 || metrics.resp < 12) ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Breathing Rate</span>
+                    {metrics.resp > 20 && <span className="gauge-spike-tag">TACHYPNEA</span>}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.resp}</strong>
                     <span className="g-unit">rpm</span>
@@ -1013,8 +1016,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">Thoracic bio-sensor. 12 to 20 breaths per minute is healthy.</p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Sleep &amp; Rest</span>
+                <article className={`clinical-gauge-box ${metrics.fatigue > 55 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Sleep &amp; Rest</span>
+                    {metrics.fatigue > 55 && <span className="gauge-spike-tag">FATIGUE ELEVATED</span>}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.fatigue}</strong>
                     <span className="g-unit">/100 score</span>
@@ -1022,8 +1028,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">{Number(metrics.sleep).toFixed(1)} hours of rest. Cognitive alertness scores are sharp.</p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Immune Defense</span>
+                <article className={`clinical-gauge-box ${metrics.immune > 30 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Immune Defense</span>
+                    {metrics.immune > 30 && <span className="gauge-spike-tag">IMMUNE STRESS</span>}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.immune}</strong>
                     <span className="g-unit">% stress</span>
@@ -1031,8 +1040,13 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">Salivary biomarker check. Low stress score indicates dormant viruses.</p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Bone &amp; Muscle Strength</span>
+                <article className={`clinical-gauge-box ${selectedAstro.id === 1 && (liveWearable.steps || metrics.steps) && (liveWearable.steps || metrics.steps) < 3000 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Bone &amp; Muscle Strength</span>
+                    {selectedAstro.id === 1 && (liveWearable.steps || metrics.steps) && (liveWearable.steps || metrics.steps) < 3000 && (
+                      <span className="gauge-spike-tag">UNDER TARGET</span>
+                    )}
+                  </div>
                   <div className="g-val-line">
                     <strong>{selectedAstro.id === 1 && (liveWearable.steps || metrics.steps) ? `${(liveWearable.steps || metrics.steps).toLocaleString()} steps` : '96.4%'}</strong>
                     <span className="g-unit">{selectedAstro.id === 1 && (liveWearable.steps || metrics.steps) ? 'BMD Loading' : 'BMD'}</span>
