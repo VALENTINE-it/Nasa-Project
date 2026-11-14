@@ -66,10 +66,13 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
 
   const connectDevice = useCallback(async () => {
     if (typeof navigator === 'undefined' || !navigator.bluetooth) {
-      const err = 'Web Bluetooth is not supported in this browser. Please open Chrome or Edge on localhost.'
-      setErrorMessage(err)
-      logDiag(err)
-      alert(err)
+      const isLinux = typeof navigator !== 'undefined' && /linux/i.test(navigator.userAgent || navigator.platform || '')
+      const linuxMsg = isLinux
+        ? 'Web Bluetooth is disabled by default in Chrome on Linux.\n\nTo enable it:\n1. Open a new tab: chrome://flags/#enable-experimental-web-platform-features\n2. Change the dropdown from "Default" to "Enabled"\n3. Click "Relaunch" at the bottom of Chrome.'
+        : 'Web Bluetooth is not supported in this browser. Please use Chrome or Edge.'
+      setErrorMessage(linuxMsg)
+      logDiag(linuxMsg)
+      alert(linuxMsg)
       return
     }
 
