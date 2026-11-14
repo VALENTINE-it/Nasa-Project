@@ -986,3 +986,137 @@
   background-color: var(--bg-surface-secondary);
   border: 1px solid var(--border-subtle);
 }
+
+/* --------------------------------------------------------------------------
+   Crew Roster Matrix Grid & Cards (.hd-roster-*)
+   -------------------------------------------------------------------------- */
+.hd-roster-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.hd-roster-alert {
+  margin-bottom: 1.25rem;
+}
+
+.hd-roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.hd-roster-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--hd-radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: transform var(--hd-transition-fast), box-shadow var(--hd-transition-fast), border-color var(--hd-transition-fast);
+  cursor: pointer;
+}
+
+.hd-roster-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hd-shadow-md);
+}
+
+.hd-roster-card--selected {
+  border-color: var(--accent-color);
+  box-shadow: var(--hd-shadow-focus);
+}
+
+.hd-roster-card__top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hd-roster-card__meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.hd-roster-card__name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.hd-roster-card__name {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hd-roster-card__sub {
+  font-size: 0.775rem;
+  color: var(--text-tertiary);
+  margin: 0.15rem 0 0 0;
+}
+
+.hd-roster-hr-panel {
+  background-color: var(--bg-surface-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--hd-radius-md);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hd-roster-hr-readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.hd-roster-hr-label {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hd-roster-hr-num {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.hd-roster-hr-num small {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  margin-left: 0.2rem;
+}
+
+.hd-roster-metrics-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+}
+
+.hd-roster-source {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
