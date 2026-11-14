@@ -466,7 +466,7 @@
 }
 
 .vitals-matrix-row.secondary-row {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .vital-block {
@@ -2073,6 +2073,69 @@
     max-width: 160px;
     height: 70px;
   }
+}
+
+/* Houston Ground Advisory Banner (Closed-Loop Telemedicine) */
+.houston-uplink-banner {
+  margin: 12px 24px 0;
+  padding: 12px 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-focus);
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.uplink-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #f59e0b;
+  white-space: nowrap;
+}
+
+.uplink-body {
+  font-size: 13px;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.uplink-body strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.uplink-meta {
+  display: block;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.uplink-ack-btn {
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.uplink-ack-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-focus);
 }
 
 
