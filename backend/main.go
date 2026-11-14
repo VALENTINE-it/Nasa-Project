@@ -13,11 +13,13 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -28,6 +30,49 @@ const (
 	sessionCookieName = "aura_session"
 	maxRequestsPerMin = 60
 )
+
+type config struct {
+	dbPath             string
+	corsAllowedOrigins []string
+	demoPasswords      map[string]string
+	port               string
+}
+
+func loadConfig() config {
+	c := config{
+		dbPath:             getEnv("DB_PATH", filepath.Join(".", "data", "aura_med.db")),
+		corsAllowedOrigins: parseOrigins(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080")),
+		demoPasswords: map[string]string{
+			"A-2041": getEnv("DEMO_PASSWORD_A2041", ""),
+			"A-2056": getEnv("DEMO_PASSWORD_A2056", ""),
+			"A-2089": getEnv("DEMO_PASSWORD_A2089", ""),
+		},
+		port: getEnv("BACKEND_PORT", "8080"),
+	}
+	return c
+}
+
+func getEnv(key, defaultValue string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return defaultValue
+}
+
+func parseOrigins(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	origins := make([]string, 0, len(parts))
+	for _, p := range parts {
+		trimmed := strings.TrimSpace(p)
+		if trimmed != "" {
+			origins = append(origins, trimmed)
+		}
+	}
+	return origins
+}
 
 //go:embed dist
 var frontendFS embed.FS
@@ -64,6 +109,8 @@ var (
 			Eta:      "Delivered",
 		},
 	}
+
+	cfg config
 )
 
 type commsMessage struct {
@@ -163,13 +210,13 @@ type createHealthRequest struct {
 }
 
 func initDB() error {
-	if err := os.MkdirAll(filepath.Join(".", "data"), 0o755); err != nil {
+	dbDir := filepath.Dir(cfg.dbPath)
+	if err := os.MkdirAll(dbDir, 0o755); err != nil {
 		return err
 	}
 
-	dbPath := filepath.Join(".", "data", "aura_med.db")
 	var err error
-	db, err = sql.Open("sqlite3", dbPath)
+	db, err = sql.Open("sqlite3", cfg.dbPath+"?_journal_mode=WAL&_busy_timeout=5000")
 	if err != nil {
 		return err
 	}
@@ -295,18 +342,21 @@ func seedDemoData() error {
 		}
 
 		username := strings.ToLower(strings.ReplaceAll(profile.FullName, " ", ""))
-		hash, err := bcrypt.GenerateFromPassword([]byte(defaultPasswordFor(profile.AstronautID)), bcrypt.DefaultCost)
-		if err != nil {
-			return err
-		}
+		pw := defaultPasswordFor(profile.AstronautID)
+		if pw != "" {
+			hash, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+			if err != nil {
+				return err
+			}
 
-		if _, err = db.Exec(
-			"INSERT INTO users (astronaut_id, username, password_hash, role) VALUES (?, ?, ?, 'astronaut')",
-			astronautID,
-			username,
-			string(hash),
-		); err != nil {
-			return err
+			if _, err = db.Exec(
+				"INSERT INTO users (astronaut_id, username, password_hash, role) VALUES (?, ?, ?, 'astronaut')",
+				astronautID,
+				username,
+				string(hash),
+			); err != nil {
+				return err
+			}
 		}
 
 		if err = insertDemoMeasurements(int(astronautID), profile.AstronautID); err != nil {
@@ -317,16 +367,11 @@ func seedDemoData() error {
 }
 
 func defaultPasswordFor(astronautID string) string {
-	switch astronautID {
-	case "A-2041":
-		return "mission-2041"
-	case "A-2056":
-		return "mission-2056"
-	case "A-2089":
-		return "mission-2089"
-	default:
-		return "mission-demo"
+	if pw, ok := cfg.demoPasswords[astronautID]; ok && pw != "" {
+		return pw
 	}
+	// No fallback - passwords must be set via env vars
+	return ""
 }
 
 func insertDemoMeasurements(astronautID int, code string) error {
@@ -399,9 +444,20 @@ func insertDemoMeasurements(astronautID int, code string) error {
 
 func withCORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := r.Header.Get("Origin")
+		allowed := false
+		for _, o := range cfg.corsAllowedOrigins {
+			if o == "*" || o == origin {
+				allowed = true
+				break
+			}
+		}
+		if allowed && origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
@@ -926,7 +982,44 @@ func handleCommsUplink(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func newSPAHandler() (http.Handler, error) {
+	subFS, err := fs.Sub(frontendFS, "dist")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dist subdirectory: %w", err)
+	}
+
+	fileServer := http.FileServer(http.FS(subFS))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		path := strings.TrimPrefix(r.URL.Path, "/")
+		if path == "" {
+			path = "index.html"
+		}
+
+		_, err := fs.Stat(subFS, path)
+		if err == nil {
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		indexData, err := fs.ReadFile(subFS, "index.html")
+		if err != nil {
+			http.Error(w, "frontend not built", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(indexData)
+	}), nil
+}
+
 func main() {
+	cfg = loadConfig()
+
 	if err := initDB(); err != nil {
 		log.Fatalf("database initialization failed: %v", err)
 	}
@@ -964,50 +1057,29 @@ func main() {
 		mux.Handle("/", spaHandler)
 	}
 
-	port := os.Getenv("BACKEND_PORT")
-	if port == "" {
-		port = "8080"
+	server := &http.Server{
+		Addr:         ":" + cfg.port,
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
-	log.Printf("AURA-MED astronaut authentication and monitoring backend is running on http://localhost:%s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+
+	// Graceful shutdown
+	go func() {
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+		<-sigCh
+		log.Println("Shutdown signal received, stopping server...")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Server shutdown error: %v", err)
+		}
+	}()
+
+	log.Printf("AURA-MED astronaut authentication and monitoring backend is running on http://localhost:%s", cfg.port)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server failed: %v", err)
 	}
-}
-
-func newSPAHandler() (http.Handler, error) {
-	subFS, err := fs.Sub(frontendFS, "dist")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get dist subdirectory: %w", err)
-	}
-
-	fileServer := http.FileServer(http.FS(subFS))
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// API requests should not reach here (handled above), but guard anyway
-		if strings.HasPrefix(r.URL.Path, "/api/") {
-			http.NotFound(w, r)
-			return
-		}
-
-		// Try to serve the requested file
-		path := strings.TrimPrefix(r.URL.Path, "/")
-		if path == "" {
-			path = "index.html"
-		}
-
-		_, err := fs.Stat(subFS, path)
-		if err == nil {
-			fileServer.ServeHTTP(w, r)
-			return
-		}
-
-		// Fallback to index.html for SPA client-side routing
-		indexData, err := fs.ReadFile(subFS, "index.html")
-		if err != nil {
-			http.Error(w, "frontend not built", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(indexData)
-	}), nil
 }
