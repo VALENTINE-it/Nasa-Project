@@ -4,6 +4,55 @@
    Zero emojis, zero glowing dots, authentic aerospace ergonomics
    ========================================================= */
 
+/* Modern Full-Width Top-Bar & Tabs Shell */
+.earth-console-shell {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+}
+
+.earth-console-shell .earth-viewport-container {
+  width: 100%;
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: var(--bg-app);
+}
+
+.earth-console-shell .earth-viewport-header {
+  padding: 1.25rem 2rem;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.earth-console-shell .earth-viewport-header h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0 0;
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+}
+
+.earth-console-shell .earth-viewport-body {
+  flex: 1 1 auto;
+  padding: 1.5rem 2rem;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .earth-console-shell .earth-viewport-header,
+  .earth-console-shell .earth-viewport-body {
+    padding: 1rem;
+  }
+}
+
 /* Root Full-Viewport Container */
 .earth-workstation-layout {
   width: 100vw;
