@@ -928,6 +928,7 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               upcomingReminder={upcomingReminder}
               onCompleteReminder={() => setUpcomingReminder((prev) => ({ ...prev, taken: true }))}
               onJumpToTrends={() => setActiveTab('trends')}
+              onJumpToMedicalAdvice={() => setActiveTab('notices')}
             />
           )}
 
