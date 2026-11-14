@@ -389,7 +389,22 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     const telemetryInterval = setInterval(() => {
       setCrewData((prev) =>
         prev.map((astro) => {
-          /* Elena Park jitter isolation handled in subsequent module */
+          // If Elena Park (astro.id === 1) has an active live watch connection,
+          // DO NOT pull her to synthetic base.hr (78 bpm)!
+          const isElenaLive = astro.id === 1 && (liveWearable.isConnected || isBleConnected || astro.isLiveWatchConnected)
+          if (isElenaLive && activeScenario === 'nominal') {
+            const current = astro.currentMetrics || astro.baseline[missionPhase]
+            // Subtle biological sinus variability (+/- 1 bpm) without overwriting watch reading
+            const organicDelta = Math.random() > 0.7 ? (Math.random() > 0.5 ? 1 : -1) : 0
+            const boundedHr = Math.max(50, Math.min(190, (liveWearable.heartRate || current.hr) + organicDelta))
+            return {
+              ...astro,
+              currentMetrics: {
+                ...current,
+                hr: boundedHr,
+              },
+            }
+          }
 
           const base = astro.baseline[missionPhase]
           const current = astro.currentMetrics || base
