@@ -326,17 +326,71 @@ export function DailyVitalsView({
           <p className="block-desc">Sleep cycle recorded. REM and deep rest architecture complete.</p>
         </article>
 
-        <article className="vital-block good">
+        <article className={`vital-block ${(latest?.physicalActivity ?? 6000) < 3000 ? 'warning' : 'good'}`}>
           <div className="block-head">
             <span className="block-title">Daily Exercise Steps</span>
-            <span className="vital-tag nominal">ACTIVE</span>
+            <div className="block-head-right">
+              <button
+                type="button"
+                className="vital-edu-info-btn"
+                onClick={() => toggleEdu('steps')}
+                title="View How & Why measurement guide"
+              >
+                <Info size={12} />
+                <span>Guide</span>
+              </button>
+              <span className={`vital-tag ${(latest?.physicalActivity ?? 6000) < 3000 ? 'warning' : 'nominal'}`}>
+                {(latest?.physicalActivity ?? 6000) < 3000 ? 'UNDER TARGET' : 'ACTIVE'}
+              </span>
+            </div>
           </div>
           <div className="block-val-group">
-            <strong className="block-num">{latest.physicalActivity.toLocaleString()}</strong>
+            <strong className="block-num">{(latest?.physicalActivity ?? 6000).toLocaleString()}</strong>
             <span className="block-unit">steps</span>
           </div>
           <span className="block-range">Goal: 6,000+ steps</span>
-          <p className="block-desc">Live accelerometer count accumulating across current flight shift.</p>
+          <p className="block-desc">Live Oraimo wrist accelerometer count &amp; T2 treadmill loading strides.</p>
+
+          {activeEduCard === 'steps' && (
+            <div className="vital-edu-drawer">
+              <div><strong>How to Measure:</strong> Wrist optical accelerometer (Oraimo) or T2 treadmill bungee harness stride sensor.</div>
+              <div><strong>Why it Matters (NASA HRP Hazard):</strong> Microgravity eliminates mechanical ground impact. Without daily steps, astronauts lose 1.0–1.5% bone mineral density per month (osteopenia), triggering calcium leakage, kidney stones, and muscle atrophy.</div>
+              <div><strong>If Abnormal (&lt;3,000 steps):</strong> Microgravity musculoskeletal deconditioning risk. Complete mandatory 45-min bungee-loaded resistance/treadmill protocol.</div>
+            </div>
+          )}
+        </article>
+
+        {/* Nutrition & Fluid Balance (NASA Artemis Standard Measure) */}
+        <article className="vital-block good">
+          <div className="block-head">
+            <span className="block-title">Nutrition &amp; Hydration</span>
+            <div className="block-head-right">
+              <button
+                type="button"
+                className="vital-edu-info-btn"
+                onClick={() => toggleEdu('nutrition')}
+                title="View How & Why measurement guide"
+              >
+                <Info size={12} />
+                <span>Guide</span>
+              </button>
+              <span className="vital-tag nominal">BALANCED</span>
+            </div>
+          </div>
+          <div className="block-val-group">
+            <strong className="block-num">2,840</strong>
+            <span className="block-unit">kcal · 2.4 L</span>
+          </div>
+          <span className="block-range">Goal: 2,700–3,000 kcal</span>
+          <p className="block-desc">Galley RFID nutritional tracking. Low-sodium electrolyte pouch balance nominal.</p>
+
+          {activeEduCard === 'nutrition' && (
+            <div className="vital-edu-drawer">
+              <div><strong>How to Measure:</strong> Galley barcode scanner on freeze-dried meal packs and RFID metered water dispenser port.</div>
+              <div><strong>Why it Matters (NASA Standard Measure):</strong> Microgravity increases bone calcium resorption. Controlled sodium (&lt;2,300 mg) prevents intracranial fluid pressure (SANS vision damage), while adequate potassium protects heart rhythms.</div>
+              <div><strong>If Abnormal (&lt;2,200 kcal or &lt;1.8 L):</strong> Fluid deficit warning. Drink 1 chilled electrolyte hydration pouch immediately to preserve circulating plasma volume.</div>
+            </div>
+          )}
         </article>
       </div>
 
@@ -350,29 +404,67 @@ export function DailyVitalsView({
         <article className={`vital-block ${cortisolStatus === 'ELEVATED' ? 'warning' : 'good'}`}>
           <div className="block-head">
             <span className="block-title">Salivary Cortisol</span>
-            <span className={`vital-tag ${cortisolStatus === 'ELEVATED' ? 'warning' : 'nominal'}`}>
-              {cortisolStatus}
-            </span>
+            <div className="block-head-right">
+              <button
+                type="button"
+                className="vital-edu-info-btn"
+                onClick={() => toggleEdu('cortisol')}
+                title="View How & Why measurement guide"
+              >
+                <Info size={12} />
+                <span>Guide</span>
+              </button>
+              <span className={`vital-tag ${cortisolStatus === 'ELEVATED' ? 'warning' : 'nominal'}`}>
+                {cortisolStatus}
+              </span>
+            </div>
           </div>
           <div className="block-val-group">
             <strong className="block-num">{salivaryCortisol}</strong>
           </div>
           <span className="block-range">Nominal: 10.0 – 22.0 nmol/L</span>
           <p className="block-desc">Salivary neuroendocrine stress &amp; circadian rhythm alignment biomarker.</p>
+
+          {activeEduCard === 'cortisol' && (
+            <div className="vital-edu-drawer">
+              <div><strong>How to Measure:</strong> Passive drool for 2 minutes into cryo-vial immediately upon waking before meals.</div>
+              <div><strong>Why it Matters (NASA HRP Stress):</strong> High cortisol (&gt;22 nmol/L) suppresses T-cell immune activation and accelerates muscle protein breakdown.</div>
+              <div><strong>If Abnormal (&gt;25 nmol/L):</strong> High neuroendocrine strain. Schedule 30-min relaxation in sleep berth, dim cabin lighting, adjust shift duties.</div>
+            </div>
+          )}
         </article>
 
         <article className={`vital-block ${viralStatus.includes('FLARE') ? 'warning' : 'good'}`}>
           <div className="block-head">
             <span className="block-title">Latent Viral Shedding (EBV/HSV)</span>
-            <span className={`vital-tag ${viralStatus.includes('FLARE') ? 'warning' : 'nominal'}`}>
-              {viralStatus.includes('FLARE') ? 'VIRAL FLARE' : 'NOMINAL'}
-            </span>
+            <div className="block-head-right">
+              <button
+                type="button"
+                className="vital-edu-info-btn"
+                onClick={() => toggleEdu('viral')}
+                title="View How & Why measurement guide"
+              >
+                <Info size={12} />
+                <span>Guide</span>
+              </button>
+              <span className={`vital-tag ${viralStatus.includes('FLARE') ? 'warning' : 'nominal'}`}>
+                {viralStatus.includes('FLARE') ? 'VIRAL FLARE' : 'NOMINAL'}
+              </span>
+            </div>
           </div>
           <div className="block-val-group">
             <strong className="block-num">{viralShedding}</strong>
           </div>
           <span className="block-range">Safe Threshold: &lt; 50 copies/mL</span>
           <p className="block-desc">Epstein-Barr and Varicella Zoster latent virus reactivation in spaceflight.</p>
+
+          {activeEduCard === 'viral' && (
+            <div className="vital-edu-drawer">
+              <div><strong>How to Measure:</strong> Handheld miniPCR cartridge analyzer reads viral DNA copy count from saliva swab.</div>
+              <div><strong>Why it Matters (NASA OSDR-379):</strong> Dormant childhood herpesviruses re-awaken when deep-space radiation and zero-G suppress T-cell surveillance.</div>
+              <div><strong>If Abnormal (&gt;50 copies/mL):</strong> Viral flare detected. Administer oral Valacyclovir (500mg 2x daily from Bulkhead Med Locker 3), enforce sleep rest.</div>
+            </div>
+          )}
         </article>
 
         <article className="vital-block good">
