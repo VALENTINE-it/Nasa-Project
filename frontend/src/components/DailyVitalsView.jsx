@@ -180,7 +180,48 @@ export function DailyVitalsView({
       whatIfAbnormal:
         'If hydration < 1.8 L: Intravascular dehydration risk. Rehydrate with 1 electrolyte pack and review nutritional guidance in Medical Advice.',
     },
-    /* Salivary immune and viral biomarkers registered in subsequent module */
+    cortisol: {
+      title: 'Salivary Cortisol (Neuroendocrine Stress)',
+      unit: 'nmol / L',
+      getValue: () => salivaryCortisol,
+      range: 'Nominal: 10.0 – 22.0 nmol/L',
+      isAbnormal: () => cortisolStatus === 'ELEVATED',
+      statusText: () => cortisolStatus,
+      whyItMatters:
+        'NASA HRP Stress Biomarker: Elevated cortisol (>22 nmol/L) suppresses CD4+ helper T-cells, induces skeletal muscle proteolysis, and elevates risk of neurocognitive fatigue during critical mission tasks.',
+      howToMeasure:
+        'Collect 1.5 mL of passive-drool saliva using cryo-stabilized Salivette swab immediately upon awakening before oral intake.',
+      whatIfAbnormal:
+        'If elevated (>25 nmol/L): High neuroendocrine strain detected. Schedule 30-min relaxation in sleep berth, dim cabin lighting, and review psychological support protocols in Medical Advice.',
+    },
+    viral: {
+      title: 'Latent Viral Shedding (EBV / VZV / CMV)',
+      unit: 'copies / mL',
+      getValue: () => viralShedding,
+      range: 'Safe Threshold: < 50 copies/mL',
+      isAbnormal: () => viralStatus.includes('FLARE'),
+      statusText: () => viralStatus,
+      whyItMatters:
+        'NASA GeneLab OSDR-379: Deep-space cosmic radiation and zero-g stress suppress cellular immunity, causing dormant childhood herpesviruses (Epstein-Barr, Varicella Zoster) to awaken and shed into saliva.',
+      howToMeasure:
+        'Handheld miniPCR thermal cycler amplifies saliva swab DNA to measure quantitative viral copy counts within 45 minutes.',
+      whatIfAbnormal:
+        'If > 50 copies/mL: Viral flare confirmed. Administer oral Valacyclovir (500mg BID from Bulkhead Med Locker 3), enforce sleep rest, and consult Medical Advice.',
+    },
+    tcell: {
+      title: 'T-Cell Ratio (CD4+ / CD8+ Lymphocytes)',
+      unit: 'ratio',
+      getValue: () => tCellRatio,
+      range: 'Standard: 1.5 – 2.2',
+      isAbnormal: () => isStressOrRadiation,
+      statusText: () => (isStressOrRadiation ? 'SHIFTED (IMMUNOSUPPRESSION)' : 'BALANCED'),
+      whyItMatters:
+        'A decreased CD4+/CD8+ ratio signals immunosuppression from cumulative space radiation exposure, leaving the crew vulnerable to opportunistic pathogens in closed habitat air.',
+      howToMeasure:
+        'Microfluidic flow cytometer cartridge reads saliva or capillary blood leukocyte surface markers.',
+      whatIfAbnormal:
+        'Shifted ratio: Elevate antimicrobial hygiene protocols, verify air HEPA filtration, and review clinical immune support guidelines in Medical Advice.',
+    },
   }
 
   const activeModalData = activeModalKey ? VITAL_MODAL_DETAILS[activeModalKey] : null
