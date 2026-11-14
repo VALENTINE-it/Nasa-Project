@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   Activity,
   AlertTriangle,
@@ -10,20 +10,19 @@ import {
   FlaskConical,
   Globe,
   LogOut,
-  Moon,
   Radio,
   RotateCcw,
   Send,
   Shield,
   ShieldAlert,
   ShieldCheck,
-  Sun,
   User,
   Users,
   Watch,
   Wind,
   Zap,
 } from 'lucide-react'
+import { TopBar, SectionTabs, StatusStrip, Button } from './ui'
 import './EarthWatchConsole.css'
 
 const CREW_PROFILES = [
@@ -101,6 +100,14 @@ const INCIDENT_LOGS = [
     doctorAdvice: 'Earth team recommends taking 8 hours of quiet rest and drinking plenty of water.',
     status: 'Monitoring Crew Comfort',
   },
+]
+
+const CONSOLE_TABS = [
+  { id: 'crew', label: 'Crew Roster Matrix', icon: Users, subtitle: 'All 3 Astronauts Live', group: 'monitoring' },
+  { id: 'telemetry', label: 'Clinical Inspection', icon: Activity, subtitle: '8 Gauges & Flight Phases', group: 'monitoring' },
+  { id: 'environment', label: 'Cabin Air & Systems', icon: Shield, subtitle: 'Oxygen, Pressure, Radiation', group: 'habitat' },
+  { id: 'comms', label: 'Radio & Doctor Advice', icon: Radio, subtitle: 'Incident Log & Uplink', group: 'habitat' },
+  { id: 'simulator', label: 'Emergency Simulation', icon: FlaskConical, subtitle: 'Test Anomaly Injections', group: 'sim' },
 ]
 
 export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
@@ -368,144 +375,53 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
   const metrics = selectedAstro.currentMetrics || selectedAstro.baseline[missionPhase]
 
   return (
-    <div className="earth-workstation-layout">
-      {/* =========================================================
-          LEFT NAVIGATION BAR (SIDEBAR FOR MISSION CONTROL)
-          ========================================================= */}
-      <aside className="earth-sidebar-nav">
-        <div className="earth-sidebar-header">
-          <Globe className="earth-sidebar-icon" size={24} strokeWidth={2} />
-          <div>
-            <strong>NASA Houston Desk</strong>
-            <small>Deep-Space Health Console</small>
-          </div>
-          <span className="dashboard-location-badge">Ground Side</span>
-        </div>
-
-        {/* Radio Link Status Box in Sidebar */}
-        <div className="sidebar-radio-card">
-          <div className="radio-line">
-            <Radio size={14} strokeWidth={2} className="radio-icon" />
-            <strong>Radio Link Active</strong>
-          </div>
-          <span className="radio-delay-text">One-way delay: 12m 44s</span>
-          <small className="radio-range-text">Distance: 142M miles</small>
-        </div>
-
-        {/* Navigation Buttons Grouped by Relationship */}
-        <nav className="earth-nav-list">
-          <span className="earth-group-title">Crew Monitoring</span>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'crew' ? 'active' : ''}`}
-            onClick={() => setActiveTab('crew')}
-          >
-            <Users className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Crew Roster Matrix</strong>
-              <small>All 3 Astronauts Live</small>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'telemetry' ? 'active' : ''}`}
-            onClick={() => setActiveTab('telemetry')}
-          >
-            <Activity className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Clinical Inspection</strong>
-              <small>8 Gauges &amp; Flight Phases</small>
-            </div>
-          </button>
-
-          <span className="earth-group-title" style={{ marginTop: '12px' }}>Habitat &amp; Comms</span>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'environment' ? 'active' : ''}`}
-            onClick={() => setActiveTab('environment')}
-          >
-            <Shield className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Cabin Air &amp; Systems</strong>
-              <small>Oxygen, Pressure, Radiation</small>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'comms' ? 'active' : ''}`}
-            onClick={() => setActiveTab('comms')}
-          >
-            <Radio className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Radio &amp; Doctor Advice</strong>
-              <small>Incident Log &amp; Uplink</small>
-            </div>
-          </button>
-
-          <span className="earth-group-title" style={{ marginTop: '12px' }}>Simulation</span>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'simulator' ? 'active' : ''}`}
-            onClick={() => setActiveTab('simulator')}
-          >
-            <FlaskConical className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Emergency Simulation</strong>
-              <small>Test Anomaly Injections</small>
-            </div>
-          </button>
-        </nav>
-
-        {/* Sidebar Footer Controls */}
-        <div className="earth-sidebar-footer">
-          <button
-            type="button"
-            className="switch-astronaut-screen-btn"
+    <div className="earth-console-shell">
+      <TopBar
+        brandIcon={Globe}
+        brandTitle="NASA Houston Desk"
+        brandSubtitle="Deep-Space Health Console"
+        sideChipText="Ground Side"
+        brandLink="/console"
+        primaryAction={
+          <Button
+            variant="primary"
             onClick={() => navigate(`/astronaut/dashboard/${selectedAstronautId}`)}
           >
             <User size={15} strokeWidth={2} />
-            <strong>Open Astronaut Screen</strong>
-          </button>
+            <span>Open Astronaut Screen</span>
+          </Button>
+        }
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        authAction={
+          onLogout ? (
+            <Button variant="outline" onClick={onLogout} aria-label="Log Out">
+              <LogOut size={15} strokeWidth={2} />
+              <span>Log Out</span>
+            </Button>
+          ) : (
+            <Button variant="outline" to="/" aria-label="Sign In">
+              <span>Sign In</span>
+            </Button>
+          )
+        }
+      />
 
-          <div className="footer-button-row">
-            {onToggleTheme && (
-              <button type="button" className="footer-action-btn" onClick={onToggleTheme}>
-                {theme === 'dark' ? (
-                  <>
-                    <Sun size={13} strokeWidth={2} />
-                    <span>Light</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon size={13} strokeWidth={2} />
-                    <span>Dark</span>
-                  </>
-                )}
-              </button>
-            )}
-            <Link to="/" className="footer-action-btn">
-              Sign In
-            </Link>
-            {onLogout && (
-              <button type="button" className="footer-action-btn" onClick={onLogout}>
-                <LogOut size={13} strokeWidth={2} />
-                <span>Log Out</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </aside>
+      <SectionTabs
+        tabs={CONSOLE_TABS}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+      />
 
-      {/* =========================================================
-          RIGHT MAIN VIEWPORT (FITS ENTIRELY ON SCREEN WITHOUT SCROLLING)
-          ========================================================= */}
+      <StatusStrip
+        radioStatus="Active"
+        oneWayDelay="12m 44s"
+        distance="142M miles"
+        showSignal={true}
+        utcClock={currentTime}
+      />
+
       <div className="earth-viewport-container">
-        {/* Top Viewport Header Bar */}
         <header className="earth-viewport-header">
           <div>
             <div className="earth-breadcrumb">
@@ -525,15 +441,6 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               {activeTab === 'comms' && 'Radio Incident Log & Houston Advisory'}
               {activeTab === 'simulator' && 'Emergency Decision Support Simulator'}
             </h1>
-          </div>
-
-          <div className="earth-header-meta">
-            <span className="side-confirmation-tag earth">Earth Mission Control (Ground Side)</span>
-            <span className="earth-clock-pill">UTC Ground: {currentTime} · Stream Active</span>
-            <div className="delay-chip">
-              <Clock size={13} strokeWidth={2} />
-              <span>Delay: 12m 44s</span>
-            </div>
           </div>
         </header>
 
