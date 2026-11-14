@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   Activity,
-  AlertTriangle,
   ArrowRight,
   Clock,
   Compass,
@@ -10,20 +9,30 @@ import {
   FlaskConical,
   Globe,
   LogOut,
-  Moon,
   Radio,
   RotateCcw,
   Send,
   Shield,
   ShieldAlert,
   ShieldCheck,
-  Sun,
   User,
   Users,
   Watch,
   Wind,
   Zap,
 } from 'lucide-react'
+import {
+  TopBar,
+  SectionTabs,
+  StatusStrip,
+  Button,
+  SegmentedControl,
+  Alert,
+  StatusChip,
+  MeterBar,
+  EcgTrace,
+  Accordion,
+} from './ui'
 import './EarthWatchConsole.css'
 
 const CREW_PROFILES = [
@@ -103,12 +112,21 @@ const INCIDENT_LOGS = [
   },
 ]
 
+const CONSOLE_TABS = [
+  { id: 'crew', label: 'Crew Roster Matrix', icon: Users, subtitle: 'All 3 Astronauts Live', group: 'monitoring' },
+  { id: 'telemetry', label: 'Clinical Inspection', icon: Activity, subtitle: '8 Gauges & Flight Phases', group: 'monitoring' },
+  { id: 'environment', label: 'Cabin Air & Systems', icon: Shield, subtitle: 'Oxygen, Pressure, Radiation', group: 'habitat' },
+  { id: 'comms', label: 'Radio & Doctor Advice', icon: Radio, subtitle: 'Incident Log & Uplink', group: 'habitat' },
+  { id: 'simulator', label: 'Emergency Simulation', icon: FlaskConical, subtitle: 'Test Anomaly Injections', group: 'sim' },
+]
+
 export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('crew')
   const [missionPhase, setMissionPhase] = useState('inSpace')
   const [selectedAstronautId, setSelectedAstronautId] = useState(1)
   const [crewData, setCrewData] = useState(CREW_PROFILES)
+  const [crewFilter, setCrewFilter] = useState('all')
   const [activeScenario, setActiveScenario] = useState('nominal')
   const [doctorNote, setDoctorNote] = useState('')
   const [sentMessages, setSentMessages] = useState([])
@@ -368,144 +386,53 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
   const metrics = selectedAstro.currentMetrics || selectedAstro.baseline[missionPhase]
 
   return (
-    <div className="earth-workstation-layout">
-      {/* =========================================================
-          LEFT NAVIGATION BAR (SIDEBAR FOR MISSION CONTROL)
-          ========================================================= */}
-      <aside className="earth-sidebar-nav">
-        <div className="earth-sidebar-header">
-          <Globe className="earth-sidebar-icon" size={24} strokeWidth={2} />
-          <div>
-            <strong>NASA Houston Desk</strong>
-            <small>Deep-Space Health Console</small>
-          </div>
-          <span className="dashboard-location-badge">Ground Side</span>
-        </div>
-
-        {/* Radio Link Status Box in Sidebar */}
-        <div className="sidebar-radio-card">
-          <div className="radio-line">
-            <Radio size={14} strokeWidth={2} className="radio-icon" />
-            <strong>Radio Link Active</strong>
-          </div>
-          <span className="radio-delay-text">One-way delay: 12m 44s</span>
-          <small className="radio-range-text">Distance: 142M miles</small>
-        </div>
-
-        {/* Navigation Buttons Grouped by Relationship */}
-        <nav className="earth-nav-list">
-          <span className="earth-group-title">Crew Monitoring</span>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'crew' ? 'active' : ''}`}
-            onClick={() => setActiveTab('crew')}
-          >
-            <Users className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Crew Roster Matrix</strong>
-              <small>All 3 Astronauts Live</small>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'telemetry' ? 'active' : ''}`}
-            onClick={() => setActiveTab('telemetry')}
-          >
-            <Activity className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Clinical Inspection</strong>
-              <small>8 Gauges &amp; Flight Phases</small>
-            </div>
-          </button>
-
-          <span className="earth-group-title" style={{ marginTop: '12px' }}>Habitat &amp; Comms</span>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'environment' ? 'active' : ''}`}
-            onClick={() => setActiveTab('environment')}
-          >
-            <Shield className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Cabin Air &amp; Systems</strong>
-              <small>Oxygen, Pressure, Radiation</small>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'comms' ? 'active' : ''}`}
-            onClick={() => setActiveTab('comms')}
-          >
-            <Radio className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Radio &amp; Doctor Advice</strong>
-              <small>Incident Log &amp; Uplink</small>
-            </div>
-          </button>
-
-          <span className="earth-group-title" style={{ marginTop: '12px' }}>Simulation</span>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'simulator' ? 'active' : ''}`}
-            onClick={() => setActiveTab('simulator')}
-          >
-            <FlaskConical className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Emergency Simulation</strong>
-              <small>Test Anomaly Injections</small>
-            </div>
-          </button>
-        </nav>
-
-        {/* Sidebar Footer Controls */}
-        <div className="earth-sidebar-footer">
-          <button
-            type="button"
-            className="switch-astronaut-screen-btn"
+    <div className="earth-console-shell">
+      <TopBar
+        brandIcon={Globe}
+        brandTitle="NASA Houston Desk"
+        brandSubtitle="Deep-Space Health Console"
+        sideChipText="Ground Side"
+        brandLink="/console"
+        primaryAction={
+          <Button
+            variant="primary"
             onClick={() => navigate(`/astronaut/dashboard/${selectedAstronautId}`)}
           >
             <User size={15} strokeWidth={2} />
-            <strong>Open Astronaut Screen</strong>
-          </button>
+            <span>Open Astronaut Screen</span>
+          </Button>
+        }
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        authAction={
+          onLogout ? (
+            <Button variant="outline" onClick={onLogout} aria-label="Log Out">
+              <LogOut size={15} strokeWidth={2} />
+              <span>Log Out</span>
+            </Button>
+          ) : (
+            <Button variant="outline" to="/" aria-label="Sign In">
+              <span>Sign In</span>
+            </Button>
+          )
+        }
+      />
 
-          <div className="footer-button-row">
-            {onToggleTheme && (
-              <button type="button" className="footer-action-btn" onClick={onToggleTheme}>
-                {theme === 'dark' ? (
-                  <>
-                    <Sun size={13} strokeWidth={2} />
-                    <span>Light</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon size={13} strokeWidth={2} />
-                    <span>Dark</span>
-                  </>
-                )}
-              </button>
-            )}
-            <Link to="/" className="footer-action-btn">
-              Sign In
-            </Link>
-            {onLogout && (
-              <button type="button" className="footer-action-btn" onClick={onLogout}>
-                <LogOut size={13} strokeWidth={2} />
-                <span>Log Out</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </aside>
+      <SectionTabs
+        tabs={CONSOLE_TABS}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+      />
 
-      {/* =========================================================
-          RIGHT MAIN VIEWPORT (FITS ENTIRELY ON SCREEN WITHOUT SCROLLING)
-          ========================================================= */}
+      <StatusStrip
+        radioStatus="Active"
+        oneWayDelay="12m 44s"
+        distance="142M miles"
+        showSignal={true}
+        utcClock={currentTime}
+      />
+
       <div className="earth-viewport-container">
-        {/* Top Viewport Header Bar */}
         <header className="earth-viewport-header">
           <div>
             <div className="earth-breadcrumb">
@@ -526,83 +453,170 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               {activeTab === 'simulator' && 'Emergency Decision Support Simulator'}
             </h1>
           </div>
-
-          <div className="earth-header-meta">
-            <span className="side-confirmation-tag earth">Earth Mission Control (Ground Side)</span>
-            <span className="earth-clock-pill">UTC Ground: {currentTime} · Stream Active</span>
-            <div className="delay-chip">
-              <Clock size={13} strokeWidth={2} />
-              <span>Delay: 12m 44s</span>
-            </div>
-          </div>
         </header>
 
         {/* Body Viewport (Single-Screen Views) */}
         <div className="earth-viewport-body">
           {/* VIEW 1: CREW ROSTER MATRIX */}
-          {activeTab === 'crew' && (
-            <div className="earth-view-pane crew-pane">
-              <div className="vitals-group-heading">
-                <Users size={14} strokeWidth={2} />
-                <span>Crew Roster Matrix</span>
-              </div>
+          {activeTab === 'crew' && (() => {
+            const warningCrewMember = crewData.find(
+              (a) => a.statusClass === 'warning' || a.statusClass === 'danger' || a.statusClass === 'alert'
+            )
+            const crewFilterOptions = [
+              { value: 'all', label: 'All crew', count: crewData.length },
+              {
+                value: 'good',
+                label: 'Healthy',
+                count: crewData.filter((a) => a.statusClass === 'good').length,
+              },
+              {
+                value: 'attention',
+                label: 'Needs attention',
+                count: crewData.filter((a) => a.statusClass !== 'good').length,
+              },
+            ]
 
-              <div className="crew-matrix-grid">
-                {crewData.map((astro) => {
-                  const currentVitals = astro.currentMetrics || astro.baseline[missionPhase]
-                  const isSelected = astro.id === selectedAstronautId
+            const displayedCrew = crewData.filter((a) => {
+              if (crewFilter === 'all') return true
+              if (crewFilter === 'good') return a.statusClass === 'good'
+              if (crewFilter === 'attention') return a.statusClass !== 'good'
+              if (typeof crewFilter === 'number') return a.id === crewFilter
+              return true
+            })
 
-                  return (
-                    <div
-                      key={astro.id}
-                      className={`crew-profile-card ${isSelected ? 'selected' : ''}`}
-                      onClick={() => setSelectedAstronautId(astro.id)}
-                    >
-                      <div className="card-person-row">
-                        <img src={astro.avatarUrl} alt={astro.fullName} className="card-avatar-img" />
-                        <div className="card-person-info">
-                          <div className="person-name-line">
-                            <h3>{astro.fullName}</h3>
-                            <span className={`status-pill ${astro.statusClass}`}>
-                              {astro.statusClass === 'good' ? (
-                                <ShieldCheck size={13} strokeWidth={2.5} />
-                              ) : (
-                                <AlertTriangle size={13} strokeWidth={2.5} />
-                              )}
-                              <span>{astro.healthStatus}</span>
+            return (
+              <div className="earth-view-pane crew-pane">
+                <div className="hd-roster-filter-row">
+                  <SegmentedControl
+                    options={crewFilterOptions}
+                    value={typeof crewFilter === 'number' ? '' : crewFilter}
+                    onChange={(val) => setCrewFilter(val)}
+                    ariaLabel="Filter crew members by health status"
+                  />
+                  {typeof crewFilter === 'number' && (
+                    <Button variant="ghost" size="sm" onClick={() => setCrewFilter('all')}>
+                      Clear crew member filter
+                    </Button>
+                  )}
+                </div>
+
+                {warningCrewMember && (
+                  <Alert
+                    variant="warning"
+                    title={`Advisory on ${warningCrewMember.fullName}:`}
+                    action={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCrewFilter(
+                            crewFilter === warningCrewMember.id ? 'all' : warningCrewMember.id
+                          )
+                        }
+                      >
+                        {crewFilter === warningCrewMember.id
+                          ? 'Show all crew'
+                          : `Filter to ${warningCrewMember.fullName}`}
+                      </Button>
+                    }
+                    className="hd-roster-alert"
+                  >
+                    Watchlist condition detected ({warningCrewMember.healthStatus}). Real-time telemetry is actively streaming.
+                  </Alert>
+                )}
+
+                <div className="hd-roster-grid">
+                  {displayedCrew.map((astro) => {
+                    const currentVitals = astro.currentMetrics || astro.baseline[missionPhase]
+                    const isSelected = astro.id === selectedAstronautId
+                    const systolic = currentVitals.bp
+                      ? parseInt(currentVitals.bp.split('/')[0], 10)
+                      : 120
+
+                    return (
+                      <div
+                        key={astro.id}
+                        className={`hd-roster-card ${isSelected ? 'hd-roster-card--selected' : ''}`}
+                        onClick={() => setSelectedAstronautId(astro.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setSelectedAstronautId(astro.id)
+                          }
+                        }}
+                      >
+                        <div className="hd-roster-card__top">
+                          <div className="hd-avatar-wrapper">
+                            <div
+                              className={`hd-avatar-ring hd-avatar-ring--${astro.statusClass}`}
+                              aria-hidden="true"
+                            />
+                            <img
+                              src={astro.avatarUrl}
+                              alt={astro.fullName}
+                              className="hd-avatar-img"
+                            />
+                          </div>
+                          <div className="hd-roster-card__meta">
+                            <div className="hd-roster-card__name-row">
+                              <h3 className="hd-roster-card__name">{astro.fullName}</h3>
+                              <StatusChip variant={astro.statusClass}>
+                                {astro.healthStatus}
+                              </StatusChip>
+                            </div>
+                            <p className="hd-roster-card__sub">
+                              {astro.role} · {astro.astronautId}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="hd-roster-hr-panel">
+                          <div className="hd-roster-hr-readout">
+                            <span className="hd-roster-hr-label">Heart Rate</span>
+                            <span className="hd-roster-hr-num">
+                              {currentVitals.hr} <small>bpm</small>
                             </span>
                           </div>
-                          <p className="person-role">{astro.role} · {astro.astronautId}</p>
+                          <EcgTrace heartRate={currentVitals.hr} variant={astro.statusClass} />
                         </div>
-                      </div>
 
-                      <div className="card-vitals-row">
-                        <div className="v-card-cell">
-                          <span className="v-cell-lbl">Heart Rate</span>
-                          <strong>{currentVitals.hr} <small>bpm</small></strong>
+                        <div className="hd-roster-metrics-3col">
+                          <MeterBar
+                            label="Oxygen"
+                            value={currentVitals.o2}
+                            unit="%"
+                            min={80}
+                            max={100}
+                            variant={currentVitals.o2 < 95 ? 'warning' : 'good'}
+                          />
+                          <MeterBar
+                            label="Pressure"
+                            value={systolic}
+                            displayValue={currentVitals.bp}
+                            min={90}
+                            max={160}
+                            variant={systolic > 135 ? 'warning' : 'good'}
+                          />
+                          <MeterBar
+                            label="Tiredness"
+                            value={currentVitals.fatigue}
+                            unit="/100"
+                            min={0}
+                            max={100}
+                            variant={currentVitals.fatigue > 50 ? 'warning' : 'good'}
+                          />
                         </div>
-                        <div className="v-card-cell">
-                          <span className="v-cell-lbl">Oxygen</span>
-                          <strong>{currentVitals.o2} <small>%</small></strong>
-                        </div>
-                        <div className="v-card-cell">
-                          <span className="v-cell-lbl">Pressure</span>
-                          <strong>{currentVitals.bp}</strong>
-                        </div>
-                        <div className="v-card-cell">
-                          <span className="v-cell-lbl">Tiredness</span>
-                          <strong>{currentVitals.fatigue} <small>/100</small></strong>
-                        </div>
-                      </div>
 
-                      <div className="card-actions-bar">
-                        <span className="card-hardware-lbl">
-                          <Watch size={13} strokeWidth={2} />
+                        <div className="hd-roster-source">
+                          <Watch size={13} strokeWidth={2} aria-hidden="true" />
                           <span>{astro.wearableSource}</span>
-                        </span>
-                        <button
-                          type="button"
-                          className="inspect-card-btn"
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          fullWidth
                           onClick={(e) => {
                             e.stopPropagation()
                             setSelectedAstronautId(astro.id)
@@ -610,22 +624,21 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                           }}
                         >
                           <span>Open Detailed Vitals</span>
-                          <ArrowRight size={13} strokeWidth={2} />
-                        </button>
+                          <ArrowRight size={14} strokeWidth={2} />
+                        </Button>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
-
-              <details className="view-accordion">
-                <summary>Telemetry Stream Status Notes</summary>
-                <div className="accordion-body">
-                  <p>Telemetry stream active across all 3 crew members. Click any card to inspect their live biometrics.</p>
+                    )
+                  })}
                 </div>
-              </details>
-            </div>
-          )}
+
+                <Accordion title="Telemetry Stream Status Notes" defaultOpen={false}>
+                  <p>
+                    Telemetry stream active across all 3 crew members. Click any card to inspect their live biometrics.
+                  </p>
+                </Accordion>
+              </div>
+            )
+          })()}
 
           {/* VIEW 2: CLINICAL INSPECTION (8 GAUGES + STAGES) */}
           {activeTab === 'telemetry' && (
