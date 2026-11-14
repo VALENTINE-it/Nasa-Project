@@ -41,6 +41,12 @@ export function HealthTrendsView({
     },
   }[selectedPhase]
 
+  const heartCoords = heartPoints ? heartPoints.trim().split(' ').map((p) => p.split(',')) : []
+  const heartLast = heartCoords.length ? heartCoords[heartCoords.length - 1] : ['320', '60']
+
+  const oxygenCoords = oxygenPoints ? oxygenPoints.trim().split(' ').map((p) => p.split(',')) : []
+  const oxygenLast = oxygenCoords.length ? oxygenCoords[oxygenCoords.length - 1] : ['320', '60']
+
   return (
     <div className="view-pane trends-pane">
       {/* Time Window Controls */}
@@ -151,10 +157,34 @@ export function HealthTrendsView({
             </div>
           </div>
           <svg viewBox="0 0 320 120" preserveAspectRatio="none" className="graph-svg">
+            <defs>
+              <linearGradient id="hrGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--accent-color)" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="var(--accent-color)" stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
+            {/* Grid Reference Lines with Clinical Tick Values */}
             <line x1="0" y1="30" x2="320" y2="30" stroke="var(--border-subtle)" strokeDasharray="3 3" />
+            <text x="6" y="26" fill="var(--text-tertiary)" fontSize="9" fontFamily="monospace">140 bpm</text>
+
             <line x1="0" y1="60" x2="320" y2="60" stroke="var(--border-subtle)" strokeDasharray="3 3" />
+            <text x="6" y="56" fill="var(--text-tertiary)" fontSize="9" fontFamily="monospace">95 bpm</text>
+
             <line x1="0" y1="90" x2="320" y2="90" stroke="var(--border-subtle)" strokeDasharray="3 3" />
-            <polyline points={heartPoints} fill="none" stroke="currentColor" strokeWidth="2.5" />
+            <text x="6" y="86" fill="var(--text-tertiary)" fontSize="9" fontFamily="monospace">50 bpm</text>
+
+            {/* Gradient Area Fill */}
+            <polygon points={`0,120 ${heartPoints} 320,120`} fill="url(#hrGrad)" />
+
+            {/* Live Telemetry Polyline */}
+            <polyline points={heartPoints} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+            {/* Live Leading Cursor */}
+            <circle cx={heartLast[0]} cy={heartLast[1]} r="3.5" fill="var(--accent-color)" />
+            <circle cx={heartLast[0]} cy={heartLast[1]} r="7" fill="var(--accent-color)" opacity="0.3">
+              <animate attributeName="r" values="3.5;8;3.5" dur="1.8s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.4;0.05;0.4" dur="1.8s" repeatCount="indefinite" />
+            </circle>
           </svg>
           <div className="chart-labels-row">
             <span>Pre-Flight Baseline: 66 bpm</span>
@@ -174,10 +204,34 @@ export function HealthTrendsView({
             </div>
           </div>
           <svg viewBox="0 0 320 120" preserveAspectRatio="none" className="graph-svg green">
+            <defs>
+              <linearGradient id="o2Grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--status-good-text)" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="var(--status-good-text)" stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
+            {/* Grid Reference Lines with Clinical Tick Values */}
             <line x1="0" y1="30" x2="320" y2="30" stroke="var(--border-subtle)" strokeDasharray="3 3" />
+            <text x="6" y="26" fill="var(--text-tertiary)" fontSize="9" fontFamily="monospace">100%</text>
+
             <line x1="0" y1="60" x2="320" y2="60" stroke="var(--border-subtle)" strokeDasharray="3 3" />
+            <text x="6" y="56" fill="var(--text-tertiary)" fontSize="9" fontFamily="monospace">94%</text>
+
             <line x1="0" y1="90" x2="320" y2="90" stroke="var(--border-subtle)" strokeDasharray="3 3" />
-            <polyline points={oxygenPoints} fill="none" stroke="currentColor" strokeWidth="2.5" />
+            <text x="6" y="86" fill="var(--text-tertiary)" fontSize="9" fontFamily="monospace">88%</text>
+
+            {/* Gradient Area Fill */}
+            <polygon points={`0,120 ${oxygenPoints} 320,120`} fill="url(#o2Grad)" />
+
+            {/* Live Telemetry Polyline */}
+            <polyline points={oxygenPoints} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+            {/* Live Leading Cursor */}
+            <circle cx={oxygenLast[0]} cy={oxygenLast[1]} r="3.5" fill="var(--status-good-text)" />
+            <circle cx={oxygenLast[0]} cy={oxygenLast[1]} r="7" fill="var(--status-good-text)" opacity="0.3">
+              <animate attributeName="r" values="3.5;8;3.5" dur="1.8s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.4;0.05;0.4" dur="1.8s" repeatCount="indefinite" />
+            </circle>
           </svg>
           <div className="chart-labels-row">
             <span>Pre-Flight Baseline: 99%</span>
