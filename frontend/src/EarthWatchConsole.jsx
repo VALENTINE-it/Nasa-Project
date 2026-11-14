@@ -900,166 +900,215 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
           {/* VIEW 3: CABIN AIR & SYSTEMS */}
           {activeTab === 'environment' && (
             <div className="earth-view-pane environment-pane">
-              <div className="vitals-group-heading">
-                <Wind size={14} strokeWidth={2} />
+              <div className="hd-section-heading">
+                <Wind size={16} strokeWidth={2} />
                 <span>Atmosphere &amp; Pressure</span>
               </div>
 
-              <div className="cabin-systems-grid">
-                <div className="system-metric-card">
-                  <span className="sys-label">Cabin Oxygen (O2)</span>
-                  <strong>{cabinEnv.oxygen}%</strong>
-                  <small>Nominal breathable air (Standard setpoint: 21.0%)</small>
+              <div className="hd-sys-grid">
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Cabin Oxygen (O2)</span>
+                    <StatusChip variant="good">Nominal</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.oxygen}%</span>
+                  <MeterBar value={cabinEnv.oxygen} min={15} max={25} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Nominal breathable air (Standard setpoint: 21.0%)
+                  </p>
                 </div>
 
-                <div className="system-metric-card">
-                  <span className="sys-label">Carbon Dioxide (ppCO2)</span>
-                  <strong>{cabinEnv.co2}%</strong>
-                  <small>Scrubbers active. Safe limit is below 0.50%</small>
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Carbon Dioxide (ppCO2)</span>
+                    <StatusChip variant="good">Scrubbed</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.co2}%</span>
+                  <MeterBar value={cabinEnv.co2} min={0} max={1.0} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Scrubbers active. Safe limit is below 0.50%
+                  </p>
                 </div>
 
-                <div className="system-metric-card">
-                  <span className="sys-label">Cabin Air Pressure</span>
-                  <strong>{cabinEnv.pressure} kPa</strong>
-                  <small>Standard sea-level atmospheric equivalent</small>
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Cabin Air Pressure</span>
+                    <StatusChip variant="good">Sea-Level Eq</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.pressure} kPa</span>
+                  <MeterBar value={cabinEnv.pressure} min={80} max={120} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Standard sea-level atmospheric equivalent
+                  </p>
                 </div>
               </div>
 
-              <div className="vitals-group-heading">
-                <Shield size={14} strokeWidth={2} />
+              <div className="hd-section-heading">
+                <Shield size={16} strokeWidth={2} />
                 <span>Habitat Systems &amp; Environment</span>
               </div>
 
-              <div className="cabin-systems-grid">
-                <div className="system-metric-card">
-                  <span className="sys-label">Room Temperature</span>
-                  <strong>{cabinEnv.temp} °C</strong>
-                  <small>Comfortable living range automatically maintained</small>
+              <div className="hd-sys-grid">
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Room Temperature</span>
+                    <StatusChip variant="good">Thermal Stn</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.temp} °C</span>
+                  <MeterBar value={cabinEnv.temp} min={15} max={30} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Comfortable living range automatically maintained
+                  </p>
                 </div>
 
-                <div className="system-metric-card">
-                  <span className="sys-label">Space Radiation Level</span>
-                  <strong>{cabinEnv.radiation} mSv / day</strong>
-                  <small>Ship storm shields are protecting the crew</small>
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Space Radiation Level</span>
+                    <StatusChip variant="good">Shielded</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.radiation} mSv / day</span>
+                  <MeterBar value={cabinEnv.radiation} min={0} max={5} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Ship storm shields are protecting the crew
+                  </p>
                 </div>
 
-                <div className="system-metric-card">
-                  <span className="sys-label">Clean Recycled Water</span>
-                  <strong>{cabinEnv.water}%</strong>
-                  <small>Closed-loop water filters functioning at peak capacity</small>
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Clean Recycled Water</span>
+                    <StatusChip variant="good">Purified</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.water}%</span>
+                  <MeterBar value={cabinEnv.water} min={70} max={100} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Closed-loop water filters functioning at peak capacity
+                  </p>
                 </div>
               </div>
 
-              <details className="view-accordion">
-                <summary>Environmental Life Support Diagnostics</summary>
-                <div className="accordion-body">
-                  <p>Closed-loop water filters functioning at peak capacity. Safe CO2 limit is below 0.50%.</p>
-                </div>
-              </details>
+              <Accordion title="Environmental Life Support Diagnostics" defaultOpen={false}>
+                <p>
+                  Closed-loop water filters functioning at peak capacity. Safe CO2 limit is below 0.50%.
+                </p>
+              </Accordion>
 
-              <div className="systems-summary-banner">
-                <ShieldCheck size={18} strokeWidth={2} />
-                <strong>Spacecraft Life Support Status: ALL SYSTEMS NOMINAL (Dynamic Telemetry Link Active)</strong>
-              </div>
+              <Alert variant="good" title="Spacecraft Life Support Status:">
+                ALL SYSTEMS NOMINAL (Dynamic Telemetry Link Active)
+              </Alert>
             </div>
           )}
 
           {/* VIEW 4: RADIO COMMS & DOCTOR ADVICE */}
           {activeTab === 'comms' && (
             <div className="earth-view-pane comms-pane">
-              <div className="comms-split-layout">
+              <div className="hd-comms-split">
                 {/* Left: Incident Feed */}
-                <div className="comms-feed-column">
+                <div className="hd-comms-col">
                   <h3>Recent Medical Events Received</h3>
-                  <div className="incident-card-feed">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {INCIDENT_LOGS.slice(0, 1).map((inc) => (
-                      <div key={inc.id} className="feed-incident-box">
-                        <div className="incident-box-header">
-                          <strong>{inc.title}</strong>
-                          <span className="status-pill good">
-                            <ShieldCheck size={13} strokeWidth={2.5} />
-                            <span>Resolved</span>
+                      <div key={inc.id} className="hd-incident-card">
+                        <div className="hd-incident-card__header">
+                          <strong className="hd-incident-card__title">{inc.title}</strong>
+                          <StatusChip variant="good">Resolved</StatusChip>
+                        </div>
+                        <div className="hd-incident-card__meta">
+                          <span className="hd-incident-card__meta-item">
+                            <Clock size={12} strokeWidth={2} aria-hidden="true" />
+                            {inc.timeOccurred}
+                          </span>
+                          <span className="hd-incident-card__meta-item">
+                            <Radio size={12} strokeWidth={2} aria-hidden="true" />
+                            {inc.delayNote}
                           </span>
                         </div>
-                        <div className="incident-time-stamp">
-                          <span><Clock size={12} strokeWidth={2} /> {inc.timeOccurred}</span>
-                          <span><Radio size={12} strokeWidth={2} /> {inc.delayNote}</span>
-                        </div>
-                        <p className="incident-quote">
+                        <p className="hd-incident-quote">
                           <strong>Onboard Computer Action:</strong> {inc.whatShipDid}
                         </p>
-                        <p className="incident-quote doc">
+                        <p className="hd-incident-quote hd-incident-quote--doc">
                           <strong>Houston Doctor Confirmation:</strong> {inc.doctorAdvice}
                         </p>
                       </div>
                     ))}
 
                     {INCIDENT_LOGS.length > 1 && (
-                      <details className="view-accordion">
-                        <summary>Earlier Incident Logs ({INCIDENT_LOGS.length - 1} earlier record)</summary>
-                        <div className="accordion-body">
+                      <Accordion
+                        title={`Earlier Incident Logs (${INCIDENT_LOGS.length - 1} earlier record)`}
+                        defaultOpen={false}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                           {INCIDENT_LOGS.slice(1).map((inc) => (
-                            <div key={inc.id} className="feed-incident-box" style={{ marginTop: '8px' }}>
-                              <div className="incident-box-header">
-                                <strong>{inc.title}</strong>
-                                <span className="status-pill good">
-                                  <ShieldCheck size={13} strokeWidth={2.5} />
-                                  <span>Resolved</span>
+                            <div key={inc.id} className="hd-incident-card">
+                              <div className="hd-incident-card__header">
+                                <strong className="hd-incident-card__title">{inc.title}</strong>
+                                <StatusChip variant="good">Resolved</StatusChip>
+                              </div>
+                              <div className="hd-incident-card__meta">
+                                <span className="hd-incident-card__meta-item">
+                                  <Clock size={12} strokeWidth={2} aria-hidden="true" />
+                                  {inc.timeOccurred}
+                                </span>
+                                <span className="hd-incident-card__meta-item">
+                                  <Radio size={12} strokeWidth={2} aria-hidden="true" />
+                                  {inc.delayNote}
                                 </span>
                               </div>
-                              <div className="incident-time-stamp">
-                                <span><Clock size={12} strokeWidth={2} /> {inc.timeOccurred}</span>
-                                <span><Radio size={12} strokeWidth={2} /> {inc.delayNote}</span>
-                              </div>
-                              <p className="incident-quote">
+                              <p className="hd-incident-quote">
                                 <strong>Onboard Computer Action:</strong> {inc.whatShipDid}
                               </p>
-                              <p className="incident-quote doc">
+                              <p className="hd-incident-quote hd-incident-quote--doc">
                                 <strong>Houston Doctor Confirmation:</strong> {inc.doctorAdvice}
                               </p>
                             </div>
                           ))}
                         </div>
-                      </details>
+                      </Accordion>
                     )}
                   </div>
                 </div>
 
                 {/* Right: Message Dispatch */}
-                <div className="comms-dispatch-column">
+                <div className="hd-comms-col">
                   <h3>Dispatch Doctor's Advisory Note</h3>
-                  <form onSubmit={handleSendMessage} className="advice-send-form">
-                    <label htmlFor="advisory-text">
-                      Message for {selectedAstro.fullName} ({selectedAstro.role}):
-                    </label>
-                    <textarea
-                      id="advisory-text"
-                      rows="4"
-                      placeholder="e.g. Please sit down, drink plenty of water with electrolytes, and rest for 30 minutes..."
-                      value={doctorNote}
-                      onChange={(e) => setDoctorNote(e.target.value)}
-                    />
-                    <button type="submit" className="send-uplink-btn">
-                      <Send size={15} strokeWidth={2} />
-                      <span>Send Radio Message to Spacecraft (~12m delay)</span>
-                    </button>
-                  </form>
+                  <div className="hd-dispatch-card">
+                    <form onSubmit={handleSendMessage} className="hd-dispatch-form">
+                      <label htmlFor="advisory-text" className="hd-dispatch-label">
+                        Message for {selectedAstro.fullName} ({selectedAstro.role}):
+                      </label>
+                      <textarea
+                        id="advisory-text"
+                        rows="4"
+                        className="hd-dispatch-textarea"
+                        placeholder="e.g. Please sit down, drink plenty of water with electrolytes, and rest for 30 minutes..."
+                        value={doctorNote}
+                        onChange={(e) => setDoctorNote(e.target.value)}
+                      />
+                      <Button type="submit" variant="primary">
+                        <Send size={15} strokeWidth={2} />
+                        <span>Send Radio Message to Spacecraft (~12m delay)</span>
+                      </Button>
+                    </form>
 
-                  {sentMessages.length > 0 && (
-                    <div className="sent-queue-block">
-                      <h4>Messages Currently In Transit:</h4>
-                      {sentMessages.map((msg) => (
-                        <div key={msg.id} className="transit-msg-item">
-                          <div className="transit-header">
-                            <strong>To: {msg.to}</strong>
-                            <span>{msg.timeSent}</span>
+                    {sentMessages.length > 0 && (
+                      <div className="hd-transit-list">
+                        <h4 style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                          Messages Currently In Transit:
+                        </h4>
+                        {sentMessages.map((msg) => (
+                          <div key={msg.id} className="hd-transit-item">
+                            <div className="hd-transit-item__head">
+                              <span>To: {msg.to}</span>
+                              <span style={{ fontFamily: 'var(--font-mono)' }}>{msg.timeSent}</span>
+                            </div>
+                            <p className="hd-transit-item__text">"{msg.text}"</p>
+                            <span className="hd-transit-item__eta">
+                              Estimated arrival on spacecraft: ~{msg.eta}
+                            </span>
                           </div>
-                          <p>"{msg.text}"</p>
-                          <small>Estimated arrival on spacecraft: ~{msg.eta}</small>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1068,66 +1117,83 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
           {/* VIEW 5: EMERGENCY SIMULATION LAB */}
           {activeTab === 'simulator' && (
             <div className="earth-view-pane simulator-pane">
-              <div className="sim-lab-card">
+              <div className="hd-sim-lab-card">
                 <h3>Test How the Clinical Brain Responds to Emergencies</h3>
 
-                <div className="vitals-group-heading">
-                  <FlaskConical size={14} strokeWidth={2} />
+                <div className="hd-section-heading">
+                  <FlaskConical size={16} strokeWidth={2} />
                   <span>Simulation Scenarios</span>
                 </div>
 
-                <div className="scenario-buttons-grid">
+                <div className="hd-sim-grid">
                   <button
                     type="button"
-                    className={`scenario-box-btn ${activeScenario === 'tachycardia' ? 'active danger' : ''}`}
+                    className={`hd-sim-btn ${
+                      activeScenario === 'tachycardia' ? 'hd-sim-btn--active-danger' : ''
+                    }`}
                     onClick={() => triggerScenario('tachycardia')}
                   >
-                    <Zap className="scenario-btn-icon" size={22} strokeWidth={2} />
-                    <strong>Acute Tachycardia Surge</strong>
-                    <small>Spikes heart rate to 176 bpm due to sudden zero-G fluid shift</small>
+                    <Zap size={22} strokeWidth={2} style={{ color: 'var(--hd-red)' }} />
+                    <span className="hd-sim-btn__title">Acute Tachycardia Surge</span>
+                    <span className="hd-sim-btn__desc">
+                      Spikes heart rate to 176 bpm due to sudden zero-G fluid shift
+                    </span>
                   </button>
 
                   <button
                     type="button"
-                    className={`scenario-box-btn ${activeScenario === 'hypoxia' ? 'active danger' : ''}`}
+                    className={`hd-sim-btn ${
+                      activeScenario === 'hypoxia' ? 'hd-sim-btn--active-danger' : ''
+                    }`}
                     onClick={() => triggerScenario('hypoxia')}
                   >
-                    <Wind className="scenario-btn-icon" size={22} strokeWidth={2} />
-                    <strong>Cabin Hypoxia Drop</strong>
-                    <small>Drops SpO2 to 89% and elevates breathing rate</small>
+                    <Wind size={22} strokeWidth={2} style={{ color: 'var(--hd-red)' }} />
+                    <span className="hd-sim-btn__title">Cabin Hypoxia Drop</span>
+                    <span className="hd-sim-btn__desc">
+                      Drops SpO2 to 89% and elevates breathing rate
+                    </span>
                   </button>
 
                   <button
                     type="button"
-                    className={`scenario-box-btn ${activeScenario === 'immune' ? 'active warning' : ''}`}
+                    className={`hd-sim-btn ${
+                      activeScenario === 'immune' ? 'hd-sim-btn--active-warning' : ''
+                    }`}
                     onClick={() => triggerScenario('immune')}
                   >
-                    <ShieldAlert className="scenario-btn-icon" size={22} strokeWidth={2} />
-                    <strong>Immune Stress Flare</strong>
-                    <small>Elevates saliva stress biomarkers and body temperature</small>
+                    <ShieldAlert size={22} strokeWidth={2} style={{ color: 'var(--hd-amber)' }} />
+                    <span className="hd-sim-btn__title">Immune Stress Flare</span>
+                    <span className="hd-sim-btn__desc">
+                      Elevates saliva stress biomarkers and body temperature
+                    </span>
                   </button>
 
                   <button
                     type="button"
-                    className="scenario-box-btn reset"
+                    className="hd-sim-btn hd-sim-btn--reset"
                     onClick={() => triggerScenario('nominal')}
                   >
-                    <RotateCcw className="scenario-btn-icon" size={22} strokeWidth={2} />
-                    <strong>Reset to Nominal Baseline</strong>
-                    <small>Restores healthy, steady resting metrics</small>
+                    <RotateCcw size={22} strokeWidth={2} style={{ color: 'var(--text-secondary)' }} />
+                    <span className="hd-sim-btn__title">Reset to Nominal Baseline</span>
+                    <span className="hd-sim-btn__desc">
+                      Restores healthy, steady resting metrics
+                    </span>
                   </button>
                 </div>
 
-                <div className="sim-current-status-box">
-                  <strong>Selected Astronaut for Test:</strong> {selectedAstro.fullName} ({selectedAstro.astronautId}) · Current Health Status: <span className="status-highlight">{selectedAstro.healthStatus}</span>
+                <div className="hd-sim-status-banner">
+                  <strong>Selected Astronaut for Test:</strong> {selectedAstro.fullName} ({selectedAstro.astronautId}) ·
+                  <span>Current Health Status:</span>
+                  <StatusChip variant={selectedAstro.statusClass}>
+                    {selectedAstro.healthStatus}
+                  </StatusChip>
                 </div>
 
-                <details className="view-accordion">
-                  <summary>How This Simulation Operates</summary>
-                  <div className="accordion-body">
-                    <p>Click any scenario above to inject a simulated physiological surge. Watch how the vital numbers adapt and how the system alerts the crew in real time.</p>
-                  </div>
-                </details>
+                <Accordion title="How This Simulation Operates" defaultOpen={false}>
+                  <p>
+                    Click any scenario above to inject a simulated physiological surge. Watch how the vital numbers adapt and how the system alerts the crew in real time.
+                  </p>
+                </Accordion>
               </div>
             </div>
           )}
