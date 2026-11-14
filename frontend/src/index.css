@@ -5,51 +5,89 @@
    ========================================================= */
 
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --font-heading: "Space Grotesk", var(--font-sans);
 
   /* LIGHT MODE (DEFAULT) */
-  --bg-app: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-surface-elevated: #ffffff;
-  --bg-surface-secondary: #f1f5f9;
-  --bg-surface-hover: #e2e8f0;
+  --bg-app: #F5F6FA;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #FFFFFF;
+  --bg-surface-secondary: #F1F4F9;
+  --bg-surface-hover: #E5E7EF;
 
-  --border-subtle: #e2e8f0;
-  --border-default: #cbd5e1;
+  --border-subtle: #E5E7EF;
+  --border-default: #D5D9E4;
   --border-strong: #94a3b8;
-  --border-focus: #0284c7;
+  --border-focus: #2B50F5;
 
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-tertiary: #64748b;
-  --text-muted: #94a3b8;
+  --text-primary: #141824;
+  --text-secondary: #2A3042;
+  --text-tertiary: #5B6475;
+  --text-muted: #667085;
 
-  --primary-btn-bg: #0f172a;
-  --primary-btn-text: #ffffff;
-  --primary-btn-hover: #1e293b;
+  --primary-btn-bg: #2B50F5;
+  --primary-btn-text: #FFFFFF;
+  --primary-btn-hover: #1F3FD0;
 
-  --accent-color: #0284c7;
-  --accent-bg: #e0f2fe;
+  --accent-color: #2B50F5;
+  --accent-bg: #EAEFFF;
 
-  --status-good-text: #15803d;
-  --status-good-bg: #dcfce7;
-  --status-good-border: #bbf7d0;
+  --status-good-text: #0B7A55;
+  --status-good-bg: #E6F6EF;
+  --status-good-border: #A3E6CD;
 
-  --status-warn-text: #b45309;
-  --status-warn-bg: #fef3c7;
-  --status-warn-border: #fde68a;
+  --status-warn-text: #9A5B00;
+  --status-warn-bg: #FFF6E5;
+  --status-warn-border: #F5CE7E;
 
-  --status-alert-text: #b91c1c;
-  --status-alert-bg: #fee2e2;
-  --status-alert-border: #fca5a5;
+  --status-alert-text: #B91C1C;
+  --status-alert-bg: #FEE2E2;
+  --status-alert-border: #FCA5A5;
 
-  --status-danger-text: #b91c1c;
-  --status-danger-bg: #fee2e2;
-  --status-danger-border: #fca5a5;
+  --status-danger-text: #B91C1C;
+  --status-danger-bg: #FEE2E2;
+  --status-danger-border: #FCA5A5;
 
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-hover: 0 4px 6px -1px rgba(16, 24, 40, 0.08), 0 2px 4px -1px rgba(16, 24, 40, 0.04);
+
+  /* HD DESIGN TOKENS (ADDITIVE) */
+  --hd-green: #0E9F6E;
+  --hd-green-bg: #E6F6EF;
+  --hd-green-text: #0B7A55;
+  --hd-green-border: #A3E6CD;
+
+  --hd-amber: #F59E0B;
+  --hd-amber-bg: #FFF6E5;
+  --hd-amber-text: #9A5B00;
+  --hd-amber-border: #F5CE7E;
+
+  --hd-red: #E02424;
+  --hd-red-bg: #FEE2E2;
+  --hd-red-text: #B91C1C;
+  --hd-red-border: #FCA5A5;
+
+  --hd-cobalt: #2B50F5;
+  --hd-cobalt-hover: #1F3FD0;
+  --hd-cobalt-bg: #EAEFFF;
+  --hd-cobalt-border: #C6D4FE;
+
+  --hd-radius-xs: 4px;
+  --hd-radius-sm: 6px;
+  --hd-radius-md: 10px;
+  --hd-radius-lg: 14px;
+  --hd-radius-xl: 18px;
+  --hd-radius-full: 9999px;
+
+  --hd-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --hd-shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.08), 0 2px 4px -2px rgba(16, 24, 40, 0.04);
+  --hd-shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.08), 0 4px 6px -2px rgba(16, 24, 40, 0.03);
+  --hd-shadow-focus: 0 0 0 3px rgba(43, 80, 245, 0.25);
+
+  --hd-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --hd-transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --hd-transition-bounce: 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* CHROME DARK MODE (Exact Google Chrome / Google Workspace dark palette) */
@@ -95,6 +133,32 @@
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.4);
+
+  /* HD DESIGN TOKENS (DARK MODE) */
+  --hd-green: #81c995;
+  --hd-green-bg: rgba(129, 201, 149, 0.15);
+  --hd-green-text: #81c995;
+  --hd-green-border: rgba(129, 201, 149, 0.3);
+
+  --hd-amber: #fdd663;
+  --hd-amber-bg: rgba(253, 214, 99, 0.15);
+  --hd-amber-text: #fdd663;
+  --hd-amber-border: rgba(253, 214, 99, 0.3);
+
+  --hd-red: #f28b82;
+  --hd-red-bg: rgba(242, 139, 130, 0.15);
+  --hd-red-text: #f28b82;
+  --hd-red-border: rgba(242, 139, 130, 0.3);
+
+  --hd-cobalt: #8ab4f8;
+  --hd-cobalt-hover: #aecbfa;
+  --hd-cobalt-bg: rgba(138, 180, 248, 0.15);
+  --hd-cobalt-border: rgba(138, 180, 248, 0.3);
+
+  --hd-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --hd-shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --hd-shadow-lg: 0 12px 16px -4px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --hd-shadow-focus: 0 0 0 3px rgba(138, 180, 248, 0.35);
 }
 
 *, *::before, *::after {
@@ -129,6 +193,7 @@ button, input, textarea, select {
 
 /* Clear, sizable typography */
 h1, h2, h3, h4 {
+  font-family: var(--font-heading);
   color: var(--text-primary);
   margin-top: 0;
   font-weight: 700;
@@ -140,8 +205,9 @@ p {
   color: var(--text-secondary);
 }
 
-/* Tabular figures for stable vitals */
-.tabular-nums, strong, .stat-value, [data-tabular] {
+/* Tabular figures and monospace for stable vitals and readouts */
+.tabular-nums, strong, .stat-value, [data-tabular], code, pre {
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }

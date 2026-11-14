@@ -1,29 +1,36 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   Activity,
-  AlertTriangle,
   ArrowRight,
   Clock,
-  Compass,
-  Cpu,
   FlaskConical,
   Globe,
   LogOut,
-  Moon,
   Radio,
   RotateCcw,
   Send,
   Shield,
   ShieldAlert,
   ShieldCheck,
-  Sun,
   User,
   Users,
   Watch,
   Wind,
   Zap,
 } from 'lucide-react'
+import {
+  TopBar,
+  SectionTabs,
+  StatusStrip,
+  Button,
+  SegmentedControl,
+  Alert,
+  StatusChip,
+  MeterBar,
+  EcgTrace,
+  Accordion,
+} from './ui'
 import './EarthWatchConsole.css'
 
 const CREW_PROFILES = [
@@ -103,12 +110,21 @@ const INCIDENT_LOGS = [
   },
 ]
 
+const CONSOLE_TABS = [
+  { id: 'crew', label: 'Crew Roster Matrix', icon: Users, subtitle: 'All 3 Astronauts Live', group: 'monitoring' },
+  { id: 'telemetry', label: 'Clinical Inspection', icon: Activity, subtitle: '8 Gauges & Flight Phases', group: 'monitoring' },
+  { id: 'environment', label: 'Cabin Air & Systems', icon: Shield, subtitle: 'Oxygen, Pressure, Radiation', group: 'habitat' },
+  { id: 'comms', label: 'Radio & Doctor Advice', icon: Radio, subtitle: 'Incident Log & Uplink', group: 'habitat' },
+  { id: 'simulator', label: 'Emergency Simulation', icon: FlaskConical, subtitle: 'Test Anomaly Injections', group: 'sim' },
+]
+
 export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('crew')
   const [missionPhase, setMissionPhase] = useState('inSpace')
   const [selectedAstronautId, setSelectedAstronautId] = useState(1)
   const [crewData, setCrewData] = useState(CREW_PROFILES)
+  const [crewFilter, setCrewFilter] = useState('all')
   const [activeScenario, setActiveScenario] = useState('nominal')
   const [doctorNote, setDoctorNote] = useState('')
   const [sentMessages, setSentMessages] = useState([])
@@ -368,144 +384,53 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
   const metrics = selectedAstro.currentMetrics || selectedAstro.baseline[missionPhase]
 
   return (
-    <div className="earth-workstation-layout">
-      {/* =========================================================
-          LEFT NAVIGATION BAR (SIDEBAR FOR MISSION CONTROL)
-          ========================================================= */}
-      <aside className="earth-sidebar-nav">
-        <div className="earth-sidebar-header">
-          <Globe className="earth-sidebar-icon" size={24} strokeWidth={2} />
-          <div>
-            <strong>NASA Houston Desk</strong>
-            <small>Deep-Space Health Console</small>
-          </div>
-          <span className="dashboard-location-badge">Ground Side</span>
-        </div>
-
-        {/* Radio Link Status Box in Sidebar */}
-        <div className="sidebar-radio-card">
-          <div className="radio-line">
-            <Radio size={14} strokeWidth={2} className="radio-icon" />
-            <strong>Radio Link Active</strong>
-          </div>
-          <span className="radio-delay-text">One-way delay: 12m 44s</span>
-          <small className="radio-range-text">Distance: 142M miles</small>
-        </div>
-
-        {/* Navigation Buttons Grouped by Relationship */}
-        <nav className="earth-nav-list">
-          <span className="earth-group-title">Crew Monitoring</span>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'crew' ? 'active' : ''}`}
-            onClick={() => setActiveTab('crew')}
-          >
-            <Users className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Crew Roster Matrix</strong>
-              <small>All 3 Astronauts Live</small>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'telemetry' ? 'active' : ''}`}
-            onClick={() => setActiveTab('telemetry')}
-          >
-            <Activity className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Clinical Inspection</strong>
-              <small>8 Gauges &amp; Flight Phases</small>
-            </div>
-          </button>
-
-          <span className="earth-group-title" style={{ marginTop: '12px' }}>Habitat &amp; Comms</span>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'environment' ? 'active' : ''}`}
-            onClick={() => setActiveTab('environment')}
-          >
-            <Shield className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Cabin Air &amp; Systems</strong>
-              <small>Oxygen, Pressure, Radiation</small>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'comms' ? 'active' : ''}`}
-            onClick={() => setActiveTab('comms')}
-          >
-            <Radio className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Radio &amp; Doctor Advice</strong>
-              <small>Incident Log &amp; Uplink</small>
-            </div>
-          </button>
-
-          <span className="earth-group-title" style={{ marginTop: '12px' }}>Simulation</span>
-
-          <button
-            type="button"
-            className={`earth-nav-item ${activeTab === 'simulator' ? 'active' : ''}`}
-            onClick={() => setActiveTab('simulator')}
-          >
-            <FlaskConical className="earth-nav-ico" size={18} strokeWidth={2} />
-            <div className="earth-nav-lbl">
-              <strong>Emergency Simulation</strong>
-              <small>Test Anomaly Injections</small>
-            </div>
-          </button>
-        </nav>
-
-        {/* Sidebar Footer Controls */}
-        <div className="earth-sidebar-footer">
-          <button
-            type="button"
-            className="switch-astronaut-screen-btn"
+    <div className="earth-console-shell">
+      <TopBar
+        brandIcon={Globe}
+        brandTitle="NASA Houston Desk"
+        brandSubtitle="Deep-Space Health Console"
+        sideChipText="Ground Side"
+        brandLink="/console"
+        primaryAction={
+          <Button
+            variant="primary"
             onClick={() => navigate(`/astronaut/dashboard/${selectedAstronautId}`)}
           >
             <User size={15} strokeWidth={2} />
-            <strong>Open Astronaut Screen</strong>
-          </button>
+            <span>Open Astronaut Screen</span>
+          </Button>
+        }
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        authAction={
+          onLogout ? (
+            <Button variant="outline" onClick={onLogout} aria-label="Log Out">
+              <LogOut size={15} strokeWidth={2} />
+              <span>Log Out</span>
+            </Button>
+          ) : (
+            <Button variant="outline" to="/" aria-label="Sign In">
+              <span>Sign In</span>
+            </Button>
+          )
+        }
+      />
 
-          <div className="footer-button-row">
-            {onToggleTheme && (
-              <button type="button" className="footer-action-btn" onClick={onToggleTheme}>
-                {theme === 'dark' ? (
-                  <>
-                    <Sun size={13} strokeWidth={2} />
-                    <span>Light</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon size={13} strokeWidth={2} />
-                    <span>Dark</span>
-                  </>
-                )}
-              </button>
-            )}
-            <Link to="/" className="footer-action-btn">
-              Sign In
-            </Link>
-            {onLogout && (
-              <button type="button" className="footer-action-btn" onClick={onLogout}>
-                <LogOut size={13} strokeWidth={2} />
-                <span>Log Out</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </aside>
+      <SectionTabs
+        tabs={CONSOLE_TABS}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+      />
 
-      {/* =========================================================
-          RIGHT MAIN VIEWPORT (FITS ENTIRELY ON SCREEN WITHOUT SCROLLING)
-          ========================================================= */}
+      <StatusStrip
+        radioStatus="Active"
+        oneWayDelay="12m 44s"
+        distance="142M miles"
+        showSignal={true}
+        utcClock={currentTime}
+      />
+
       <div className="earth-viewport-container">
-        {/* Top Viewport Header Bar */}
         <header className="earth-viewport-header">
           <div>
             <div className="earth-breadcrumb">
@@ -526,83 +451,170 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               {activeTab === 'simulator' && 'Emergency Decision Support Simulator'}
             </h1>
           </div>
-
-          <div className="earth-header-meta">
-            <span className="side-confirmation-tag earth">Earth Mission Control (Ground Side)</span>
-            <span className="earth-clock-pill">UTC Ground: {currentTime} · Stream Active</span>
-            <div className="delay-chip">
-              <Clock size={13} strokeWidth={2} />
-              <span>Delay: 12m 44s</span>
-            </div>
-          </div>
         </header>
 
         {/* Body Viewport (Single-Screen Views) */}
         <div className="earth-viewport-body">
           {/* VIEW 1: CREW ROSTER MATRIX */}
-          {activeTab === 'crew' && (
-            <div className="earth-view-pane crew-pane">
-              <div className="vitals-group-heading">
-                <Users size={14} strokeWidth={2} />
-                <span>Crew Roster Matrix</span>
-              </div>
+          {activeTab === 'crew' && (() => {
+            const warningCrewMember = crewData.find(
+              (a) => a.statusClass === 'warning' || a.statusClass === 'danger' || a.statusClass === 'alert'
+            )
+            const crewFilterOptions = [
+              { value: 'all', label: 'All crew', count: crewData.length },
+              {
+                value: 'good',
+                label: 'Healthy',
+                count: crewData.filter((a) => a.statusClass === 'good').length,
+              },
+              {
+                value: 'attention',
+                label: 'Needs attention',
+                count: crewData.filter((a) => a.statusClass !== 'good').length,
+              },
+            ]
 
-              <div className="crew-matrix-grid">
-                {crewData.map((astro) => {
-                  const currentVitals = astro.currentMetrics || astro.baseline[missionPhase]
-                  const isSelected = astro.id === selectedAstronautId
+            const displayedCrew = crewData.filter((a) => {
+              if (crewFilter === 'all') return true
+              if (crewFilter === 'good') return a.statusClass === 'good'
+              if (crewFilter === 'attention') return a.statusClass !== 'good'
+              if (typeof crewFilter === 'number') return a.id === crewFilter
+              return true
+            })
 
-                  return (
-                    <div
-                      key={astro.id}
-                      className={`crew-profile-card ${isSelected ? 'selected' : ''}`}
-                      onClick={() => setSelectedAstronautId(astro.id)}
-                    >
-                      <div className="card-person-row">
-                        <img src={astro.avatarUrl} alt={astro.fullName} className="card-avatar-img" />
-                        <div className="card-person-info">
-                          <div className="person-name-line">
-                            <h3>{astro.fullName}</h3>
-                            <span className={`status-pill ${astro.statusClass}`}>
-                              {astro.statusClass === 'good' ? (
-                                <ShieldCheck size={13} strokeWidth={2.5} />
-                              ) : (
-                                <AlertTriangle size={13} strokeWidth={2.5} />
-                              )}
-                              <span>{astro.healthStatus}</span>
+            return (
+              <div className="earth-view-pane crew-pane">
+                <div className="hd-roster-filter-row">
+                  <SegmentedControl
+                    options={crewFilterOptions}
+                    value={typeof crewFilter === 'number' ? '' : crewFilter}
+                    onChange={(val) => setCrewFilter(val)}
+                    ariaLabel="Filter crew members by health status"
+                  />
+                  {typeof crewFilter === 'number' && (
+                    <Button variant="ghost" size="sm" onClick={() => setCrewFilter('all')}>
+                      Clear crew member filter
+                    </Button>
+                  )}
+                </div>
+
+                {warningCrewMember && (
+                  <Alert
+                    variant="warning"
+                    title={`Advisory on ${warningCrewMember.fullName}:`}
+                    action={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCrewFilter(
+                            crewFilter === warningCrewMember.id ? 'all' : warningCrewMember.id
+                          )
+                        }
+                      >
+                        {crewFilter === warningCrewMember.id
+                          ? 'Show all crew'
+                          : `Filter to ${warningCrewMember.fullName}`}
+                      </Button>
+                    }
+                    className="hd-roster-alert"
+                  >
+                    Watchlist condition detected ({warningCrewMember.healthStatus}). Real-time telemetry is actively streaming.
+                  </Alert>
+                )}
+
+                <div className="hd-roster-grid">
+                  {displayedCrew.map((astro) => {
+                    const currentVitals = astro.currentMetrics || astro.baseline[missionPhase]
+                    const isSelected = astro.id === selectedAstronautId
+                    const systolic = currentVitals.bp
+                      ? parseInt(currentVitals.bp.split('/')[0], 10)
+                      : 120
+
+                    return (
+                      <div
+                        key={astro.id}
+                        className={`hd-roster-card ${isSelected ? 'hd-roster-card--selected' : ''}`}
+                        onClick={() => setSelectedAstronautId(astro.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setSelectedAstronautId(astro.id)
+                          }
+                        }}
+                      >
+                        <div className="hd-roster-card__top">
+                          <div className="hd-avatar-wrapper">
+                            <div
+                              className={`hd-avatar-ring hd-avatar-ring--${astro.statusClass}`}
+                              aria-hidden="true"
+                            />
+                            <img
+                              src={astro.avatarUrl}
+                              alt={astro.fullName}
+                              className="hd-avatar-img"
+                            />
+                          </div>
+                          <div className="hd-roster-card__meta">
+                            <div className="hd-roster-card__name-row">
+                              <h3 className="hd-roster-card__name">{astro.fullName}</h3>
+                              <StatusChip variant={astro.statusClass}>
+                                {astro.healthStatus}
+                              </StatusChip>
+                            </div>
+                            <p className="hd-roster-card__sub">
+                              {astro.role} · {astro.astronautId}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="hd-roster-hr-panel">
+                          <div className="hd-roster-hr-readout">
+                            <span className="hd-roster-hr-label">Heart Rate</span>
+                            <span className="hd-roster-hr-num">
+                              {currentVitals.hr} <small>bpm</small>
                             </span>
                           </div>
-                          <p className="person-role">{astro.role} · {astro.astronautId}</p>
+                          <EcgTrace heartRate={currentVitals.hr} variant={astro.statusClass} />
                         </div>
-                      </div>
 
-                      <div className="card-vitals-row">
-                        <div className="v-card-cell">
-                          <span className="v-cell-lbl">Heart Rate</span>
-                          <strong>{currentVitals.hr} <small>bpm</small></strong>
+                        <div className="hd-roster-metrics-3col">
+                          <MeterBar
+                            label="Oxygen"
+                            value={currentVitals.o2}
+                            unit="%"
+                            min={80}
+                            max={100}
+                            variant={currentVitals.o2 < 95 ? 'warning' : 'good'}
+                          />
+                          <MeterBar
+                            label="Pressure"
+                            value={systolic}
+                            displayValue={currentVitals.bp}
+                            min={90}
+                            max={160}
+                            variant={systolic > 135 ? 'warning' : 'good'}
+                          />
+                          <MeterBar
+                            label="Tiredness"
+                            value={currentVitals.fatigue}
+                            unit="/100"
+                            min={0}
+                            max={100}
+                            variant={currentVitals.fatigue > 50 ? 'warning' : 'good'}
+                          />
                         </div>
-                        <div className="v-card-cell">
-                          <span className="v-cell-lbl">Oxygen</span>
-                          <strong>{currentVitals.o2} <small>%</small></strong>
-                        </div>
-                        <div className="v-card-cell">
-                          <span className="v-cell-lbl">Pressure</span>
-                          <strong>{currentVitals.bp}</strong>
-                        </div>
-                        <div className="v-card-cell">
-                          <span className="v-cell-lbl">Tiredness</span>
-                          <strong>{currentVitals.fatigue} <small>/100</small></strong>
-                        </div>
-                      </div>
 
-                      <div className="card-actions-bar">
-                        <span className="card-hardware-lbl">
-                          <Watch size={13} strokeWidth={2} />
+                        <div className="hd-roster-source">
+                          <Watch size={13} strokeWidth={2} aria-hidden="true" />
                           <span>{astro.wearableSource}</span>
-                        </span>
-                        <button
-                          type="button"
-                          className="inspect-card-btn"
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          fullWidth
                           onClick={(e) => {
                             e.stopPropagation()
                             setSelectedAstronautId(astro.id)
@@ -610,317 +622,493 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                           }}
                         >
                           <span>Open Detailed Vitals</span>
-                          <ArrowRight size={13} strokeWidth={2} />
-                        </button>
+                          <ArrowRight size={14} strokeWidth={2} />
+                        </Button>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
-
-              <details className="view-accordion">
-                <summary>Telemetry Stream Status Notes</summary>
-                <div className="accordion-body">
-                  <p>Telemetry stream active across all 3 crew members. Click any card to inspect their live biometrics.</p>
+                    )
+                  })}
                 </div>
-              </details>
-            </div>
-          )}
+
+                <Accordion title="Telemetry Stream Status Notes" defaultOpen={false}>
+                  <p>
+                    Telemetry stream active across all 3 crew members. Click any card to inspect their live biometrics.
+                  </p>
+                </Accordion>
+              </div>
+            )
+          })()}
 
           {/* VIEW 2: CLINICAL INSPECTION (8 GAUGES + STAGES) */}
           {activeTab === 'telemetry' && (
             <div className="earth-view-pane telemetry-pane">
               {/* Flight Phase Selector Bar */}
-              <div className="stage-selector-strip">
-                <span className="strip-title">Select Flight Environment:</span>
-                <div className="stage-pill-buttons">
-                  <button
-                    type="button"
-                    className={`stage-pill-btn ${missionPhase === 'preFlight' ? 'active' : ''}`}
-                    onClick={() => handlePhaseChange('preFlight')}
-                  >
-                    <Globe size={14} strokeWidth={2} />
-                    <span>1. Before Launch (Earth 1.0g)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`stage-pill-btn ${missionPhase === 'inSpace' ? 'active' : ''}`}
-                    onClick={() => handlePhaseChange('inSpace')}
-                  >
-                    <Compass size={14} strokeWidth={2} />
-                    <span>2. Flying in Space (Zero-G Fluid Shift)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`stage-pill-btn ${missionPhase === 'surface' ? 'active' : ''}`}
-                    onClick={() => handlePhaseChange('surface')}
-                  >
-                    <Cpu size={14} strokeWidth={2} />
-                    <span>3. Walking on Mars (0.38g Gravity)</span>
-                  </button>
+              <div className="hd-phase-selector-bar">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <span className="hd-phase-title">Flight Phase:</span>
+                  <SegmentedControl
+                    options={[
+                      { value: 'preFlight', label: '1. Earth (1.0g)' },
+                      { value: 'inSpace', label: '2. Transit Zero-G' },
+                      { value: 'surface', label: '3. Mars (0.38g)' },
+                    ]}
+                    value={missionPhase}
+                    onChange={(val) => handlePhaseChange(val)}
+                    ariaLabel="Flight Phase Selection"
+                  />
+                </div>
+
+                <div className="hd-astro-pill-group">
+                  <span className="hd-phase-title">Astronaut:</span>
+                  {crewData.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      className={`hd-astro-pill ${
+                        a.id === selectedAstronautId ? 'hd-astro-pill--active' : ''
+                      }`}
+                      onClick={() => setSelectedAstronautId(a.id)}
+                    >
+                      <img src={a.avatarUrl} alt="" className="hd-astro-pill__img" />
+                      <span>{a.fullName}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {/* 8 Gauges Grid */}
-              <div className="vitals-group-heading">
-                <Activity size={14} strokeWidth={2} />
+              <div className="hd-section-heading">
+                <Activity size={16} strokeWidth={2} />
                 <span>Primary Circulatory Vitals</span>
               </div>
 
-              <div className="eight-gauges-grid">
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Heart Rate</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.hr}</strong>
-                    <span className="g-unit">bpm</span>
+              <div className="hd-gauges-grid">
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Heart Rate</span>
+                    <StatusChip variant={metrics.hr > 100 || metrics.hr < 55 ? 'warning' : 'good'}>
+                      {metrics.hr > 100 ? 'Elevated' : 'Nominal'}
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Resting pulse sensor. Fluctuating dynamically with autonomic rhythm.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.hr}</span>
+                    <span className="hd-gauge-card__unit">bpm</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.hr}
+                    min={40}
+                    max={150}
+                    variant={metrics.hr > 100 || metrics.hr < 55 ? 'warning' : 'good'}
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Resting pulse sensor. Fluctuating dynamically with autonomic rhythm.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Blood Oxygen</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.o2}</strong>
-                    <span className="g-unit">% SpO2</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Blood Oxygen</span>
+                    <StatusChip variant={metrics.o2 < 95 ? 'warning' : 'good'}>
+                      {metrics.o2 >= 95 ? 'Optimal' : 'Caution'}
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Oxygen saturation. Above 95% indicates nominal lung absorption.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.o2}</span>
+                    <span className="hd-gauge-card__unit">% SpO2</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.o2}
+                    min={80}
+                    max={100}
+                    variant={metrics.o2 < 95 ? 'warning' : 'good'}
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Oxygen saturation. Above 95% indicates nominal lung absorption.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Blood Pressure</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.bp}</strong>
-                    <span className="g-unit">mmHg</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Blood Pressure</span>
+                    <StatusChip
+                      variant={
+                        parseInt(String(metrics.bp).split('/')[0], 10) > 135
+                          ? 'warning'
+                          : 'good'
+                      }
+                    >
+                      {parseInt(String(metrics.bp).split('/')[0], 10) > 135
+                        ? 'High-Normal'
+                        : 'Balanced'}
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Circulatory pressure required to supply the brain in microgravity.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.bp}</span>
+                    <span className="hd-gauge-card__unit">mmHg</span>
+                  </div>
+                  <MeterBar
+                    value={parseInt(String(metrics.bp).split('/')[0], 10) || 120}
+                    min={90}
+                    max={160}
+                    variant={
+                      parseInt(String(metrics.bp).split('/')[0], 10) > 135
+                        ? 'warning'
+                        : 'good'
+                    }
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Circulatory pressure required to supply the brain in microgravity.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Body Temperature</span>
-                  <div className="g-val-line">
-                    <strong>{Number(metrics.temp).toFixed(1)}°</strong>
-                    <span className="g-unit">C</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Body Temperature</span>
+                    <StatusChip
+                      variant={
+                        metrics.temp > 37.5 || metrics.temp < 36.0 ? 'warning' : 'good'
+                      }
+                    >
+                      Nominal
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Normal core body warmth. Circadian regulation is functioning well.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">
+                      {Number(metrics.temp).toFixed(1)}°
+                    </span>
+                    <span className="hd-gauge-card__unit">C</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.temp}
+                    min={35.0}
+                    max={39.0}
+                    variant={
+                      metrics.temp > 37.5 || metrics.temp < 36.0 ? 'warning' : 'good'
+                    }
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Normal core body warmth. Circadian regulation is functioning well.
+                  </p>
+                </div>
               </div>
 
-              <div className="vitals-group-heading">
-                <ShieldCheck size={14} strokeWidth={2} />
+              <div className="hd-section-heading">
+                <ShieldCheck size={16} strokeWidth={2} />
                 <span>Respiration &amp; Physiological Biomarkers</span>
               </div>
 
-              <div className="eight-gauges-grid">
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Breathing Rate</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.resp}</strong>
-                    <span className="g-unit">rpm</span>
+              <div className="hd-gauges-grid">
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Breathing Rate</span>
+                    <StatusChip variant={metrics.resp > 22 ? 'warning' : 'good'}>
+                      Steady
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Thoracic bio-sensor. 12 to 20 breaths per minute is healthy.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.resp}</span>
+                    <span className="hd-gauge-card__unit">rpm</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.resp}
+                    min={8}
+                    max={28}
+                    variant={metrics.resp > 22 ? 'warning' : 'good'}
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Thoracic bio-sensor. 12 to 20 breaths per minute is healthy.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Sleep &amp; Rest</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.fatigue}</strong>
-                    <span className="g-unit">/100 score</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Sleep &amp; Rest</span>
+                    <StatusChip variant={metrics.fatigue > 55 ? 'warning' : 'good'}>
+                      {metrics.fatigue > 55 ? 'Fatigued' : 'Rested'}
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">{Number(metrics.sleep).toFixed(1)} hours of rest. Cognitive alertness scores are sharp.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.fatigue}</span>
+                    <span className="hd-gauge-card__unit">/100 score</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.fatigue}
+                    min={0}
+                    max={100}
+                    variant={metrics.fatigue > 55 ? 'warning' : 'good'}
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    {Number(metrics.sleep).toFixed(1)} hours of rest. Cognitive alertness scores are sharp.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Immune Defense</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.immune}</strong>
-                    <span className="g-unit">% stress</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Immune Defense</span>
+                    <StatusChip variant={metrics.immune > 35 ? 'warning' : 'good'}>
+                      {metrics.immune > 35 ? 'Stressed' : 'Robust'}
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Salivary biomarker check. Low stress score indicates dormant viruses.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.immune}</span>
+                    <span className="hd-gauge-card__unit">% stress</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.immune}
+                    min={0}
+                    max={60}
+                    variant={metrics.immune > 35 ? 'warning' : 'good'}
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Salivary biomarker check. Low stress score indicates dormant viruses.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Bone &amp; Muscle Strength</span>
-                  <div className="g-val-line">
-                    <strong>96.4%</strong>
-                    <span className="g-unit">BMD</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Bone &amp; Muscle Strength</span>
+                    <StatusChip variant="good">Preserved</StatusChip>
                   </div>
-                  <p className="g-desc">Daily resistive exercise countermeasure preserving bone density.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">96.4%</span>
+                    <span className="hd-gauge-card__unit">BMD</span>
+                  </div>
+                  <MeterBar value={96.4} min={80} max={100} variant="good" showValue={false} />
+                  <p className="hd-gauge-card__desc">
+                    Daily resistive exercise countermeasure preserving bone density.
+                  </p>
+                </div>
               </div>
 
-              <details className="view-accordion">
-                <summary>Flight Surgeon Clinical Notes</summary>
-                <div className="accordion-body">
-                  <p>Resting pulse and circulatory pressure required to supply the brain in microgravity. Autonomic rhythm fluctuates dynamically.</p>
-                  <p>Daily resistive exercise countermeasure preserving bone density (BMD).</p>
-                </div>
-              </details>
+              <Accordion title="Flight Surgeon Clinical Notes" defaultOpen={false}>
+                <p>
+                  Resting pulse and circulatory pressure required to supply the brain in microgravity. Autonomic rhythm fluctuates dynamically.
+                </p>
+                <p>
+                  Daily resistive exercise countermeasure preserving bone density (BMD).
+                </p>
+              </Accordion>
             </div>
           )}
 
           {/* VIEW 3: CABIN AIR & SYSTEMS */}
           {activeTab === 'environment' && (
             <div className="earth-view-pane environment-pane">
-              <div className="vitals-group-heading">
-                <Wind size={14} strokeWidth={2} />
+              <div className="hd-section-heading">
+                <Wind size={16} strokeWidth={2} />
                 <span>Atmosphere &amp; Pressure</span>
               </div>
 
-              <div className="cabin-systems-grid">
-                <div className="system-metric-card">
-                  <span className="sys-label">Cabin Oxygen (O2)</span>
-                  <strong>{cabinEnv.oxygen}%</strong>
-                  <small>Nominal breathable air (Standard setpoint: 21.0%)</small>
+              <div className="hd-sys-grid">
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Cabin Oxygen (O2)</span>
+                    <StatusChip variant="good">Nominal</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.oxygen}%</span>
+                  <MeterBar value={cabinEnv.oxygen} min={15} max={25} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Nominal breathable air (Standard setpoint: 21.0%)
+                  </p>
                 </div>
 
-                <div className="system-metric-card">
-                  <span className="sys-label">Carbon Dioxide (ppCO2)</span>
-                  <strong>{cabinEnv.co2}%</strong>
-                  <small>Scrubbers active. Safe limit is below 0.50%</small>
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Carbon Dioxide (ppCO2)</span>
+                    <StatusChip variant="good">Scrubbed</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.co2}%</span>
+                  <MeterBar value={cabinEnv.co2} min={0} max={1.0} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Scrubbers active. Safe limit is below 0.50%
+                  </p>
                 </div>
 
-                <div className="system-metric-card">
-                  <span className="sys-label">Cabin Air Pressure</span>
-                  <strong>{cabinEnv.pressure} kPa</strong>
-                  <small>Standard sea-level atmospheric equivalent</small>
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Cabin Air Pressure</span>
+                    <StatusChip variant="good">Sea-Level Eq</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.pressure} kPa</span>
+                  <MeterBar value={cabinEnv.pressure} min={80} max={120} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Standard sea-level atmospheric equivalent
+                  </p>
                 </div>
               </div>
 
-              <div className="vitals-group-heading">
-                <Shield size={14} strokeWidth={2} />
+              <div className="hd-section-heading">
+                <Shield size={16} strokeWidth={2} />
                 <span>Habitat Systems &amp; Environment</span>
               </div>
 
-              <div className="cabin-systems-grid">
-                <div className="system-metric-card">
-                  <span className="sys-label">Room Temperature</span>
-                  <strong>{cabinEnv.temp} °C</strong>
-                  <small>Comfortable living range automatically maintained</small>
+              <div className="hd-sys-grid">
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Room Temperature</span>
+                    <StatusChip variant="good">Thermal Stn</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.temp} °C</span>
+                  <MeterBar value={cabinEnv.temp} min={15} max={30} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Comfortable living range automatically maintained
+                  </p>
                 </div>
 
-                <div className="system-metric-card">
-                  <span className="sys-label">Space Radiation Level</span>
-                  <strong>{cabinEnv.radiation} mSv / day</strong>
-                  <small>Ship storm shields are protecting the crew</small>
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Space Radiation Level</span>
+                    <StatusChip variant="good">Shielded</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.radiation} mSv / day</span>
+                  <MeterBar value={cabinEnv.radiation} min={0} max={5} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Ship storm shields are protecting the crew
+                  </p>
                 </div>
 
-                <div className="system-metric-card">
-                  <span className="sys-label">Clean Recycled Water</span>
-                  <strong>{cabinEnv.water}%</strong>
-                  <small>Closed-loop water filters functioning at peak capacity</small>
+                <div className="hd-sys-card">
+                  <div className="hd-sys-card__header">
+                    <span className="hd-sys-card__label">Clean Recycled Water</span>
+                    <StatusChip variant="good">Purified</StatusChip>
+                  </div>
+                  <span className="hd-sys-card__val">{cabinEnv.water}%</span>
+                  <MeterBar value={cabinEnv.water} min={70} max={100} variant="good" showValue={false} />
+                  <p className="hd-sys-card__desc">
+                    Closed-loop water filters functioning at peak capacity
+                  </p>
                 </div>
               </div>
 
-              <details className="view-accordion">
-                <summary>Environmental Life Support Diagnostics</summary>
-                <div className="accordion-body">
-                  <p>Closed-loop water filters functioning at peak capacity. Safe CO2 limit is below 0.50%.</p>
-                </div>
-              </details>
+              <Accordion title="Environmental Life Support Diagnostics" defaultOpen={false}>
+                <p>
+                  Closed-loop water filters functioning at peak capacity. Safe CO2 limit is below 0.50%.
+                </p>
+              </Accordion>
 
-              <div className="systems-summary-banner">
-                <ShieldCheck size={18} strokeWidth={2} />
-                <strong>Spacecraft Life Support Status: ALL SYSTEMS NOMINAL (Dynamic Telemetry Link Active)</strong>
-              </div>
+              <Alert variant="good" title="Spacecraft Life Support Status:">
+                ALL SYSTEMS NOMINAL (Dynamic Telemetry Link Active)
+              </Alert>
             </div>
           )}
 
           {/* VIEW 4: RADIO COMMS & DOCTOR ADVICE */}
           {activeTab === 'comms' && (
             <div className="earth-view-pane comms-pane">
-              <div className="comms-split-layout">
+              <div className="hd-comms-split">
                 {/* Left: Incident Feed */}
-                <div className="comms-feed-column">
+                <div className="hd-comms-col">
                   <h3>Recent Medical Events Received</h3>
-                  <div className="incident-card-feed">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {INCIDENT_LOGS.slice(0, 1).map((inc) => (
-                      <div key={inc.id} className="feed-incident-box">
-                        <div className="incident-box-header">
-                          <strong>{inc.title}</strong>
-                          <span className="status-pill good">
-                            <ShieldCheck size={13} strokeWidth={2.5} />
-                            <span>Resolved</span>
+                      <div key={inc.id} className="hd-incident-card">
+                        <div className="hd-incident-card__header">
+                          <strong className="hd-incident-card__title">{inc.title}</strong>
+                          <StatusChip variant="good">Resolved</StatusChip>
+                        </div>
+                        <div className="hd-incident-card__meta">
+                          <span className="hd-incident-card__meta-item">
+                            <Clock size={12} strokeWidth={2} aria-hidden="true" />
+                            {inc.timeOccurred}
+                          </span>
+                          <span className="hd-incident-card__meta-item">
+                            <Radio size={12} strokeWidth={2} aria-hidden="true" />
+                            {inc.delayNote}
                           </span>
                         </div>
-                        <div className="incident-time-stamp">
-                          <span><Clock size={12} strokeWidth={2} /> {inc.timeOccurred}</span>
-                          <span><Radio size={12} strokeWidth={2} /> {inc.delayNote}</span>
-                        </div>
-                        <p className="incident-quote">
+                        <p className="hd-incident-quote">
                           <strong>Onboard Computer Action:</strong> {inc.whatShipDid}
                         </p>
-                        <p className="incident-quote doc">
+                        <p className="hd-incident-quote hd-incident-quote--doc">
                           <strong>Houston Doctor Confirmation:</strong> {inc.doctorAdvice}
                         </p>
                       </div>
                     ))}
 
                     {INCIDENT_LOGS.length > 1 && (
-                      <details className="view-accordion">
-                        <summary>Earlier Incident Logs ({INCIDENT_LOGS.length - 1} earlier record)</summary>
-                        <div className="accordion-body">
+                      <Accordion
+                        title={`Earlier Incident Logs (${INCIDENT_LOGS.length - 1} earlier record)`}
+                        defaultOpen={false}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                           {INCIDENT_LOGS.slice(1).map((inc) => (
-                            <div key={inc.id} className="feed-incident-box" style={{ marginTop: '8px' }}>
-                              <div className="incident-box-header">
-                                <strong>{inc.title}</strong>
-                                <span className="status-pill good">
-                                  <ShieldCheck size={13} strokeWidth={2.5} />
-                                  <span>Resolved</span>
+                            <div key={inc.id} className="hd-incident-card">
+                              <div className="hd-incident-card__header">
+                                <strong className="hd-incident-card__title">{inc.title}</strong>
+                                <StatusChip variant="good">Resolved</StatusChip>
+                              </div>
+                              <div className="hd-incident-card__meta">
+                                <span className="hd-incident-card__meta-item">
+                                  <Clock size={12} strokeWidth={2} aria-hidden="true" />
+                                  {inc.timeOccurred}
+                                </span>
+                                <span className="hd-incident-card__meta-item">
+                                  <Radio size={12} strokeWidth={2} aria-hidden="true" />
+                                  {inc.delayNote}
                                 </span>
                               </div>
-                              <div className="incident-time-stamp">
-                                <span><Clock size={12} strokeWidth={2} /> {inc.timeOccurred}</span>
-                                <span><Radio size={12} strokeWidth={2} /> {inc.delayNote}</span>
-                              </div>
-                              <p className="incident-quote">
+                              <p className="hd-incident-quote">
                                 <strong>Onboard Computer Action:</strong> {inc.whatShipDid}
                               </p>
-                              <p className="incident-quote doc">
+                              <p className="hd-incident-quote hd-incident-quote--doc">
                                 <strong>Houston Doctor Confirmation:</strong> {inc.doctorAdvice}
                               </p>
                             </div>
                           ))}
                         </div>
-                      </details>
+                      </Accordion>
                     )}
                   </div>
                 </div>
 
                 {/* Right: Message Dispatch */}
-                <div className="comms-dispatch-column">
+                <div className="hd-comms-col">
                   <h3>Dispatch Doctor's Advisory Note</h3>
-                  <form onSubmit={handleSendMessage} className="advice-send-form">
-                    <label htmlFor="advisory-text">
-                      Message for {selectedAstro.fullName} ({selectedAstro.role}):
-                    </label>
-                    <textarea
-                      id="advisory-text"
-                      rows="4"
-                      placeholder="e.g. Please sit down, drink plenty of water with electrolytes, and rest for 30 minutes..."
-                      value={doctorNote}
-                      onChange={(e) => setDoctorNote(e.target.value)}
-                    />
-                    <button type="submit" className="send-uplink-btn">
-                      <Send size={15} strokeWidth={2} />
-                      <span>Send Radio Message to Spacecraft (~12m delay)</span>
-                    </button>
-                  </form>
+                  <div className="hd-dispatch-card">
+                    <form onSubmit={handleSendMessage} className="hd-dispatch-form">
+                      <label htmlFor="advisory-text" className="hd-dispatch-label">
+                        Message for {selectedAstro.fullName} ({selectedAstro.role}):
+                      </label>
+                      <textarea
+                        id="advisory-text"
+                        rows="4"
+                        className="hd-dispatch-textarea"
+                        placeholder="e.g. Please sit down, drink plenty of water with electrolytes, and rest for 30 minutes..."
+                        value={doctorNote}
+                        onChange={(e) => setDoctorNote(e.target.value)}
+                      />
+                      <Button type="submit" variant="primary">
+                        <Send size={15} strokeWidth={2} />
+                        <span>Send Radio Message to Spacecraft (~12m delay)</span>
+                      </Button>
+                    </form>
 
-                  {sentMessages.length > 0 && (
-                    <div className="sent-queue-block">
-                      <h4>Messages Currently In Transit:</h4>
-                      {sentMessages.map((msg) => (
-                        <div key={msg.id} className="transit-msg-item">
-                          <div className="transit-header">
-                            <strong>To: {msg.to}</strong>
-                            <span>{msg.timeSent}</span>
+                    {sentMessages.length > 0 && (
+                      <div className="hd-transit-list">
+                        <h4 style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                          Messages Currently In Transit:
+                        </h4>
+                        {sentMessages.map((msg) => (
+                          <div key={msg.id} className="hd-transit-item">
+                            <div className="hd-transit-item__head">
+                              <span>To: {msg.to}</span>
+                              <span style={{ fontFamily: 'var(--font-mono)' }}>{msg.timeSent}</span>
+                            </div>
+                            <p className="hd-transit-item__text">"{msg.text}"</p>
+                            <span className="hd-transit-item__eta">
+                              Estimated arrival on spacecraft: ~{msg.eta}
+                            </span>
                           </div>
-                          <p>"{msg.text}"</p>
-                          <small>Estimated arrival on spacecraft: ~{msg.eta}</small>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -929,66 +1117,83 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
           {/* VIEW 5: EMERGENCY SIMULATION LAB */}
           {activeTab === 'simulator' && (
             <div className="earth-view-pane simulator-pane">
-              <div className="sim-lab-card">
+              <div className="hd-sim-lab-card">
                 <h3>Test How the Clinical Brain Responds to Emergencies</h3>
 
-                <div className="vitals-group-heading">
-                  <FlaskConical size={14} strokeWidth={2} />
+                <div className="hd-section-heading">
+                  <FlaskConical size={16} strokeWidth={2} />
                   <span>Simulation Scenarios</span>
                 </div>
 
-                <div className="scenario-buttons-grid">
+                <div className="hd-sim-grid">
                   <button
                     type="button"
-                    className={`scenario-box-btn ${activeScenario === 'tachycardia' ? 'active danger' : ''}`}
+                    className={`hd-sim-btn ${
+                      activeScenario === 'tachycardia' ? 'hd-sim-btn--active-danger' : ''
+                    }`}
                     onClick={() => triggerScenario('tachycardia')}
                   >
-                    <Zap className="scenario-btn-icon" size={22} strokeWidth={2} />
-                    <strong>Acute Tachycardia Surge</strong>
-                    <small>Spikes heart rate to 176 bpm due to sudden zero-G fluid shift</small>
+                    <Zap size={22} strokeWidth={2} style={{ color: 'var(--hd-red)' }} />
+                    <span className="hd-sim-btn__title">Acute Tachycardia Surge</span>
+                    <span className="hd-sim-btn__desc">
+                      Spikes heart rate to 176 bpm due to sudden zero-G fluid shift
+                    </span>
                   </button>
 
                   <button
                     type="button"
-                    className={`scenario-box-btn ${activeScenario === 'hypoxia' ? 'active danger' : ''}`}
+                    className={`hd-sim-btn ${
+                      activeScenario === 'hypoxia' ? 'hd-sim-btn--active-danger' : ''
+                    }`}
                     onClick={() => triggerScenario('hypoxia')}
                   >
-                    <Wind className="scenario-btn-icon" size={22} strokeWidth={2} />
-                    <strong>Cabin Hypoxia Drop</strong>
-                    <small>Drops SpO2 to 89% and elevates breathing rate</small>
+                    <Wind size={22} strokeWidth={2} style={{ color: 'var(--hd-red)' }} />
+                    <span className="hd-sim-btn__title">Cabin Hypoxia Drop</span>
+                    <span className="hd-sim-btn__desc">
+                      Drops SpO2 to 89% and elevates breathing rate
+                    </span>
                   </button>
 
                   <button
                     type="button"
-                    className={`scenario-box-btn ${activeScenario === 'immune' ? 'active warning' : ''}`}
+                    className={`hd-sim-btn ${
+                      activeScenario === 'immune' ? 'hd-sim-btn--active-warning' : ''
+                    }`}
                     onClick={() => triggerScenario('immune')}
                   >
-                    <ShieldAlert className="scenario-btn-icon" size={22} strokeWidth={2} />
-                    <strong>Immune Stress Flare</strong>
-                    <small>Elevates saliva stress biomarkers and body temperature</small>
+                    <ShieldAlert size={22} strokeWidth={2} style={{ color: 'var(--hd-amber)' }} />
+                    <span className="hd-sim-btn__title">Immune Stress Flare</span>
+                    <span className="hd-sim-btn__desc">
+                      Elevates saliva stress biomarkers and body temperature
+                    </span>
                   </button>
 
                   <button
                     type="button"
-                    className="scenario-box-btn reset"
+                    className="hd-sim-btn hd-sim-btn--reset"
                     onClick={() => triggerScenario('nominal')}
                   >
-                    <RotateCcw className="scenario-btn-icon" size={22} strokeWidth={2} />
-                    <strong>Reset to Nominal Baseline</strong>
-                    <small>Restores healthy, steady resting metrics</small>
+                    <RotateCcw size={22} strokeWidth={2} style={{ color: 'var(--text-secondary)' }} />
+                    <span className="hd-sim-btn__title">Reset to Nominal Baseline</span>
+                    <span className="hd-sim-btn__desc">
+                      Restores healthy, steady resting metrics
+                    </span>
                   </button>
                 </div>
 
-                <div className="sim-current-status-box">
-                  <strong>Selected Astronaut for Test:</strong> {selectedAstro.fullName} ({selectedAstro.astronautId}) · Current Health Status: <span className="status-highlight">{selectedAstro.healthStatus}</span>
+                <div className="hd-sim-status-banner">
+                  <strong>Selected Astronaut for Test:</strong> {selectedAstro.fullName} ({selectedAstro.astronautId}) ·
+                  <span>Current Health Status:</span>
+                  <StatusChip variant={selectedAstro.statusClass}>
+                    {selectedAstro.healthStatus}
+                  </StatusChip>
                 </div>
 
-                <details className="view-accordion">
-                  <summary>How This Simulation Operates</summary>
-                  <div className="accordion-body">
-                    <p>Click any scenario above to inject a simulated physiological surge. Watch how the vital numbers adapt and how the system alerts the crew in real time.</p>
-                  </div>
-                </details>
+                <Accordion title="How This Simulation Operates" defaultOpen={false}>
+                  <p>
+                    Click any scenario above to inject a simulated physiological surge. Watch how the vital numbers adapt and how the system alerts the crew in real time.
+                  </p>
+                </Accordion>
               </div>
             </div>
           )}
