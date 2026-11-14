@@ -4,8 +4,6 @@ import {
   Activity,
   ArrowRight,
   Clock,
-  Compass,
-  Cpu,
   FlaskConical,
   Globe,
   LogOut,
@@ -644,130 +642,258 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
           {activeTab === 'telemetry' && (
             <div className="earth-view-pane telemetry-pane">
               {/* Flight Phase Selector Bar */}
-              <div className="stage-selector-strip">
-                <span className="strip-title">Select Flight Environment:</span>
-                <div className="stage-pill-buttons">
-                  <button
-                    type="button"
-                    className={`stage-pill-btn ${missionPhase === 'preFlight' ? 'active' : ''}`}
-                    onClick={() => handlePhaseChange('preFlight')}
-                  >
-                    <Globe size={14} strokeWidth={2} />
-                    <span>1. Before Launch (Earth 1.0g)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`stage-pill-btn ${missionPhase === 'inSpace' ? 'active' : ''}`}
-                    onClick={() => handlePhaseChange('inSpace')}
-                  >
-                    <Compass size={14} strokeWidth={2} />
-                    <span>2. Flying in Space (Zero-G Fluid Shift)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`stage-pill-btn ${missionPhase === 'surface' ? 'active' : ''}`}
-                    onClick={() => handlePhaseChange('surface')}
-                  >
-                    <Cpu size={14} strokeWidth={2} />
-                    <span>3. Walking on Mars (0.38g Gravity)</span>
-                  </button>
+              <div className="hd-phase-selector-bar">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <span className="hd-phase-title">Flight Phase:</span>
+                  <SegmentedControl
+                    options={[
+                      { value: 'preFlight', label: '1. Earth (1.0g)' },
+                      { value: 'inSpace', label: '2. Transit Zero-G' },
+                      { value: 'surface', label: '3. Mars (0.38g)' },
+                    ]}
+                    value={missionPhase}
+                    onChange={(val) => handlePhaseChange(val)}
+                    ariaLabel="Flight Phase Selection"
+                  />
+                </div>
+
+                <div className="hd-astro-pill-group">
+                  <span className="hd-phase-title">Astronaut:</span>
+                  {crewData.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      className={`hd-astro-pill ${
+                        a.id === selectedAstronautId ? 'hd-astro-pill--active' : ''
+                      }`}
+                      onClick={() => setSelectedAstronautId(a.id)}
+                    >
+                      <img src={a.avatarUrl} alt="" className="hd-astro-pill__img" />
+                      <span>{a.fullName}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {/* 8 Gauges Grid */}
-              <div className="vitals-group-heading">
-                <Activity size={14} strokeWidth={2} />
+              <div className="hd-section-heading">
+                <Activity size={16} strokeWidth={2} />
                 <span>Primary Circulatory Vitals</span>
               </div>
 
-              <div className="eight-gauges-grid">
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Heart Rate</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.hr}</strong>
-                    <span className="g-unit">bpm</span>
+              <div className="hd-gauges-grid">
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Heart Rate</span>
+                    <StatusChip variant={metrics.hr > 100 || metrics.hr < 55 ? 'warning' : 'good'}>
+                      {metrics.hr > 100 ? 'Elevated' : 'Nominal'}
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Resting pulse sensor. Fluctuating dynamically with autonomic rhythm.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.hr}</span>
+                    <span className="hd-gauge-card__unit">bpm</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.hr}
+                    min={40}
+                    max={150}
+                    variant={metrics.hr > 100 || metrics.hr < 55 ? 'warning' : 'good'}
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Resting pulse sensor. Fluctuating dynamically with autonomic rhythm.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Blood Oxygen</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.o2}</strong>
-                    <span className="g-unit">% SpO2</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Blood Oxygen</span>
+                    <StatusChip variant={metrics.o2 < 95 ? 'warning' : 'good'}>
+                      {metrics.o2 >= 95 ? 'Optimal' : 'Caution'}
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Oxygen saturation. Above 95% indicates nominal lung absorption.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.o2}</span>
+                    <span className="hd-gauge-card__unit">% SpO2</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.o2}
+                    min={80}
+                    max={100}
+                    variant={metrics.o2 < 95 ? 'warning' : 'good'}
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Oxygen saturation. Above 95% indicates nominal lung absorption.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Blood Pressure</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.bp}</strong>
-                    <span className="g-unit">mmHg</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Blood Pressure</span>
+                    <StatusChip
+                      variant={
+                        parseInt(String(metrics.bp).split('/')[0], 10) > 135
+                          ? 'warning'
+                          : 'good'
+                      }
+                    >
+                      {parseInt(String(metrics.bp).split('/')[0], 10) > 135
+                        ? 'High-Normal'
+                        : 'Balanced'}
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Circulatory pressure required to supply the brain in microgravity.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.bp}</span>
+                    <span className="hd-gauge-card__unit">mmHg</span>
+                  </div>
+                  <MeterBar
+                    value={parseInt(String(metrics.bp).split('/')[0], 10) || 120}
+                    min={90}
+                    max={160}
+                    variant={
+                      parseInt(String(metrics.bp).split('/')[0], 10) > 135
+                        ? 'warning'
+                        : 'good'
+                    }
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Circulatory pressure required to supply the brain in microgravity.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Body Temperature</span>
-                  <div className="g-val-line">
-                    <strong>{Number(metrics.temp).toFixed(1)}°</strong>
-                    <span className="g-unit">C</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Body Temperature</span>
+                    <StatusChip
+                      variant={
+                        metrics.temp > 37.5 || metrics.temp < 36.0 ? 'warning' : 'good'
+                      }
+                    >
+                      Nominal
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Normal core body warmth. Circadian regulation is functioning well.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">
+                      {Number(metrics.temp).toFixed(1)}°
+                    </span>
+                    <span className="hd-gauge-card__unit">C</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.temp}
+                    min={35.0}
+                    max={39.0}
+                    variant={
+                      metrics.temp > 37.5 || metrics.temp < 36.0 ? 'warning' : 'good'
+                    }
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Normal core body warmth. Circadian regulation is functioning well.
+                  </p>
+                </div>
               </div>
 
-              <div className="vitals-group-heading">
-                <ShieldCheck size={14} strokeWidth={2} />
+              <div className="hd-section-heading">
+                <ShieldCheck size={16} strokeWidth={2} />
                 <span>Respiration &amp; Physiological Biomarkers</span>
               </div>
 
-              <div className="eight-gauges-grid">
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Breathing Rate</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.resp}</strong>
-                    <span className="g-unit">rpm</span>
+              <div className="hd-gauges-grid">
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Breathing Rate</span>
+                    <StatusChip variant={metrics.resp > 22 ? 'warning' : 'good'}>
+                      Steady
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Thoracic bio-sensor. 12 to 20 breaths per minute is healthy.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.resp}</span>
+                    <span className="hd-gauge-card__unit">rpm</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.resp}
+                    min={8}
+                    max={28}
+                    variant={metrics.resp > 22 ? 'warning' : 'good'}
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Thoracic bio-sensor. 12 to 20 breaths per minute is healthy.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Sleep &amp; Rest</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.fatigue}</strong>
-                    <span className="g-unit">/100 score</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Sleep &amp; Rest</span>
+                    <StatusChip variant={metrics.fatigue > 55 ? 'warning' : 'good'}>
+                      {metrics.fatigue > 55 ? 'Fatigued' : 'Rested'}
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">{Number(metrics.sleep).toFixed(1)} hours of rest. Cognitive alertness scores are sharp.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.fatigue}</span>
+                    <span className="hd-gauge-card__unit">/100 score</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.fatigue}
+                    min={0}
+                    max={100}
+                    variant={metrics.fatigue > 55 ? 'warning' : 'good'}
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    {Number(metrics.sleep).toFixed(1)} hours of rest. Cognitive alertness scores are sharp.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Immune Defense</span>
-                  <div className="g-val-line">
-                    <strong>{metrics.immune}</strong>
-                    <span className="g-unit">% stress</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Immune Defense</span>
+                    <StatusChip variant={metrics.immune > 35 ? 'warning' : 'good'}>
+                      {metrics.immune > 35 ? 'Stressed' : 'Robust'}
+                    </StatusChip>
                   </div>
-                  <p className="g-desc">Salivary biomarker check. Low stress score indicates dormant viruses.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">{metrics.immune}</span>
+                    <span className="hd-gauge-card__unit">% stress</span>
+                  </div>
+                  <MeterBar
+                    value={metrics.immune}
+                    min={0}
+                    max={60}
+                    variant={metrics.immune > 35 ? 'warning' : 'good'}
+                    showValue={false}
+                  />
+                  <p className="hd-gauge-card__desc">
+                    Salivary biomarker check. Low stress score indicates dormant viruses.
+                  </p>
+                </div>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Bone &amp; Muscle Strength</span>
-                  <div className="g-val-line">
-                    <strong>96.4%</strong>
-                    <span className="g-unit">BMD</span>
+                <div className="hd-gauge-card">
+                  <div className="hd-gauge-card__header">
+                    <span className="hd-gauge-card__title">Bone &amp; Muscle Strength</span>
+                    <StatusChip variant="good">Preserved</StatusChip>
                   </div>
-                  <p className="g-desc">Daily resistive exercise countermeasure preserving bone density.</p>
-                </article>
+                  <div className="hd-gauge-card__value-line">
+                    <span className="hd-gauge-card__value">96.4%</span>
+                    <span className="hd-gauge-card__unit">BMD</span>
+                  </div>
+                  <MeterBar value={96.4} min={80} max={100} variant="good" showValue={false} />
+                  <p className="hd-gauge-card__desc">
+                    Daily resistive exercise countermeasure preserving bone density.
+                  </p>
+                </div>
               </div>
 
-              <details className="view-accordion">
-                <summary>Flight Surgeon Clinical Notes</summary>
-                <div className="accordion-body">
-                  <p>Resting pulse and circulatory pressure required to supply the brain in microgravity. Autonomic rhythm fluctuates dynamically.</p>
-                  <p>Daily resistive exercise countermeasure preserving bone density (BMD).</p>
-                </div>
-              </details>
+              <Accordion title="Flight Surgeon Clinical Notes" defaultOpen={false}>
+                <p>
+                  Resting pulse and circulatory pressure required to supply the brain in microgravity. Autonomic rhythm fluctuates dynamically.
+                </p>
+                <p>
+                  Daily resistive exercise countermeasure preserving bone density (BMD).
+                </p>
+              </Accordion>
             </div>
           )}
 
