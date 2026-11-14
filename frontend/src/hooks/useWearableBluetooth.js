@@ -84,17 +84,8 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
           'heart_rate',
           'battery_service',
           'device_information',
-          'generic_access',
-          '0000fee0-0000-1000-8000-00805f9b34fb', // Da Fit / Micro-mutual vendor UUID
-          '0000fee1-0000-1000-8000-00805f9b34fb',
-          '0000fee7-0000-1000-8000-00805f9b34fb',
-          '0000feea-0000-1000-8000-00805f9b34fb',
-          '0000ffe0-0000-1000-8000-00805f9b34fb', // Common BLE UART Service
-          '0000ffe1-0000-1000-8000-00805f9b34fb',
-          '0000180a-0000-1000-8000-00805f9b34fb', // Device Info (16-bit hex)
-          '0000180f-0000-1000-8000-00805f9b34fb', // Battery (16-bit hex)
-          '0000180d-0000-1000-8000-00805f9b34fb', // Heart Rate (16-bit hex)
-          '00001822-0000-1000-8000-00805f9b34fb', // Pulse Oximeter SpO2
+          '0000fee0-0000-1000-8000-00805f9b34fb', // Common vendor UUIDs
+          '0000ffe0-0000-1000-8000-00805f9b34fb',
         ],
       })
 
