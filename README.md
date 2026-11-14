@@ -655,6 +655,17 @@ In strict compliance with [VersionControl.md](file:///home/michaelochieng0/clayw
 
 ---
 
+
+### 14.4 Project Engineering Team & Architectural Ownership
+* **mmicbee**: Backend Telemetry Ingestion, Go Mutex Concurrency, Wearable Data Models & Houston Comms Bridge.
+* **its-ryann**: Notification Regex Extraction, Comms Handlers & Interval Streaming Bug Remediation.
+* **ClayMichael2004**: Telemetry Coordinate Mathematical Scaling, Physiological Anchor Bounds & Houston Comms Service Client.
+* **VALENTINE-it**: Earth Watch Mission Control Console, Emergency Dispatch Dialog & Unit Test Suites.
+* **nyabokegrace**: Astronaut Daily Biometrics Protocols, T2 Treadmill Exercise Guidance & OSDR-379 Immune Biomarkers.
+* **Moraa021**: Senior Fullstack QA Reviews, NASA HRP Benchmark Mapping & Telemetry Automation Test Scripts.
+
+---
+
 ## 15. Quickstart & Local Setup Guide
 
 ### 15.1 Start the Backend & Telemetry Replayer (Laptop)
