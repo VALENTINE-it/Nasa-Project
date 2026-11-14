@@ -145,6 +145,73 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     return () => clearInterval(envTimer)
   }, [])
 
+  // Ingest live telemetry from spacecraft via /api/wearable/live (NVIDIA QA Fix)
+  useEffect(() => {
+    let active = true
+    const pollWearable = async () => {
+      try {
+        const res = await fetch('/api/wearable/live')
+        if (!res.ok) return
+        const data = await res.json()
+        if (active && data) {
+          if (data.isConnected && data.heartRate > 0) {
+            setCrewData((prev) =>
+              prev.map((astro) => {
+                if (astro.id === 1) { // Elena Park is linked to the physical watch
+                  const current = astro.currentMetrics || astro.baseline[missionPhase]
+                  return {
+                    ...astro,
+                    wearableSource: `${data.deviceName || 'Oraimo Watch 2 Pro'} (LIVE GROUND LINK)`,
+                    currentMetrics: {
+                      ...current,
+                      hr: data.heartRate,
+                      steps: typeof data.steps === 'number' ? data.steps : current.steps,
+                      o2: data.spO2 > 0 ? data.spO2 : current.o2,
+                    },
+                  }
+                }
+                return astro
+              })
+            )
+          }
+        }
+      } catch {
+        // Ignore network hiccups
+      }
+    }
+
+    pollWearable()
+    const interval = setInterval(pollWearable, 3000)
+    return () => {
+      active = false
+      clearInterval(interval)
+    }
+  }, [missionPhase])
+
+  // Ingest deep-space comms messages from backend (NVIDIA QA Fix)
+  useEffect(() => {
+    let active = true
+    const fetchComms = async () => {
+      try {
+        const res = await fetch('/api/comms/messages')
+        if (res.ok) {
+          const list = await res.json()
+          if (active && Array.isArray(list)) {
+            setSentMessages(list)
+          }
+        }
+      } catch {
+        // Ignore
+      }
+    }
+    fetchComms()
+    const interval = setInterval(fetchComms, 5000)
+    return () => {
+      active = false
+      clearInterval(interval)
+    }
+  }, [])
+
   // REAL-TIME DYNAMIC TELEMETRY JITTER FOR ALL CREW MEMBERS
   useEffect(() => {
     const telemetryInterval = setInterval(() => {
@@ -269,20 +336,32 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     )
   }
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault()
     if (!doctorNote.trim()) return
 
+    const targetAstro = crewData.find((a) => a.id === selectedAstronautId)?.fullName || 'Crew'
     const newMsg = {
       id: `MSG-${Date.now()}`,
-      to: crewData.find((a) => a.id === selectedAstronautId)?.fullName || 'Crew',
+      to: targetAstro,
+      from: 'Dr. Henderson (Houston Flight Surgeon)',
       text: doctorNote,
-      timeSent: new Date().toLocaleTimeString(),
-      eta: '12.7 minutes',
+      timeSent: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' UTC',
+      eta: '12.7 minutes (Deep-Space Latency)',
     }
 
     setSentMessages((prev) => [newMsg, ...prev])
     setDoctorNote('')
+
+    try {
+      await fetch('/api/comms/uplink', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMsg),
+      })
+    } catch {
+      // Local state already updated
+    }
   }
 
   const selectedAstro = crewData.find((a) => a.id === selectedAstronautId) || crewData[0]
