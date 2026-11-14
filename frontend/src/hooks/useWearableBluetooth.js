@@ -89,6 +89,8 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
           'device_information',
           '0000fee0-0000-1000-8000-00805f9b34fb', // Common vendor UUIDs
           '0000ffe0-0000-1000-8000-00805f9b34fb',
+          '16186f00-0000-1000-8000-00807f9b34fb', // Exact Oraimo Watch 2 Pro Vendor Health Service
+          '0000aa01-0000-1000-8000-00805f9b34fb', // Oraimo OTA Service
         ],
       })
 
@@ -153,8 +155,9 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
         // optional
       }
 
-      // 5. Probe Vendor Services (0xFEE0, 0xFFE0, etc.)
+      // 5. Probe Vendor Services (including exact Oraimo 16186f00)
       const vendorCandidates = [
+        '16186f00-0000-1000-8000-00807f9b34fb',
         '0000fee0-0000-1000-8000-00805f9b34fb',
         '0000ffe0-0000-1000-8000-00805f9b34fb',
       ]
@@ -164,9 +167,25 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
           logDiag(`Vendor Service detected: ${vUuid}`)
           const vChars = await vService.getCharacteristics()
           const charSummary = vChars
-            .map((c) => `${c.uuid.slice(4, 8)}(read:${c.properties.read},write:${c.properties.write},notify:${c.properties.notify})`)
+            .map((c) => `${c.uuid.slice(0, 8)}(read:${c.properties.read},write:${c.properties.write},notify:${c.properties.notify})`)
             .join(', ')
           logDiag(`Vendor Characteristics: ${charSummary}`)
+
+          // Attempt to listen on any notify characteristic
+          for (const ch of vChars) {
+            if (ch.properties.notify) {
+              try {
+                await ch.startNotifications()
+                ch.addEventListener('characteristicvaluechanged', (evt) => {
+                  const bytes = new Uint8Array(evt.target.value.buffer)
+                  logDiag(`Raw Vendor packet from ${ch.uuid.slice(0, 8)}: [${Array.from(bytes).map(b => '0x' + b.toString(16).padStart(2, '0')).join(', ')}]`)
+                })
+                logDiag(`Subscribed to vendor notify characteristic: ${ch.uuid.slice(0, 8)}`)
+              } catch (subErr) {
+                logDiag(`Could not subscribe to ${ch.uuid.slice(0, 8)}: ${subErr.message}`)
+              }
+            }
+          }
         } catch {
           // not present
         }
