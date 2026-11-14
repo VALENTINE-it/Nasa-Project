@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
-import { AlertTriangle, CheckCircle2, Watch, Radio } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Watch, Radio, RefreshCw } from 'lucide-react'
 import EarthWatchConsole from './EarthWatchConsole'
 import PublicLoginPage from './components/PublicLoginPage'
 import AstronautSidebar from './components/AstronautSidebar'
@@ -407,9 +407,23 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     connectDevice: connectBleWatch,
     disconnectDevice: disconnectBleWatch,
     isConnected: isBleConnected,
+    triggerOraimoSync,
+    isSyncing: isBleSyncing,
+    lastVitals: bleLastVitals,
+    batteryLevel: bleBattery,
+    packetCount: blePacketCount,
   } = useWearableBluetooth({
-    onHeartRateUpdate: ({ heartRate }) => {
-      setLiveVitals((prev) => (prev ? { ...prev, heartRate } : prev))
+    onHeartRateUpdate: ({ heartRate, steps, bloodOxygen, stress }) => {
+      setLiveVitals((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          ...(heartRate ? { heartRate } : {}),
+          ...(typeof steps === 'number' && steps > 0 ? { physicalActivity: steps } : {}),
+          ...(bloodOxygen ? { bloodOxygen } : {}),
+          ...(stress ? { mentalStrain: stress } : {}),
+        }
+      })
     },
   })
 
@@ -850,7 +864,7 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               title={
                 isBleConnected
                   ? 'Click to disconnect Oraimo Watch'
-                  : 'Pair directly via Chrome Web Bluetooth (GATT Discovery Probe)'
+                  : 'Pair directly via Chrome Web Bluetooth (Oraimo SEWear Telemetry Protocol Engine)'
               }
             >
               <Watch size={14} strokeWidth={2} />
@@ -862,6 +876,19 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
                   : 'Pair Oraimo Watch (BLE)'}
               </span>
             </button>
+
+            {isBleConnected && (
+              <button
+                type="button"
+                className="wearable-sync-btn"
+                onClick={triggerOraimoSync}
+                disabled={isBleSyncing}
+                title="Wake sensors and stream live vitals via Oraimo SEWear protocol"
+              >
+                <RefreshCw size={12} className={isBleSyncing ? 'animate-spin' : ''} />
+                <span>{isBleSyncing ? 'Syncing...' : 'Sync Vitals'}</span>
+              </button>
+            )}
           </div>
         </header>
 
