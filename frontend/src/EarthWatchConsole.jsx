@@ -932,12 +932,19 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               </div>
 
               <div className="eight-gauges-grid">
-                <article className="clinical-gauge-box">
+                <article className={`clinical-gauge-box ${metrics.hr > 140 ? 'danger' : metrics.hr > 90 ? 'warning' : 'good'}`}>
                   <div className="g-title-row">
                     <span className="g-title">Heart Rate</span>
-                    {selectedAstro.id === 1 && (liveWearable.isConnected || isBleConnected || selectedAstro.isLiveWatchConnected) && (
-                      <span className="gauge-live-badge">LIVE ORAIMO SENSOR</span>
-                    )}
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      {metrics.hr > 140 ? (
+                        <span className="gauge-spike-tag danger">CRITICAL TACHYCARDIA</span>
+                      ) : metrics.hr > 90 ? (
+                        <span className="gauge-spike-tag">ELEVATED</span>
+                      ) : null}
+                      {selectedAstro.id === 1 && (liveWearable.isConnected || isBleConnected || selectedAstro.isLiveWatchConnected) && (
+                        <span className="gauge-live-badge">LIVE ORAIMO SENSOR</span>
+                      )}
+                    </div>
                   </div>
                   <div className="g-val-line">
                     <strong>{metrics.hr}</strong>
@@ -950,8 +957,15 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   </p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Blood Oxygen</span>
+                <article className={`clinical-gauge-box ${metrics.o2 < 90 ? 'danger' : metrics.o2 < 95 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Blood Oxygen</span>
+                    {metrics.o2 < 90 ? (
+                      <span className="gauge-spike-tag danger">HYPOXIA</span>
+                    ) : metrics.o2 < 95 ? (
+                      <span className="gauge-spike-tag">LOW SpO2</span>
+                    ) : null}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.o2}</strong>
                     <span className="g-unit">% SpO2</span>
@@ -959,8 +973,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">Oxygen saturation. Above 95% indicates nominal lung absorption.</p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Blood Pressure</span>
+                <article className={`clinical-gauge-box ${(parseInt(metrics.bp) > 135 || parseInt((metrics.bp || '').split('/')[1]) > 88) ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Blood Pressure</span>
+                    {parseInt(metrics.bp) > 135 && <span className="gauge-spike-tag">ELEVATED</span>}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.bp}</strong>
                     <span className="g-unit">mmHg</span>
@@ -968,8 +985,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">Circulatory pressure required to supply the brain in microgravity.</p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Body Temperature</span>
+                <article className={`clinical-gauge-box ${Number(metrics.temp) > 37.5 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Body Temperature</span>
+                    {Number(metrics.temp) > 37.5 && <span className="gauge-spike-tag">SPACE FEVER</span>}
+                  </div>
                   <div className="g-val-line">
                     <strong>{Number(metrics.temp).toFixed(1)}°</strong>
                     <span className="g-unit">C</span>
