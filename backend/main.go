@@ -74,6 +74,9 @@ func parseOrigins(s string) []string {
 	return origins
 }
 
+//go:embed dist
+var frontendFS embed.FS
+
 var (
 	db *sql.DB
 	mu sync.Mutex
@@ -109,9 +112,6 @@ var (
 
 	cfg config
 )
-
-//go:embed dist
-var frontendFS embed.FS
 
 type commsMessage struct {
 	ID       string `json:"id"`
@@ -1026,6 +1026,8 @@ func main() {
 	defer db.Close()
 
 	mux := http.NewServeMux()
+
+	// API routes (must come before SPA handler)
 	mux.HandleFunc("/api/health", withCORS(rateLimitMiddleware(handleHealth)))
 	mux.HandleFunc("/api/auth/login", withCORS(rateLimitMiddleware(handleLogin)))
 	mux.HandleFunc("/api/auth/session", withCORS(rateLimitMiddleware(handleSession)))
