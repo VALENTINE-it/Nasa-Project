@@ -779,11 +779,20 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 {crewData.map((astro) => {
                   const currentVitals = astro.currentMetrics || astro.baseline[missionPhase]
                   const isSelected = astro.id === selectedAstronautId
+                  const isAstroDanger = currentVitals.hr > 140 || currentVitals.o2 < 90 || astro.statusClass === 'danger'
+                  const isAstroSpiking =
+                    currentVitals.hr > 90 ||
+                    currentVitals.o2 < 95 ||
+                    currentVitals.fatigue > 55 ||
+                    astro.statusClass === 'warning' ||
+                    isAstroDanger
+
+                  const cardSpikeClass = isAstroDanger ? 'danger' : isAstroSpiking ? 'warning' : 'good'
 
                   return (
                     <div
                       key={astro.id}
-                      className={`crew-profile-card ${isSelected ? 'selected' : ''}`}
+                      className={`crew-profile-card ${isSelected ? 'selected' : ''} ${cardSpikeClass}`}
                       onClick={() => setSelectedAstronautId(astro.id)}
                     >
                       <div className="card-person-row">
@@ -791,13 +800,13 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                         <div className="card-person-info">
                           <div className="person-name-line">
                             <h3>{astro.fullName}</h3>
-                            <span className={`status-pill ${astro.statusClass}`}>
-                              {astro.statusClass === 'good' ? (
-                                <ShieldCheck size={13} strokeWidth={2.5} />
-                              ) : (
+                            <span className={`status-pill ${isAstroDanger ? 'danger' : isAstroSpiking ? 'warning' : 'good'}`}>
+                              {isAstroSpiking ? (
                                 <AlertTriangle size={13} strokeWidth={2.5} />
+                              ) : (
+                                <ShieldCheck size={13} strokeWidth={2.5} />
                               )}
-                              <span>{astro.healthStatus}</span>
+                              <span>{isAstroDanger ? 'CRITICAL ALERT' : isAstroSpiking ? 'SPIKE DETECTED' : astro.healthStatus}</span>
                             </span>
                           </div>
                           <p className="person-role">{astro.role} · {astro.astronautId}</p>
