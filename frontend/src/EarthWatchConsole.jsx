@@ -12,6 +12,7 @@ import {
   LogOut,
   Moon,
   Radio,
+  RefreshCw,
   RotateCcw,
   Send,
   Shield,
@@ -24,6 +25,7 @@ import {
   Wind,
   Zap,
 } from 'lucide-react'
+import useWearableBluetooth from './hooks/useWearableBluetooth'
 import './EarthWatchConsole.css'
 
 const CREW_PROFILES = [
@@ -124,6 +126,100 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     water: 98.4,
   })
 
+  // Live Watch Synchronization State (Elena Park - Crew #1)
+  const [liveWearable, setLiveWearable] = useState(() => {
+    try {
+      const saved = localStorage.getItem('aura_med_live_wearable')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      isConnected: false,
+      deviceName: 'Oraimo Watch 2 Pro',
+      heartRate: 0,
+      steps: 0,
+      spO2: 0,
+      lastSeen: '',
+    }
+  })
+
+  // Optional direct Web Bluetooth pairing from Earth Mission Control console
+  const {
+    connectionStatus: bleStatus,
+    deviceName: bleDeviceName,
+    connectDevice: connectBleWatch,
+    disconnectDevice: disconnectBleWatch,
+    isConnected: isBleConnected,
+    triggerOraimoSync,
+    isSyncing: isBleSyncing,
+  } = useWearableBluetooth({
+    onHeartRateUpdate: ({ heartRate, steps, bloodOxygen }) => {
+      const liveData = {
+        astronautId: 1,
+        isConnected: true,
+        deviceName: bleDeviceName || 'Oraimo Watch 2 Pro',
+        heartRate: heartRate || 0,
+        steps: typeof steps === 'number' ? steps : 0,
+        bloodOxygen: bloodOxygen || 98,
+        timestamp: Date.now(),
+      }
+
+      setLiveWearable(liveData)
+
+      // Uplink to Go backend
+      fetch('/api/wearable/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device: bleDeviceName || 'Oraimo Watch 2 Pro',
+          heartRate: heartRate || 0,
+          steps: typeof steps === 'number' ? steps : 0,
+          spO2: bloodOxygen || 98,
+          rawText: `Earth Console Direct Web Bluetooth · HR ${heartRate} bpm · Steps ${steps || 0}`,
+        }),
+      }).catch(() => {})
+
+      // Broadcast to other tabs (e.g. Astronaut Dashboard)
+      try {
+        const bc = new BroadcastChannel('aura_med_telemetry')
+        bc.postMessage({
+          type: 'WEARABLE_UPDATE',
+          ...liveData,
+        })
+        bc.close()
+      } catch {}
+
+      try {
+        localStorage.setItem('aura_med_live_wearable', JSON.stringify(liveData))
+      } catch {}
+
+      setCrewData((prev) =>
+        prev.map((astro) => {
+          if (astro.id === 1) {
+            const current = astro.currentMetrics || astro.baseline[missionPhase]
+            return {
+              ...astro,
+              isLiveWatchConnected: true,
+              wearableSource: `${bleDeviceName || 'Oraimo Watch 2 Pro'} (DIRECT GROUND LINK)`,
+              currentMetrics: {
+                ...current,
+                hr: heartRate || current.hr,
+                steps: typeof steps === 'number' && steps > 0 ? steps : current.steps,
+                o2: bloodOxygen || current.o2,
+              },
+            }
+          }
+          return astro
+        })
+      )
+    },
+    onDisconnect: () => {
+      setLiveWearable((prev) => ({ ...prev, isConnected: false }))
+      try {
+        localStorage.removeItem('aura_med_live_wearable')
+      } catch {}
+    },
+  })
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date().toUTCString())
@@ -145,7 +241,9 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     return () => clearInterval(envTimer)
   }, [])
 
-  // Ingest live telemetry from spacecraft via /api/wearable/live (NVIDIA QA Fix)
+  /* BroadcastChannel and cross-tab storage synchronizer registered in subsequent module */
+
+  // Fast poll Go backend /api/wearable/live (every 1.5s) for multi-device network sync
   useEffect(() => {
     let active = true
     const pollWearable = async () => {
@@ -155,17 +253,19 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
         const data = await res.json()
         if (active && data) {
           if (data.isConnected && data.heartRate > 0) {
+            setLiveWearable(data)
             setCrewData((prev) =>
               prev.map((astro) => {
-                if (astro.id === 1) { // Elena Park is linked to the physical watch
+                if (astro.id === 1) {
                   const current = astro.currentMetrics || astro.baseline[missionPhase]
                   return {
                     ...astro,
+                    isLiveWatchConnected: true,
                     wearableSource: `${data.deviceName || 'Oraimo Watch 2 Pro'} (LIVE GROUND LINK)`,
                     currentMetrics: {
                       ...current,
                       hr: data.heartRate,
-                      steps: typeof data.steps === 'number' ? data.steps : current.steps,
+                      steps: typeof data.steps === 'number' && data.steps > 0 ? data.steps : current.steps,
                       o2: data.spO2 > 0 ? data.spO2 : current.o2,
                     },
                   }
@@ -173,6 +273,8 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 return astro
               })
             )
+          } else if (!data.isConnected && !isBleConnected) {
+            setLiveWearable((prev) => ({ ...prev, isConnected: false }))
           }
         }
       } catch {
@@ -181,12 +283,12 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     }
 
     pollWearable()
-    const interval = setInterval(pollWearable, 3000)
+    const interval = setInterval(pollWearable, 1500)
     return () => {
       active = false
       clearInterval(interval)
     }
-  }, [missionPhase])
+  }, [missionPhase, isBleConnected])
 
   // Ingest deep-space comms messages from backend (NVIDIA QA Fix)
   useEffect(() => {
@@ -217,6 +319,23 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     const telemetryInterval = setInterval(() => {
       setCrewData((prev) =>
         prev.map((astro) => {
+          // If Elena Park (astro.id === 1) has an active live watch connection,
+          // DO NOT pull her to synthetic base.hr (78 bpm)!
+          const isElenaLive = astro.id === 1 && (liveWearable.isConnected || isBleConnected || astro.isLiveWatchConnected)
+          if (isElenaLive && activeScenario === 'nominal') {
+            const current = astro.currentMetrics || astro.baseline[missionPhase]
+            // Subtle biological sinus variability (+/- 1 bpm) without overwriting watch reading
+            const organicDelta = Math.random() > 0.7 ? (Math.random() > 0.5 ? 1 : -1) : 0
+            const boundedHr = Math.max(50, Math.min(190, (liveWearable.heartRate || current.hr) + organicDelta))
+            return {
+              ...astro,
+              currentMetrics: {
+                ...current,
+                hr: boundedHr,
+              },
+            }
+          }
+
           const base = astro.baseline[missionPhase]
           const current = astro.currentMetrics || base
 
@@ -271,7 +390,7 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     }, 2500)
 
     return () => clearInterval(telemetryInterval)
-  }, [missionPhase, activeScenario, selectedAstronautId])
+  }, [missionPhase, activeScenario, selectedAstronautId, liveWearable.isConnected, isBleConnected])
 
   const handlePhaseChange = (phase) => {
     setMissionPhase(phase)
@@ -362,6 +481,13 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     } catch {
       // Local state already updated
     }
+
+    // Broadcast instant comms notification to open Astronaut Dashboard tabs
+    try {
+      const bc = new BroadcastChannel('aura_med_comms')
+      bc.postMessage({ type: 'NEW_ADVISORY', message: newMsg })
+      bc.close()
+    } catch {}
   }
 
   const selectedAstro = crewData.find((a) => a.id === selectedAstronautId) || crewData[0]
@@ -528,8 +654,40 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
           </div>
 
           <div className="earth-header-meta">
+            {/* Live Watch Telemetry Link Pill */}
+            <div className={`earth-stream-sync-pill ${liveWearable.isConnected || isBleConnected ? 'live' : 'sim'}`}>
+              <span className={`pulse-dot ${liveWearable.isConnected || isBleConnected ? 'live' : ''}`} />
+              <span>
+                {liveWearable.isConnected || isBleConnected ? (
+                  <>
+                    <strong>Elena Park (Oraimo Live):</strong> {selectedAstro.id === 1 ? metrics.hr : (liveWearable.heartRate || 78)} bpm ·{' '}
+                    {(liveWearable.steps || (selectedAstro.id === 1 ? metrics.steps : 6420) || 6420).toLocaleString()} steps
+                  </>
+                ) : (
+                  <>Elena Telemetry: Spacecraft Relay (Nominal Stream)</>
+                )}
+              </span>
+            </div>
+
+            {/* Direct Watch Connection / Sync Button */}
+            <button
+              type="button"
+              className={`ground-watch-pair-btn ${isBleConnected || liveWearable.isConnected ? 'connected' : ''}`}
+              onClick={isBleConnected ? triggerOraimoSync : connectBleWatch}
+              title={isBleConnected ? 'Trigger immediate SEWear sensor sync' : 'Pair Elena Park Oraimo Watch via Chrome Web Bluetooth'}
+            >
+              <Watch size={13} strokeWidth={2} />
+              <span>
+                {isBleConnected
+                  ? isBleSyncing ? 'Syncing...' : 'Sync Watch'
+                  : liveWearable.isConnected
+                  ? 'Watch Live'
+                  : 'Pair Watch'}
+              </span>
+            </button>
+
             <span className="side-confirmation-tag earth">Earth Mission Control (Ground Side)</span>
-            <span className="earth-clock-pill">UTC Ground: {currentTime} · Stream Active</span>
+            <span className="earth-clock-pill">UTC Ground: {currentTime}</span>
             <div className="delay-chip">
               <Clock size={13} strokeWidth={2} />
               <span>Delay: 12m 44s</span>
@@ -599,6 +757,9 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                         <span className="card-hardware-lbl">
                           <Watch size={13} strokeWidth={2} />
                           <span>{astro.wearableSource}</span>
+                          {astro.id === 1 && (liveWearable.isConnected || isBleConnected || astro.isLiveWatchConnected) && (
+                            <span className="card-live-lock-badge">LIVE LOCK</span>
+                          )}
                         </span>
                         <button
                           type="button"
@@ -661,6 +822,30 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 </div>
               </div>
 
+              {/* Live Telemetry Banner if Elena Park is selected and live watch is connected */}
+              {selectedAstro.id === 1 && (liveWearable.isConnected || isBleConnected || selectedAstro.isLiveWatchConnected) && (
+                <div className="ground-live-telemetry-banner">
+                  <div className="banner-left">
+                    <Watch size={16} className="text-emerald-400" />
+                    <div>
+                      <strong>Direct Wearable Telemetry Active:</strong> Ingesting real-time optical pulse &amp; accelerometer feed from {liveWearable.deviceName || 'Oraimo Watch 2 Pro'} for Elena Park.
+                    </div>
+                  </div>
+                  <div className="banner-right">
+                    <span className="live-bpm-badge">{metrics.hr} BPM LIVE</span>
+                    <button
+                      type="button"
+                      className="banner-sync-btn"
+                      onClick={isBleConnected ? triggerOraimoSync : () => alert('Telemetric link active. Data streaming from spacecraft relay.')}
+                      title="Sync live sensors"
+                    >
+                      <RefreshCw size={11} className={isBleSyncing ? 'animate-spin' : ''} />
+                      <span>{isBleSyncing ? 'Syncing...' : 'Sync'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 8 Gauges Grid */}
               <div className="vitals-group-heading">
                 <Activity size={14} strokeWidth={2} />
@@ -669,12 +854,21 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
 
               <div className="eight-gauges-grid">
                 <article className="clinical-gauge-box">
-                  <span className="g-title">Heart Rate</span>
+                  <div className="g-title-row">
+                    <span className="g-title">Heart Rate</span>
+                    {selectedAstro.id === 1 && (liveWearable.isConnected || isBleConnected || selectedAstro.isLiveWatchConnected) && (
+                      <span className="gauge-live-badge">LIVE ORAIMO SENSOR</span>
+                    )}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.hr}</strong>
                     <span className="g-unit">bpm</span>
                   </div>
-                  <p className="g-desc">Resting pulse sensor. Fluctuating dynamically with autonomic rhythm.</p>
+                  <p className="g-desc">
+                    {selectedAstro.id === 1 && (liveWearable.isConnected || isBleConnected)
+                      ? 'Live optical photoplethysmography telemetry from wrist sensor.'
+                      : 'Resting pulse sensor. Fluctuating dynamically with autonomic rhythm.'}
+                  </p>
                 </article>
 
                 <article className="clinical-gauge-box">
@@ -741,10 +935,14 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 <article className="clinical-gauge-box">
                   <span className="g-title">Bone &amp; Muscle Strength</span>
                   <div className="g-val-line">
-                    <strong>96.4%</strong>
-                    <span className="g-unit">BMD</span>
+                    <strong>{selectedAstro.id === 1 && (liveWearable.steps || metrics.steps) ? `${(liveWearable.steps || metrics.steps).toLocaleString()} steps` : '96.4%'}</strong>
+                    <span className="g-unit">{selectedAstro.id === 1 && (liveWearable.steps || metrics.steps) ? 'BMD Loading' : 'BMD'}</span>
                   </div>
-                  <p className="g-desc">Daily resistive exercise countermeasure preserving bone density.</p>
+                  <p className="g-desc">
+                    {selectedAstro.id === 1 && (liveWearable.steps || metrics.steps)
+                      ? 'Daily mechanical stride loading via T2 treadmill & Oraimo tri-axial accelerometer.'
+                      : 'Daily resistive exercise countermeasure preserving bone density.'}
+                  </p>
                 </article>
               </div>
 
