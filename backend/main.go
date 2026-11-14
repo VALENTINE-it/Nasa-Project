@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"math"
 	"net"
@@ -26,6 +28,9 @@ const (
 	sessionCookieName = "aura_session"
 	maxRequestsPerMin = 60
 )
+
+//go:embed dist
+var frontendFS embed.FS
 
 var (
 	db *sql.DB
@@ -928,6 +933,8 @@ func main() {
 	defer db.Close()
 
 	mux := http.NewServeMux()
+
+	// API routes (must come before SPA handler)
 	mux.HandleFunc("/api/health", withCORS(rateLimitMiddleware(handleHealth)))
 	mux.HandleFunc("/api/auth/login", withCORS(rateLimitMiddleware(handleLogin)))
 	mux.HandleFunc("/api/auth/session", withCORS(rateLimitMiddleware(handleSession)))
@@ -947,8 +954,60 @@ func main() {
 		}
 	})))
 
-	log.Println("AURA-MED astronaut authentication and monitoring backend is running on http://localhost:8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	// Single-origin mode: serve embedded frontend SPA
+	if os.Getenv("SINGLE_ORIGIN") == "true" {
+		log.Println("Single-origin mode: serving embedded frontend")
+		spaHandler, err := newSPAHandler()
+		if err != nil {
+			log.Fatalf("failed to create SPA handler: %v", err)
+		}
+		mux.Handle("/", spaHandler)
+	}
+
+	port := os.Getenv("BACKEND_PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Printf("AURA-MED astronaut authentication and monitoring backend is running on http://localhost:%s", port)
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
+}
+
+func newSPAHandler() (http.Handler, error) {
+	subFS, err := fs.Sub(frontendFS, "dist")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dist subdirectory: %w", err)
+	}
+
+	fileServer := http.FileServer(http.FS(subFS))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// API requests should not reach here (handled above), but guard anyway
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		// Try to serve the requested file
+		path := strings.TrimPrefix(r.URL.Path, "/")
+		if path == "" {
+			path = "index.html"
+		}
+
+		_, err := fs.Stat(subFS, path)
+		if err == nil {
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// Fallback to index.html for SPA client-side routing
+		indexData, err := fs.ReadFile(subFS, "index.html")
+		if err != nil {
+			http.Error(w, "frontend not built", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(indexData)
+	}), nil
 }
