@@ -121,7 +121,7 @@ function extractMetricsFromTree(obj) {
  * Supports:
  * 1. Standard Bluetooth SIG Heart Rate Service (0x180D / 0x2A37)
  * 2. Oraimo Watch 2 Pro Vendor GATT Protocol (16186f00 / SEWear Protobuf Engine)
- * 3. Bidirectional Handshake: CMD 164 (App Open) & CMD 355 (Sport Start / Continuous Optical PPG)
+ * 3. Bidirectional Handshake: Full 3-phase Start/Chunk/End ACK negotiation on 16186f01 & 16186f02
  * 4. Deep Metric Extraction (Heart Rate, Steps, SpO2, Stress, Battery)
  */
 export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
@@ -175,9 +175,28 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
     }
   }, [onHeartRateUpdate, logDiag])
 
+  // Low-level helper: writes raw bytes to whichever characteristic is available
+  const writeRawBytes = useCallback(async (targetChar, bytes) => {
+    const targets = [targetChar, txCharRef.current, rxCharRef.current].filter(Boolean)
+    for (const t of targets) {
+      try {
+        if (t.writeValueWithoutResponse) {
+          await t.writeValueWithoutResponse(bytes)
+          return true
+        } else if (t.writeValue) {
+          await t.writeValue(bytes)
+          return true
+        }
+      } catch {
+        // try next
+      }
+    }
+    return false
+  }, [])
+
   // Oraimo SEWear Transport Writer (Framed 3-phase packet transfer)
   const sendOraimoCommand = useCallback(async (payloadBytes, desc = 'Command') => {
-    const tx = txCharRef.current
+    const tx = txCharRef.current || rxCharRef.current
     if (!tx) {
       logDiag(`Cannot send ${desc}: TX characteristic not ready`)
       return false
@@ -188,11 +207,7 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
 
       // Phase 1: Start Frame (00 00 00 00 <chunk_count u16 LE>)
       const startFrame = new Uint8Array([0x00, 0x00, 0x00, 0x00, 0x01, 0x00])
-      if (tx.writeValueWithoutResponse) {
-        await tx.writeValueWithoutResponse(startFrame)
-      } else {
-        await tx.writeValue(startFrame)
-      }
+      await writeRawBytes(tx, startFrame)
 
       await new Promise((r) => setTimeout(r, 60))
 
@@ -201,21 +216,13 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
       chunk[0] = 0x01
       chunk[1] = 0x00
       chunk.set(payloadBytes, 2)
-      if (tx.writeValueWithoutResponse) {
-        await tx.writeValueWithoutResponse(chunk)
-      } else {
-        await tx.writeValue(chunk)
-      }
+      await writeRawBytes(tx, chunk)
 
       await new Promise((r) => setTimeout(r, 60))
 
       // Phase 3: End ACK (00 00 01 00)
       const endAck = new Uint8Array([0x00, 0x00, 0x01, 0x00])
-      if (tx.writeValueWithoutResponse) {
-        await tx.writeValueWithoutResponse(endAck)
-      } else {
-        await tx.writeValue(endAck)
-      }
+      await writeRawBytes(tx, endAck)
 
       logDiag(`SUCCESS: ${desc} sent to Oraimo Watch!`)
       return true
@@ -223,11 +230,11 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
       logDiag(`Failed sending ${desc}: ${err.message}`)
       return false
     }
-  }, [logDiag])
+  }, [writeRawBytes, logDiag])
 
   // Public Sync Action: Wakes sensors and triggers full telemetry report
   const triggerOraimoSync = useCallback(async () => {
-    if (!txCharRef.current) return
+    if (!txCharRef.current && !rxCharRef.current) return
     setIsSyncing(true)
     logDiag('Initiating Oraimo Full Sensor Sync sequence...')
 
@@ -262,15 +269,27 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
     setIsSyncing(false)
   }, [sendOraimoCommand, logDiag])
 
-  // Oraimo Vendor Packet Handler (Parses incoming bytes from 6f01 / 6f02)
+  // Oraimo Vendor Packet Handler (Parses incoming bytes from 6f01 / 6f02 with two-way ACK)
   const handleVendorPacket = useCallback((event) => {
     const dataView = event.target.value
     if (!dataView || dataView.byteLength === 0) return
 
     setPacketCount((c) => c + 1)
     const rawBytes = new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength)
+    const targetChar = event.target
 
-    // Check for Transport ACK
+    // 1. Detect incoming Start Frame from Watch: [0x00, 0x00, 0x00, 0x00, count_lo, count_hi]
+    if (rawBytes.length >= 6 && rawBytes[0] === 0x00 && rawBytes[1] === 0x00 && rawBytes[2] === 0x00 && rawBytes[3] === 0x00) {
+      const chunkCount = rawBytes[4] | (rawBytes[5] << 8)
+      logDiag(`Watch initiated incoming telemetry frame (${chunkCount} chunk). Replying ACK Ready...`)
+
+      // Immediately write ACK Ready (00 00 01 01) back to the watch!
+      const ackReady = new Uint8Array([0x00, 0x00, 0x01, 0x01])
+      writeRawBytes(targetChar, ackReady)
+      return
+    }
+
+    // 2. Detect Transport ACK from Watch in response to our TX
     if (rawBytes.length >= 4 && rawBytes[0] === 0x00 && rawBytes[1] === 0x00) {
       if (rawBytes[2] === 0x01 && rawBytes[3] === 0x01) {
         logDiag('Watch Transport ACK: Ready')
@@ -280,17 +299,29 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
         logDiag('Watch Transport ACK: Complete')
         return
       }
+      if (rawBytes[2] === 0x01 && rawBytes[3] === 0x02) {
+        logDiag('Watch Transport note: Busy / Transfer in progress')
+        return
+      }
     }
 
-    // Strip chunk index if present (<idx u16 LE, 1-based>)
+    // 3. Detect incoming Data Chunk: <idx u16 LE, 1-based> + <payload>
     let payload = rawBytes
-    if (rawBytes.length >= 4 && (rawBytes[0] === 0x01 || rawBytes[0] === 0x02) && rawBytes[1] === 0x00) {
+    let isChunk = false
+    if (rawBytes.length >= 3 && (rawBytes[0] >= 0x01 && rawBytes[0] <= 0x10) && rawBytes[1] === 0x00) {
+      isChunk = true
       payload = rawBytes.slice(2)
+      logDiag(`Incoming Chunk ${rawBytes[0]} payload len: ${payload.length}`)
+
+      // Send End ACK (00 00 01 00) so watch completes the transfer
+      const endAck = new Uint8Array([0x00, 0x00, 0x01, 0x00])
+      writeRawBytes(targetChar, endAck)
     }
 
-    // Decode Protobuf payload
+    // 4. Decode Protobuf payload
     try {
       const tree = decodeProtobuf(payload)
+      logDiag(`Decoded Protobuf Tree: ${JSON.stringify(tree)}`)
       const metrics = extractMetricsFromTree(tree)
 
       const summaryParts = []
@@ -336,7 +367,7 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
     } catch (parseErr) {
       logDiag(`Protobuf parse note: ${parseErr.message}`)
     }
-  }, [onHeartRateUpdate, logDiag])
+  }, [writeRawBytes, onHeartRateUpdate, logDiag])
 
   const handleDeviceDisconnected = useCallback(() => {
     logDiag('Device disconnected.')
@@ -485,9 +516,8 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
       logDiag('Device connection setup complete!')
 
       // 5. Trigger Initial Handshake & Sensor Activation
-      if (txCharRef.current) {
+      if (txCharRef.current || rxCharRef.current) {
         logDiag('Triggering automatic sensor wake-up handshake (CMD 164 & CMD 355)...')
-        // Give connection 200ms to settle
         setTimeout(async () => {
           // Send CMD 164 (App Open)
           await sendOraimoCommand(new Uint8Array([0x08, 0xa4, 0x01, 0x62, 0x02, 0x18, 0x00]), 'CMD 164 (App Open)')
@@ -497,7 +527,7 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
           // Set 12-second keep-alive heartbeat to keep watch in active reporting mode
           if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current)
           heartbeatTimerRef.current = setInterval(async () => {
-            if (txCharRef.current) {
+            if (txCharRef.current || rxCharRef.current) {
               await sendOraimoCommand(new Uint8Array([0x08, 0xa4, 0x01, 0x62, 0x02, 0x18, 0x00]), 'Heartbeat Ping (CMD 164)')
             }
           }, 12000)
