@@ -668,42 +668,113 @@ In strict compliance with [VersionControl.md](file:///home/michaelochieng0/clayw
 
 ## 15. Quickstart & Local Setup Guide
 
-### 15.1 Start the Backend & Telemetry Replayer (Laptop)
+### 15.1 Prerequisites
+* **Go** (v1.21+ or v1.22+)
+* **Node.js** (v18+ or v20+) and **npm**
+* **Google Chrome** or Microsoft Edge (for Web Bluetooth capabilities)
+
+---
+
+### 15.2 Start the Go Backend Server
+The backend is a high-performance Go microservice managing live wearable ingestion mutexes, regex telemetry parsing, and deep-space comms queues:
+
 ```bash
 cd backend
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
 
-# Run FastAPI Habitat Server
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# Run the Go server (starts on http://localhost:8080)
+go run .
 ```
-* Interactive API Docs: `http://localhost:8000/docs`
 
-### 15.2 Start the Telemetry Replayer (Simulating Deep Space)
+Verify backend health in a second terminal:
 ```bash
-# In a second terminal on the laptop:
-cd backend
-source venv/bin/activate
-python -m app.simulator.replayer --scenario cardiac_emergency --speed 1.0
+curl http://localhost:8080/api/wearable/live
+# Expected: {"isConnected":false,"deviceName":"oraimo watch 2 pro_4ED7","heartRate":0,"steps":0,"spO2":0,"lastSeen":"","rawText":""}
 ```
 
-### 15.3 Start the Frontend HUD & Console (Laptop & Phone)
+---
+
+### 15.3 Start the Frontend Astronaut & Earth Watch Consoles
+The frontend is a reactive Vite + React dashboard with real-time biometric charts, NASA OSDR-379 immune drawers, and Keplerian orbital trackers:
+
 ```bash
 cd frontend
+
+# Install dependencies (first time only)
 npm install
+
+# Start Vite development server (starts on http://localhost:5173)
 npm run dev
 ```
-* **Earth Watch Centre Console:** Open `http://localhost:3000/console` on the laptop.
-* **Astronaut Mobile HUD:** Open `http://<laptop-local-ip>:3000/hud` on your smartphone browser (connected to the same local WiFi or laptop mobile hotspot).
+
+#### Application Access URLs:
+* **Astronaut Deep-Space Medical Console (Commander Elena Park):** Open `http://localhost:5173/astronaut/1` or `http://localhost:5173`.
+* **Earth Watch Ground Station Console (Houston Flight Surgeon):** Open `http://localhost:5173/earth-watch` (or click "Earth Watch Center" in the top navigation).
+* **Mobile Tactical HUD:** Open `http://<LAPTOP_LOCAL_IP>:5173/astronaut/1` on your smartphone browser (connected to the same Wi-Fi or mobile hotspot).
+
+---
+
+### 15.4 How to Connect the Oraimo Smartwatch
+
+AURA-MED supports two independent methods to connect the **Oraimo Watch 2 Pro** (`oraimo Watch 2 Pro_4ED7`):
+
+#### Route A: Mobile Relay Bridge (MacroDroid Webhook) — *Recommended for Presentations*
+1. Keep the watch paired to your smartphone via the official **Oraimo Health app**.
+2. Install **MacroDroid** (or Tasker) on your phone.
+3. Create a Macro triggered by incoming notifications from `Oraimo Health`.
+4. Configure an action: **HTTP POST** to:
+   ```text
+   http://<YOUR_LAPTOP_IP>:8080/api/wearable/telemetry
+   ```
+   with Body:
+   ```json
+   {
+     "deviceName": "oraimo Watch 2 Pro_4ED7",
+     "notificationText": "{not_title} {not_body}"
+   }
+   ```
+5. The Go server automatically extracts steps (e.g. `1,270 steps`) and heart rate (e.g. `86 bpm`), and the dashboard immediately updates Elena's cards.
+
+#### Route B: Direct Chrome Web Bluetooth (No Phone Required)
+1. Disconnect the watch from your phone (turn off phone Bluetooth).
+2. On Linux/Ubuntu, enable Web Bluetooth:
+   * Open `chrome://flags/#enable-experimental-web-platform-features` in Chrome.
+   * Set the dropdown to **Enabled** and click **Relaunch**.
+3. Open `http://localhost:5173` and click the **"Pair Oraimo Watch (BLE)"** button in the header.
+4. Select **`oraimo Watch 2 Pro_4ED7`** in the Chrome pairing dialog and click **Pair**.
+5. The button turns green (`oraimo Watch 2 Pro_4ED7 (Direct BLE)`). Chrome automatically:
+   * Attaches to vendor service `16186f00-0000-1000-8000-00807f9b34fb`.
+   * Fires the `CMD 164` (App Open) and `CMD 355` (Optical PPG sensor wake) binary Protobuf handshakes.
+   * Negotiates two-way transport ACKs (`00 00 01 01` $\rightarrow$ `00 00 01 00`).
+   * Decodes Message 165 (`SEBasicData`) directly into live heart rate and step counts.
+
+---
+
+### 15.5 Graceful Simulation Fallback (When Watch is Disconnected)
+
+A critical requirement of deep-space software is **zero failure**:
+
+* If the watch is disconnected, powered off, or not on hand:
+  * The dashboard does **NOT** crash, throw errors, or display blank cards.
+  * In `App.jsx`, the system automatically activates the **NASA Autonomous Spaceflight Simulation Engine**.
+  * Elena Park's vitals (Heart Rate: 74–78 bpm, Blood Pressure: 124/80 mmHg, SpO2: 98%, Body Temp: 36.8°C, Respiration: 16 br/min) stream continuously with realistic biological sinus arrhythmia.
+* The moment the watch reconnects via BLE or pushes an HTTP webhook, the dashboard immediately latches onto the live hardware data with zero UI flicker.
+
+---
+
+### 15.6 Complete Panel Defense & Scientific Proofs Reference
+For technical evaluators, flight surgeons, and hackathon judges:
+* **The Master Telemetry Matrix (Watch vs. Simulation):** See [`docs/PANEL_DEFENSE_AND_TELEMETRY_TRUTH.md`](file:///home/michaelochieng0/clayworks/Nasa-Project/docs/PANEL_DEFENSE_AND_TELEMETRY_TRUTH.md).
+* **The 6,000 Steps Threshold Proof (NASA T2 Treadmill & Wolff's Law):** See [`docs/T2_TREADMILL_PROTOCOL.md`](file:///home/michaelochieng0/clayworks/Nasa-Project/docs/T2_TREADMILL_PROTOCOL.md).
+* **NASA Flight Phase Physiological Baselines:** See [`docs/NASA_HRP_BENCHMARKS.md`](file:///home/michaelochieng0/clayworks/Nasa-Project/docs/NASA_HRP_BENCHMARKS.md).
+* **Hardware GATT Protocol Reverse Engineering:** See [`docs/WEARABLE_INTEGRATION.md`](file:///home/michaelochieng0/clayworks/Nasa-Project/docs/WEARABLE_INTEGRATION.md).
 
 ---
 
 ## 16. Verification & Automated Evaluation Protocol
 
-1. **BLE Ingestion & Replay Test:** Asserts that live frames from the Oraimo watch or NASA OSDR replayer persist into DuckDB with zero dropped samples.
+1. **BLE Ingestion & Replay Test:** Asserts that live frames from the Oraimo watch or NASA OSDR replayer persist with zero dropped samples.
 2. **Emergency Latency Benchmark:** Verifies that when an abnormal vital vector ($Z > 3.0\sigma$) is injected, the mobile HUD renders the 3-part layperson action guidance and triggers voice audio in **under 200 milliseconds**.
-3. **Offline Air-Gap Resilience:** Disconnects the laptop and phone from external internet; verifies that the full PWA and local FastAPI CDSS operate without failure.
+3. **Offline Air-Gap Resilience:** Disconnects the laptop and phone from external internet; verifies that the full PWA and local Go CDSS operate without failure.
 4. **NASA HRP Clinical Accuracy Test:** Compares CDSS differential diagnosis outputs against published NASA Human Research Program clinical risk mitigation trees.
 
 ---
