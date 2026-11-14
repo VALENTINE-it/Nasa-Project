@@ -1078,16 +1078,16 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               </div>
 
               <div className="cabin-systems-grid">
-                <div className="system-metric-card">
+                <div className={`system-metric-card ${cabinEnv.oxygen < 20.5 ? 'warning' : ''}`}>
                   <span className="sys-label">Cabin Oxygen (O2)</span>
                   <strong>{cabinEnv.oxygen}%</strong>
-                  <small>Nominal breathable air (Standard setpoint: 21.0%)</small>
+                  <small>{cabinEnv.oxygen < 20.5 ? 'WARNING: Hypoxic atmosphere pocket detected' : 'Nominal breathable air (Standard setpoint: 21.0%)'}</small>
                 </div>
 
-                <div className="system-metric-card">
+                <div className={`system-metric-card ${cabinEnv.co2 > 0.40 ? 'warning' : ''}`}>
                   <span className="sys-label">Carbon Dioxide (ppCO2)</span>
                   <strong>{cabinEnv.co2}%</strong>
-                  <small>Scrubbers active. Safe limit is below 0.50%</small>
+                  <small>{cabinEnv.co2 > 0.40 ? 'WARNING: Elevated cabin CO2 - Inspect LiOH scrubbers' : 'Scrubbers active. Safe limit is below 0.50%'}</small>
                 </div>
 
                 <div className="system-metric-card">
@@ -1109,10 +1109,10 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <small>Comfortable living range automatically maintained</small>
                 </div>
 
-                <div className="system-metric-card">
+                <div className={`system-metric-card ${cabinEnv.radiation > 1.8 ? 'warning' : ''}`}>
                   <span className="sys-label">Space Radiation Level</span>
                   <strong>{cabinEnv.radiation} mSv / day</strong>
-                  <small>Ship storm shields are protecting the crew</small>
+                  <small>{cabinEnv.radiation > 1.8 ? 'WARNING: Elevated galactic cosmic radiation flux' : 'Ship storm shields are protecting the crew'}</small>
                 </div>
 
                 <div className="system-metric-card">
