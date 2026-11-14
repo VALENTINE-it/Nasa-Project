@@ -20,6 +20,12 @@ jobs:
           go-version-file: backend/go.mod
           cache: true
           cache-dependency-path: backend/go.sum
+      - name: Build frontend for embedding
+        run: |
+          cd ../frontend
+          npm ci
+          npm run build
+          cp -r dist ../backend/
       - name: Check formatting
         run: |
           if [ -n "$(gofmt -l .)" ]; then
