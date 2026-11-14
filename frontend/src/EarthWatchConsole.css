@@ -1103,3 +1103,69 @@
   margin-bottom: 0;
 }
 
+/* =========================================================
+   RESPONSIVE DESIGN FOR MOBILE & TABLETS (NVIDIA QA FIX)
+   ========================================================= */
+@media (max-width: 860px) {
+  .earth-workstation-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .earth-sidebar-nav {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-default);
+    padding: 14px 16px;
+  }
+
+  .earth-nav-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .earth-group-title {
+    width: 100%;
+  }
+
+  .earth-nav-item {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 140px;
+  }
+
+  .earth-viewport-container {
+    height: auto;
+    overflow: visible;
+  }
+
+  .earth-viewport-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .earth-header-meta {
+    flex-wrap: wrap;
+  }
+
+  .crew-matrix-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .eight-gauges-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cabin-systems-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .comms-split-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
