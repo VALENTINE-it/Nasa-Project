@@ -121,7 +121,7 @@ export default function PublicLoginPage({ onAuthenticated, theme, onToggleTheme 
             <span className="picker-label hd-login-picker-label">
               Click a crew member to pre-fill credentials:
             </span>
-            <div className="crew-picker-cards hd-login-crew-grid" role="group" aria-label="Demo Crew Accounts">
+            <div className="crew-picker-cards hd-login-crew-grid hd-stagger" role="group" aria-label="Demo Crew Accounts">
               {DEMO_USERS.map((user) => {
                 const isSelected = username === user.username
                 return (

@@ -147,7 +147,7 @@ export function DailyVitalsView({
         <span>Primary Circulatory Vitals</span>
       </div>
 
-      <div className="hd-vitals-grid">
+      <div className="hd-vitals-grid hd-stagger">
         {/* Heart Rate Card */}
         <article className="hd-vital-card">
           <div className="hd-vital-card__head">
@@ -371,7 +371,7 @@ export function DailyVitalsView({
         <span>Respiration &amp; Daily Activity</span>
       </div>
 
-      <div className="hd-vitals-grid">
+      <div className="hd-vitals-grid hd-stagger">
         <article className="hd-vital-card">
           <div className="hd-vital-card__head">
             <span className="hd-vital-card__title">Breathing Rate</span>
@@ -524,7 +524,7 @@ export function DailyVitalsView({
         <span>Salivary Immune Biomarkers &amp; Viral Surveillance (NASA GeneLab OSDR-379)</span>
       </div>
 
-      <div className="hd-vitals-grid">
+      <div className="hd-vitals-grid hd-stagger">
         <article className="hd-vital-card">
           <div className="hd-vital-card__head">
             <span className="hd-vital-card__title">Salivary Cortisol</span>
