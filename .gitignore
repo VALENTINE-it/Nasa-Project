@@ -3,3 +3,4 @@ dist/
 backend/data/
 /backend/aura-med-backend
 /backend/server
+.env
