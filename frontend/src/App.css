@@ -4,10 +4,25 @@
    Zero emojis, zero glowing dots, authentic aerospace ergonomics
    ========================================================= */
 
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active,
+.clickable:active,
+.pill-link-btn:active,
+.timeframe-chip:active,
+.nav-menu-button:active,
+.scenario-box-btn:active,
+.picker-member-btn:active {
+  transform: scale(0.98);
+}
+
 /* Loading Screen */
 .full-viewport-loading {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -38,6 +53,7 @@
 .workstation-app-layout {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   overflow: hidden;
   background: var(--bg-app);
@@ -49,6 +65,7 @@
 .left-sidebar-navigation {
   width: 280px;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg-surface);
@@ -265,9 +282,62 @@
 .main-viewport-content {
   flex: 1;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
+}
+
+/* Mobile Hamburger & Drawer Controls */
+.header-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.mobile-hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.mobile-hamburger-btn:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-focus);
+}
+
+.mobile-sidebar-close-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: 8px;
+  margin-left: auto;
+  transition: color 120ms ease;
+}
+
+.mobile-sidebar-close-btn:hover {
+  color: var(--text-primary);
+}
+
+.mobile-sidebar-backdrop {
+  display: none;
 }
 
 /* Viewport Header */
