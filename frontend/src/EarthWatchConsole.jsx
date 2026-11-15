@@ -12,6 +12,7 @@ import {
   LogOut,
   Moon,
   Radio,
+  RefreshCw,
   RotateCcw,
   Send,
   Shield,
@@ -24,6 +25,7 @@ import {
   Wind,
   Zap,
 } from 'lucide-react'
+import useWearableBluetooth from './hooks/useWearableBluetooth'
 import './EarthWatchConsole.css'
 
 const CREW_PROFILES = [
@@ -124,6 +126,100 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     water: 98.4,
   })
 
+  // Live Watch Synchronization State (Elena Park - Crew #1)
+  const [liveWearable, setLiveWearable] = useState(() => {
+    try {
+      const saved = localStorage.getItem('aura_med_live_wearable')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      isConnected: false,
+      deviceName: 'Oraimo Watch 2 Pro',
+      heartRate: 0,
+      steps: 0,
+      spO2: 0,
+      lastSeen: '',
+    }
+  })
+
+  // Optional direct Web Bluetooth pairing from Earth Mission Control console
+  const {
+    connectionStatus: bleStatus,
+    deviceName: bleDeviceName,
+    connectDevice: connectBleWatch,
+    disconnectDevice: disconnectBleWatch,
+    isConnected: isBleConnected,
+    triggerOraimoSync,
+    isSyncing: isBleSyncing,
+  } = useWearableBluetooth({
+    onHeartRateUpdate: ({ heartRate, steps, bloodOxygen }) => {
+      const liveData = {
+        astronautId: 1,
+        isConnected: true,
+        deviceName: bleDeviceName || 'Oraimo Watch 2 Pro',
+        heartRate: heartRate || 0,
+        steps: typeof steps === 'number' ? steps : 0,
+        bloodOxygen: bloodOxygen || 98,
+        timestamp: Date.now(),
+      }
+
+      setLiveWearable(liveData)
+
+      // Uplink to Go backend
+      fetch('/api/wearable/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device: bleDeviceName || 'Oraimo Watch 2 Pro',
+          heartRate: heartRate || 0,
+          steps: typeof steps === 'number' ? steps : 0,
+          spO2: bloodOxygen || 98,
+          rawText: `Earth Console Direct Web Bluetooth · HR ${heartRate} bpm · Steps ${steps || 0}`,
+        }),
+      }).catch(() => {})
+
+      // Broadcast to other tabs (e.g. Astronaut Dashboard)
+      try {
+        const bc = new BroadcastChannel('aura_med_telemetry')
+        bc.postMessage({
+          type: 'WEARABLE_UPDATE',
+          ...liveData,
+        })
+        bc.close()
+      } catch {}
+
+      try {
+        localStorage.setItem('aura_med_live_wearable', JSON.stringify(liveData))
+      } catch {}
+
+      setCrewData((prev) =>
+        prev.map((astro) => {
+          if (astro.id === 1) {
+            const current = astro.currentMetrics || astro.baseline[missionPhase]
+            return {
+              ...astro,
+              isLiveWatchConnected: true,
+              wearableSource: `${bleDeviceName || 'Oraimo Watch 2 Pro'} (DIRECT GROUND LINK)`,
+              currentMetrics: {
+                ...current,
+                hr: heartRate || current.hr,
+                steps: typeof steps === 'number' && steps > 0 ? steps : current.steps,
+                o2: bloodOxygen || current.o2,
+              },
+            }
+          }
+          return astro
+        })
+      )
+    },
+    onDisconnect: () => {
+      setLiveWearable((prev) => ({ ...prev, isConnected: false }))
+      try {
+        localStorage.removeItem('aura_med_live_wearable')
+      } catch {}
+    },
+  })
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date().toUTCString())
@@ -145,7 +241,79 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     return () => clearInterval(envTimer)
   }, [])
 
-  // Ingest live telemetry from spacecraft via /api/wearable/live (NVIDIA QA Fix)
+  // 0ms instant synchronizer with Astronaut Dashboard via BroadcastChannel & LocalStorage
+  useEffect(() => {
+    let channel
+    try {
+      channel = new BroadcastChannel('aura_med_telemetry')
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'WEARABLE_UPDATE') {
+          const data = event.data
+          setLiveWearable(data)
+
+          setCrewData((prev) =>
+            prev.map((astro) => {
+              if (astro.id === 1) {
+                const current = astro.currentMetrics || astro.baseline[missionPhase]
+                return {
+                  ...astro,
+                  isLiveWatchConnected: data.isConnected,
+                  wearableSource: `${data.deviceName || 'Oraimo Watch 2 Pro'} (LIVE GROUND LINK)`,
+                  currentMetrics: {
+                    ...current,
+                    hr: data.heartRate || current.hr,
+                    steps: typeof data.steps === 'number' && data.steps > 0 ? data.steps : current.steps,
+                    o2: data.bloodOxygen || current.o2,
+                  },
+                }
+              }
+              return astro
+            })
+          )
+        } else if (event.data?.type === 'WEARABLE_DISCONNECT') {
+          setLiveWearable((prev) => ({ ...prev, isConnected: false }))
+        }
+      }
+    } catch {}
+
+    const handleStorage = (e) => {
+      if (e.key === 'aura_med_live_wearable' && e.newValue) {
+        try {
+          const data = JSON.parse(e.newValue)
+          setLiveWearable(data)
+          if (data.isConnected && data.heartRate > 0) {
+            setCrewData((prev) =>
+              prev.map((astro) => {
+                if (astro.id === 1) {
+                  const current = astro.currentMetrics || astro.baseline[missionPhase]
+                  return {
+                    ...astro,
+                    isLiveWatchConnected: true,
+                    wearableSource: `${data.deviceName || 'Oraimo Watch 2 Pro'} (LIVE GROUND LINK)`,
+                    currentMetrics: {
+                      ...current,
+                      hr: data.heartRate,
+                      steps: typeof data.steps === 'number' && data.steps > 0 ? data.steps : current.steps,
+                      o2: data.bloodOxygen || current.o2,
+                    },
+                  }
+                }
+                return astro
+              })
+            )
+          }
+        } catch {}
+      }
+    }
+
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      channel?.close()
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [missionPhase])
+
+  // Fast poll Go backend /api/wearable/live (every 1.5s) for multi-device network sync
   useEffect(() => {
     let active = true
     const pollWearable = async () => {
@@ -155,17 +323,19 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
         const data = await res.json()
         if (active && data) {
           if (data.isConnected && data.heartRate > 0) {
+            setLiveWearable(data)
             setCrewData((prev) =>
               prev.map((astro) => {
-                if (astro.id === 1) { // Elena Park is linked to the physical watch
+                if (astro.id === 1) {
                   const current = astro.currentMetrics || astro.baseline[missionPhase]
                   return {
                     ...astro,
+                    isLiveWatchConnected: true,
                     wearableSource: `${data.deviceName || 'Oraimo Watch 2 Pro'} (LIVE GROUND LINK)`,
                     currentMetrics: {
                       ...current,
                       hr: data.heartRate,
-                      steps: typeof data.steps === 'number' ? data.steps : current.steps,
+                      steps: typeof data.steps === 'number' && data.steps > 0 ? data.steps : current.steps,
                       o2: data.spO2 > 0 ? data.spO2 : current.o2,
                     },
                   }
@@ -173,6 +343,8 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 return astro
               })
             )
+          } else if (!data.isConnected && !isBleConnected) {
+            setLiveWearable((prev) => ({ ...prev, isConnected: false }))
           }
         }
       } catch {
@@ -181,12 +353,12 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     }
 
     pollWearable()
-    const interval = setInterval(pollWearable, 3000)
+    const interval = setInterval(pollWearable, 1500)
     return () => {
       active = false
       clearInterval(interval)
     }
-  }, [missionPhase])
+  }, [missionPhase, isBleConnected])
 
   // Ingest deep-space comms messages from backend (NVIDIA QA Fix)
   useEffect(() => {
@@ -217,6 +389,23 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     const telemetryInterval = setInterval(() => {
       setCrewData((prev) =>
         prev.map((astro) => {
+          // If Elena Park (astro.id === 1) has an active live watch connection,
+          // DO NOT pull her to synthetic base.hr (78 bpm)!
+          const isElenaLive = astro.id === 1 && (liveWearable.isConnected || isBleConnected || astro.isLiveWatchConnected)
+          if (isElenaLive && activeScenario === 'nominal') {
+            const current = astro.currentMetrics || astro.baseline[missionPhase]
+            // Subtle biological sinus variability (+/- 1 bpm) without overwriting watch reading
+            const organicDelta = Math.random() > 0.7 ? (Math.random() > 0.5 ? 1 : -1) : 0
+            const boundedHr = Math.max(50, Math.min(190, (liveWearable.heartRate || current.hr) + organicDelta))
+            return {
+              ...astro,
+              currentMetrics: {
+                ...current,
+                hr: boundedHr,
+              },
+            }
+          }
+
           const base = astro.baseline[missionPhase]
           const current = astro.currentMetrics || base
 
@@ -271,7 +460,7 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     }, 2500)
 
     return () => clearInterval(telemetryInterval)
-  }, [missionPhase, activeScenario, selectedAstronautId])
+  }, [missionPhase, activeScenario, selectedAstronautId, liveWearable.isConnected, isBleConnected])
 
   const handlePhaseChange = (phase) => {
     setMissionPhase(phase)
@@ -362,6 +551,13 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
     } catch {
       // Local state already updated
     }
+
+    // Broadcast instant comms notification to open Astronaut Dashboard tabs
+    try {
+      const bc = new BroadcastChannel('aura_med_comms')
+      bc.postMessage({ type: 'NEW_ADVISORY', message: newMsg })
+      bc.close()
+    } catch {}
   }
 
   const selectedAstro = crewData.find((a) => a.id === selectedAstronautId) || crewData[0]
@@ -528,8 +724,40 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
           </div>
 
           <div className="earth-header-meta">
+            {/* Live Watch Telemetry Link Pill */}
+            <div className={`earth-stream-sync-pill ${liveWearable.isConnected || isBleConnected ? 'live' : 'sim'}`}>
+              <span className={`pulse-dot ${liveWearable.isConnected || isBleConnected ? 'live' : ''}`} />
+              <span>
+                {liveWearable.isConnected || isBleConnected ? (
+                  <>
+                    <strong>Elena Park (Oraimo Live):</strong> {selectedAstro.id === 1 ? metrics.hr : (liveWearable.heartRate || 78)} bpm ·{' '}
+                    {(liveWearable.steps || (selectedAstro.id === 1 ? metrics.steps : 6420) || 6420).toLocaleString()} steps
+                  </>
+                ) : (
+                  <>Elena Telemetry: Spacecraft Relay (Nominal Stream)</>
+                )}
+              </span>
+            </div>
+
+            {/* Direct Watch Connection / Sync Button */}
+            <button
+              type="button"
+              className={`ground-watch-pair-btn ${isBleConnected || liveWearable.isConnected ? 'connected' : ''}`}
+              onClick={isBleConnected ? triggerOraimoSync : connectBleWatch}
+              title={isBleConnected ? 'Trigger immediate SEWear sensor sync' : 'Pair Elena Park Oraimo Watch via Chrome Web Bluetooth'}
+            >
+              <Watch size={13} strokeWidth={2} />
+              <span>
+                {isBleConnected
+                  ? isBleSyncing ? 'Syncing...' : 'Sync Watch'
+                  : liveWearable.isConnected
+                  ? 'Watch Live'
+                  : 'Pair Watch'}
+              </span>
+            </button>
+
             <span className="side-confirmation-tag earth">Earth Mission Control (Ground Side)</span>
-            <span className="earth-clock-pill">UTC Ground: {currentTime} · Stream Active</span>
+            <span className="earth-clock-pill">UTC Ground: {currentTime}</span>
             <div className="delay-chip">
               <Clock size={13} strokeWidth={2} />
               <span>Delay: 12m 44s</span>
@@ -551,11 +779,20 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 {crewData.map((astro) => {
                   const currentVitals = astro.currentMetrics || astro.baseline[missionPhase]
                   const isSelected = astro.id === selectedAstronautId
+                  const isAstroDanger = currentVitals.hr > 140 || currentVitals.o2 < 90 || astro.statusClass === 'danger'
+                  const isAstroSpiking =
+                    currentVitals.hr > 90 ||
+                    currentVitals.o2 < 95 ||
+                    currentVitals.fatigue > 55 ||
+                    astro.statusClass === 'warning' ||
+                    isAstroDanger
+
+                  const cardSpikeClass = isAstroDanger ? 'danger' : isAstroSpiking ? 'warning' : 'good'
 
                   return (
                     <div
                       key={astro.id}
-                      className={`crew-profile-card ${isSelected ? 'selected' : ''}`}
+                      className={`crew-profile-card ${isSelected ? 'selected' : ''} ${cardSpikeClass}`}
                       onClick={() => setSelectedAstronautId(astro.id)}
                     >
                       <div className="card-person-row">
@@ -563,13 +800,13 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                         <div className="card-person-info">
                           <div className="person-name-line">
                             <h3>{astro.fullName}</h3>
-                            <span className={`status-pill ${astro.statusClass}`}>
-                              {astro.statusClass === 'good' ? (
-                                <ShieldCheck size={13} strokeWidth={2.5} />
-                              ) : (
+                            <span className={`status-pill ${isAstroDanger ? 'danger' : isAstroSpiking ? 'warning' : 'good'}`}>
+                              {isAstroSpiking ? (
                                 <AlertTriangle size={13} strokeWidth={2.5} />
+                              ) : (
+                                <ShieldCheck size={13} strokeWidth={2.5} />
                               )}
-                              <span>{astro.healthStatus}</span>
+                              <span>{isAstroDanger ? 'CRITICAL ALERT' : isAstroSpiking ? 'SPIKE DETECTED' : astro.healthStatus}</span>
                             </span>
                           </div>
                           <p className="person-role">{astro.role} · {astro.astronautId}</p>
@@ -577,19 +814,19 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                       </div>
 
                       <div className="card-vitals-row">
-                        <div className="v-card-cell">
+                        <div className={`v-card-cell ${currentVitals.hr > 140 ? 'cell-danger' : currentVitals.hr > 90 ? 'cell-spike' : ''}`}>
                           <span className="v-cell-lbl">Heart Rate</span>
                           <strong>{currentVitals.hr} <small>bpm</small></strong>
                         </div>
-                        <div className="v-card-cell">
+                        <div className={`v-card-cell ${currentVitals.o2 < 90 ? 'cell-danger' : currentVitals.o2 < 95 ? 'cell-spike' : ''}`}>
                           <span className="v-cell-lbl">Oxygen</span>
                           <strong>{currentVitals.o2} <small>%</small></strong>
                         </div>
-                        <div className="v-card-cell">
+                        <div className={`v-card-cell ${(parseInt(currentVitals.bp) > 135 || parseInt((currentVitals.bp || '').split('/')[1]) > 88) ? 'cell-spike' : ''}`}>
                           <span className="v-cell-lbl">Pressure</span>
                           <strong>{currentVitals.bp}</strong>
                         </div>
-                        <div className="v-card-cell">
+                        <div className={`v-card-cell ${currentVitals.fatigue > 60 ? 'cell-danger' : currentVitals.fatigue > 45 ? 'cell-spike' : ''}`}>
                           <span className="v-cell-lbl">Tiredness</span>
                           <strong>{currentVitals.fatigue} <small>/100</small></strong>
                         </div>
@@ -599,6 +836,9 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                         <span className="card-hardware-lbl">
                           <Watch size={13} strokeWidth={2} />
                           <span>{astro.wearableSource}</span>
+                          {astro.id === 1 && (liveWearable.isConnected || isBleConnected || astro.isLiveWatchConnected) && (
+                            <span className="card-live-lock-badge">LIVE LOCK</span>
+                          )}
                         </span>
                         <button
                           type="button"
@@ -661,6 +901,30 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 </div>
               </div>
 
+              {/* Live Telemetry Banner if Elena Park is selected and live watch is connected */}
+              {selectedAstro.id === 1 && (liveWearable.isConnected || isBleConnected || selectedAstro.isLiveWatchConnected) && (
+                <div className="ground-live-telemetry-banner">
+                  <div className="banner-left">
+                    <Watch size={16} className="text-emerald-400" />
+                    <div>
+                      <strong>Direct Wearable Telemetry Active:</strong> Ingesting real-time optical pulse &amp; accelerometer feed from {liveWearable.deviceName || 'Oraimo Watch 2 Pro'} for Elena Park.
+                    </div>
+                  </div>
+                  <div className="banner-right">
+                    <span className="live-bpm-badge">{metrics.hr} BPM LIVE</span>
+                    <button
+                      type="button"
+                      className="banner-sync-btn"
+                      onClick={isBleConnected ? triggerOraimoSync : () => alert('Telemetric link active. Data streaming from spacecraft relay.')}
+                      title="Sync live sensors"
+                    >
+                      <RefreshCw size={11} className={isBleSyncing ? 'animate-spin' : ''} />
+                      <span>{isBleSyncing ? 'Syncing...' : 'Sync'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 8 Gauges Grid */}
               <div className="vitals-group-heading">
                 <Activity size={14} strokeWidth={2} />
@@ -668,17 +932,40 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               </div>
 
               <div className="eight-gauges-grid">
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Heart Rate</span>
+                <article className={`clinical-gauge-box ${metrics.hr > 140 ? 'danger' : metrics.hr > 90 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Heart Rate</span>
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      {metrics.hr > 140 ? (
+                        <span className="gauge-spike-tag danger">CRITICAL TACHYCARDIA</span>
+                      ) : metrics.hr > 90 ? (
+                        <span className="gauge-spike-tag">ELEVATED</span>
+                      ) : null}
+                      {selectedAstro.id === 1 && (liveWearable.isConnected || isBleConnected || selectedAstro.isLiveWatchConnected) && (
+                        <span className="gauge-live-badge">LIVE ORAIMO SENSOR</span>
+                      )}
+                    </div>
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.hr}</strong>
                     <span className="g-unit">bpm</span>
                   </div>
-                  <p className="g-desc">Resting pulse sensor. Fluctuating dynamically with autonomic rhythm.</p>
+                  <p className="g-desc">
+                    {selectedAstro.id === 1 && (liveWearable.isConnected || isBleConnected)
+                      ? 'Live optical photoplethysmography telemetry from wrist sensor.'
+                      : 'Resting pulse sensor. Fluctuating dynamically with autonomic rhythm.'}
+                  </p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Blood Oxygen</span>
+                <article className={`clinical-gauge-box ${metrics.o2 < 90 ? 'danger' : metrics.o2 < 95 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Blood Oxygen</span>
+                    {metrics.o2 < 90 ? (
+                      <span className="gauge-spike-tag danger">HYPOXIA</span>
+                    ) : metrics.o2 < 95 ? (
+                      <span className="gauge-spike-tag">LOW SpO2</span>
+                    ) : null}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.o2}</strong>
                     <span className="g-unit">% SpO2</span>
@@ -686,8 +973,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">Oxygen saturation. Above 95% indicates nominal lung absorption.</p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Blood Pressure</span>
+                <article className={`clinical-gauge-box ${(parseInt(metrics.bp) > 135 || parseInt((metrics.bp || '').split('/')[1]) > 88) ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Blood Pressure</span>
+                    {parseInt(metrics.bp) > 135 && <span className="gauge-spike-tag">ELEVATED</span>}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.bp}</strong>
                     <span className="g-unit">mmHg</span>
@@ -695,8 +985,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">Circulatory pressure required to supply the brain in microgravity.</p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Body Temperature</span>
+                <article className={`clinical-gauge-box ${Number(metrics.temp) > 37.5 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Body Temperature</span>
+                    {Number(metrics.temp) > 37.5 && <span className="gauge-spike-tag">SPACE FEVER</span>}
+                  </div>
                   <div className="g-val-line">
                     <strong>{Number(metrics.temp).toFixed(1)}°</strong>
                     <span className="g-unit">C</span>
@@ -711,8 +1004,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               </div>
 
               <div className="eight-gauges-grid">
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Breathing Rate</span>
+                <article className={`clinical-gauge-box ${(metrics.resp > 20 || metrics.resp < 12) ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Breathing Rate</span>
+                    {metrics.resp > 20 && <span className="gauge-spike-tag">TACHYPNEA</span>}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.resp}</strong>
                     <span className="g-unit">rpm</span>
@@ -720,8 +1016,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">Thoracic bio-sensor. 12 to 20 breaths per minute is healthy.</p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Sleep &amp; Rest</span>
+                <article className={`clinical-gauge-box ${metrics.fatigue > 55 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Sleep &amp; Rest</span>
+                    {metrics.fatigue > 55 && <span className="gauge-spike-tag">FATIGUE ELEVATED</span>}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.fatigue}</strong>
                     <span className="g-unit">/100 score</span>
@@ -729,8 +1028,11 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">{Number(metrics.sleep).toFixed(1)} hours of rest. Cognitive alertness scores are sharp.</p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Immune Defense</span>
+                <article className={`clinical-gauge-box ${metrics.immune > 30 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Immune Defense</span>
+                    {metrics.immune > 30 && <span className="gauge-spike-tag">IMMUNE STRESS</span>}
+                  </div>
                   <div className="g-val-line">
                     <strong>{metrics.immune}</strong>
                     <span className="g-unit">% stress</span>
@@ -738,13 +1040,22 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <p className="g-desc">Salivary biomarker check. Low stress score indicates dormant viruses.</p>
                 </article>
 
-                <article className="clinical-gauge-box">
-                  <span className="g-title">Bone &amp; Muscle Strength</span>
-                  <div className="g-val-line">
-                    <strong>96.4%</strong>
-                    <span className="g-unit">BMD</span>
+                <article className={`clinical-gauge-box ${selectedAstro.id === 1 && (liveWearable.steps || metrics.steps) && (liveWearable.steps || metrics.steps) < 3000 ? 'warning' : 'good'}`}>
+                  <div className="g-title-row">
+                    <span className="g-title">Bone &amp; Muscle Strength</span>
+                    {selectedAstro.id === 1 && (liveWearable.steps || metrics.steps) && (liveWearable.steps || metrics.steps) < 3000 && (
+                      <span className="gauge-spike-tag">UNDER TARGET</span>
+                    )}
                   </div>
-                  <p className="g-desc">Daily resistive exercise countermeasure preserving bone density.</p>
+                  <div className="g-val-line">
+                    <strong>{selectedAstro.id === 1 && (liveWearable.steps || metrics.steps) ? `${(liveWearable.steps || metrics.steps).toLocaleString()} steps` : '96.4%'}</strong>
+                    <span className="g-unit">{selectedAstro.id === 1 && (liveWearable.steps || metrics.steps) ? 'BMD Loading' : 'BMD'}</span>
+                  </div>
+                  <p className="g-desc">
+                    {selectedAstro.id === 1 && (liveWearable.steps || metrics.steps)
+                      ? 'Daily mechanical stride loading via T2 treadmill & Oraimo tri-axial accelerometer.'
+                      : 'Daily resistive exercise countermeasure preserving bone density.'}
+                  </p>
                 </article>
               </div>
 
@@ -767,16 +1078,16 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
               </div>
 
               <div className="cabin-systems-grid">
-                <div className="system-metric-card">
+                <div className={`system-metric-card ${cabinEnv.oxygen < 20.5 ? 'warning' : ''}`}>
                   <span className="sys-label">Cabin Oxygen (O2)</span>
                   <strong>{cabinEnv.oxygen}%</strong>
-                  <small>Nominal breathable air (Standard setpoint: 21.0%)</small>
+                  <small>{cabinEnv.oxygen < 20.5 ? 'WARNING: Hypoxic atmosphere pocket detected' : 'Nominal breathable air (Standard setpoint: 21.0%)'}</small>
                 </div>
 
-                <div className="system-metric-card">
+                <div className={`system-metric-card ${cabinEnv.co2 > 0.40 ? 'warning' : ''}`}>
                   <span className="sys-label">Carbon Dioxide (ppCO2)</span>
                   <strong>{cabinEnv.co2}%</strong>
-                  <small>Scrubbers active. Safe limit is below 0.50%</small>
+                  <small>{cabinEnv.co2 > 0.40 ? 'WARNING: Elevated cabin CO2 - Inspect LiOH scrubbers' : 'Scrubbers active. Safe limit is below 0.50%'}</small>
                 </div>
 
                 <div className="system-metric-card">
@@ -798,10 +1109,10 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   <small>Comfortable living range automatically maintained</small>
                 </div>
 
-                <div className="system-metric-card">
+                <div className={`system-metric-card ${cabinEnv.radiation > 1.8 ? 'warning' : ''}`}>
                   <span className="sys-label">Space Radiation Level</span>
                   <strong>{cabinEnv.radiation} mSv / day</strong>
-                  <small>Ship storm shields are protecting the crew</small>
+                  <small>{cabinEnv.radiation > 1.8 ? 'WARNING: Elevated galactic cosmic radiation flux' : 'Ship storm shields are protecting the crew'}</small>
                 </div>
 
                 <div className="system-metric-card">
