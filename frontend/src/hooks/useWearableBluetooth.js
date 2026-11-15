@@ -426,96 +426,133 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
       setDeviceName(selectedDevice.name || 'Oraimo Watch 2 Pro')
       logDiag('GATT Server connected! Initializing sensor streams...')
 
-      // 1. Probe Standard Heart Rate Service (0x180D)
+      // Safe timeout wrapper for GATT operations to prevent Linux BlueZ hangs
+      const withTimeout = (promise, ms, desc) =>
+        new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error(`${desc} timed out after ${ms}ms`)), ms)
+          promise
+            .then((res) => {
+              clearTimeout(timer)
+              resolve(res)
+            })
+            .catch((err) => {
+              clearTimeout(timer)
+              reject(err)
+            })
+        })
+
+      const isOraimo = (selectedDevice.name || '').toLowerCase().includes('oraimo')
+      let vendorEngineActive = false
       let standardHrFound = false
-      try {
-        const hrService = await server.getPrimaryService('heart_rate')
-        const hrCharacteristic = await hrService.getCharacteristic('heart_rate_measurement')
-        await hrCharacteristic.startNotifications()
-        hrCharacteristic.addEventListener('characteristicvaluechanged', handleStandardHeartRate)
-        standardHrFound = true
-        logDiag('SUCCESS: Subscribed to standard heart_rate_measurement (0x180D)!')
-      } catch {
-        logDiag('Standard heart_rate service (0x180D) not advertised. Engaging Oraimo Vendor Engine...')
+
+      // 1. If Oraimo Watch is detected, prioritize SEWear Vendor Engine directly (never query standard heart_rate which hangs on Linux)
+      if (isOraimo) {
+        logDiag('Oraimo device detected. Prioritizing SEWear Vendor Service (16186f00)...')
+        try {
+          const vendorService = await withTimeout(
+            server.getPrimaryService('16186f00-0000-1000-8000-00807f9b34fb'),
+            3500,
+            'Oraimo 16186f00 Service'
+          )
+          logDiag('Discovered Primary Service: 16186f00 (Oraimo SEWear Telemetry Engine)')
+
+          const chars = await withTimeout(
+            vendorService.getCharacteristics(),
+            3000,
+            'Get 16186f00 Characteristics'
+          )
+          logDiag(`Found ${chars.length} characteristics under 16186f00`)
+
+          const char6f01 = chars.find((c) => c.uuid.toLowerCase().startsWith('16186f01'))
+          const char6f02 = chars.find((c) => c.uuid.toLowerCase().startsWith('16186f02'))
+          const char6f03 = chars.find((c) => c.uuid.toLowerCase().startsWith('16186f03'))
+
+          if (char6f02) {
+            txCharRef.current = char6f02
+            logDiag('Mapped TX Command Characteristic: 16186f02')
+          }
+
+          if (char6f01) {
+            rxCharRef.current = char6f01
+            logDiag('Mapped RX Telemetry Characteristic: 16186f01')
+            try {
+              await withTimeout(char6f01.startNotifications(), 3000, 'Start Notifications 6f01')
+              char6f01.addEventListener('characteristicvaluechanged', handleVendorPacket)
+              logDiag('SUCCESS: Attached event listener on 16186f01 notifications!')
+
+              // Try reading initial cached data snapshot immediately
+              try {
+                const initVal = await withTimeout(char6f01.readValue(), 1200, 'Read 6f01')
+                if (initVal && initVal.byteLength > 0) {
+                  logDiag(`Read ${initVal.byteLength} initial bytes from 16186f01! Parsing...`)
+                  handleVendorPacket({ target: char6f01, targetValue: initVal })
+                }
+              } catch (rErr) {
+                logDiag(`Initial read note: ${rErr.message}`)
+              }
+            } catch (nErr) {
+              logDiag(`Notification error on 6f01: ${nErr.message}`)
+            }
+          }
+
+          // Also listen on 6f02 & 6f03 notifications if supported
+          for (const ch of [char6f02, char6f03]) {
+            if (ch && ch.properties && ch.properties.notify) {
+              try {
+                await withTimeout(ch.startNotifications(), 1500, `Notify ${ch.uuid.slice(0, 8)}`)
+                ch.addEventListener('characteristicvaluechanged', handleVendorPacket)
+                logDiag(`Subscribed to additional channel: ${ch.uuid.slice(0, 8)}`)
+              } catch {}
+            }
+          }
+
+          vendorEngineActive = true
+        } catch (vErr) {
+          logDiag(`Oraimo vendor service note: ${vErr.message}`)
+        }
+      } else {
+        // Standard Bluetooth SIG Heart Rate Service (for Polar, Garmin, etc.)
+        try {
+          const hrService = await withTimeout(server.getPrimaryService('heart_rate'), 2500, 'Standard HR')
+          const hrCharacteristic = await withTimeout(hrService.getCharacteristic('heart_rate_measurement'), 2500, 'HR Char')
+          await withTimeout(hrCharacteristic.startNotifications(), 2500, 'Start HR Notifications')
+          hrCharacteristic.addEventListener('characteristicvaluechanged', handleStandardHeartRate)
+          standardHrFound = true
+          logDiag('SUCCESS: Subscribed to standard heart_rate_measurement (0x180D)!')
+        } catch (hErr) {
+          logDiag(`Standard heart_rate note: ${hErr.message}`)
+        }
       }
 
-      // 2. Probe Battery Service (0x180F)
+      // Probe Battery Service (0x180F) with timeout
       try {
-        const batService = await server.getPrimaryService('battery_service')
-        const batChar = await batService.getCharacteristic('battery_level')
-        const batVal = await batChar.readValue()
+        const batService = await withTimeout(server.getPrimaryService('battery_service'), 1500, 'Battery Service')
+        const batChar = await withTimeout(batService.getCharacteristic('battery_level'), 1500, 'Battery Char')
+        const batVal = await withTimeout(batChar.readValue(), 1200, 'Battery Read')
         const bLevel = batVal.getUint8(0)
         setBatteryLevel(bLevel)
         logDiag(`Battery level: ${bLevel}%`)
-      } catch {
-        // Battery service optional
-      }
+      } catch {}
 
-      // 3. Probe Oraimo / InfoWear Vendor Service (16186f00)
-      let vendorEngineActive = false
+      // Probe Nordic UART Service (0000aa01) with timeout
       try {
-        const vendorService = await server.getPrimaryService('16186f00-0000-1000-8000-00807f9b34fb')
-        logDiag('Discovered Primary Service: 16186f00 (Oraimo SEWear Telemetry Engine)')
-
-        const chars = await vendorService.getCharacteristics()
-        logDiag(`Found ${chars.length} characteristics under 16186f00`)
-
-        // 6f01: RX (Notifications from watch to browser)
-        const char6f01 = chars.find((c) => c.uuid.toLowerCase().startsWith('16186f01'))
-        // 6f02: TX (Commands from browser to watch)
-        const char6f02 = chars.find((c) => c.uuid.toLowerCase().startsWith('16186f02'))
-        // 6f03: Bulk
-        const char6f03 = chars.find((c) => c.uuid.toLowerCase().startsWith('16186f03'))
-
-        if (char6f02) {
-          txCharRef.current = char6f02
-          logDiag('Mapped TX Command Characteristic: 16186f02')
-        }
-
-        if (char6f01) {
-          rxCharRef.current = char6f01
-          logDiag('Mapped RX Telemetry Characteristic: 16186f01')
-          await char6f01.startNotifications()
-          char6f01.addEventListener('characteristicvaluechanged', handleVendorPacket)
-          logDiag('SUCCESS: Attached event listener on 16186f01 notifications!')
-        }
-
-        // Also listen on 6f02 & 6f03 notifications if supported
-        for (const ch of [char6f02, char6f03]) {
-          if (ch && ch.properties.notify) {
-            try {
-              await ch.startNotifications()
-              ch.addEventListener('characteristicvaluechanged', handleVendorPacket)
-            } catch {
-              // optional
-            }
-          }
-        }
-
-        vendorEngineActive = true
-      } catch (vErr) {
-        logDiag(`Oraimo vendor service note: ${vErr.message}`)
-      }
-
-      // 4. Probe Nordic UART Service (0000aa01)
-      try {
-        const nusService = await server.getPrimaryService('0000aa01-0000-1000-8000-00805f9b34fb')
-        const nusChars = await nusService.getCharacteristics()
+        const nusService = await withTimeout(server.getPrimaryService('0000aa01-0000-1000-8000-00805f9b34fb'), 1500, 'NUS Service')
+        const nusChars = await withTimeout(nusService.getCharacteristics(), 1500, 'NUS Chars')
         for (const nch of nusChars) {
-          if (nch.properties.notify) {
-            await nch.startNotifications()
-            nch.addEventListener('characteristicvaluechanged', handleVendorPacket)
-            logDiag(`Subscribed to NUS notification characteristic: ${nch.uuid.slice(0, 8)}`)
+          if (nch.properties && nch.properties.notify) {
+            try {
+              await withTimeout(nch.startNotifications(), 1500, 'NUS Notify')
+              nch.addEventListener('characteristicvaluechanged', handleVendorPacket)
+              logDiag(`Subscribed to NUS notification: ${nch.uuid.slice(0, 8)}`)
+            } catch {}
           }
         }
-      } catch {
-        // optional
-      }
+      } catch {}
 
       setConnectionStatus('connected')
-      logDiag('Device connection setup complete!')
+      logDiag('Device connection setup complete! Watch is connected and listening.')
 
-      // 5. Trigger Initial Handshake & Sensor Activation
+      // Trigger Initial Handshake & Sensor Activation
       if (txCharRef.current || rxCharRef.current) {
         logDiag('Triggering automatic sensor wake-up handshake (CMD 164 & CMD 355)...')
         setTimeout(async () => {
@@ -531,7 +568,7 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
               await sendOraimoCommand(new Uint8Array([0x08, 0xa4, 0x01, 0x62, 0x02, 0x18, 0x00]), 'Heartbeat Ping (CMD 164)')
             }
           }, 12000)
-        }, 250)
+        }, 150)
       }
 
       if (!standardHrFound && vendorEngineActive) {
