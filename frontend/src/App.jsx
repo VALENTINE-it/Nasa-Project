@@ -14,6 +14,12 @@ import useWearableBluetooth from './hooks/useWearableBluetooth'
 import './App.css'
 
 function getFallbackDashboard(id) {
+  const resolvedId =
+    id === 'A-2056' || id === 2 || id === '2'
+      ? 2
+      : id === 'A-2089' || id === 3 || id === '3'
+      ? 3
+      : 1
   const crewMap = {
     1: {
       profile: {
@@ -250,7 +256,7 @@ function getFallbackDashboard(id) {
       },
     },
   }
-  return crewMap[id] || crewMap[1]
+  return crewMap[resolvedId] || crewMap[1]
 }
 
 function App() {
@@ -374,7 +380,12 @@ function App() {
 
 function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   const { id } = useParams()
-  const astronautId = Number(id) || 1
+  const astronautId =
+    id === 'A-2056' || id === 2 || id === '2'
+      ? 2
+      : id === 'A-2089' || id === 3 || id === '3'
+      ? 3
+      : 1
   const [dashboardData, setDashboardData] = useState(() => getFallbackDashboard(astronautId))
   const [activeTab, setActiveTab] = useState('vitals')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
@@ -843,12 +854,12 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   }
 
   // Microgravity Musculoskeletal & Bone Loss Warning (Directly tied to Oraimo Watch steps)
-  if ((latest?.physicalActivity ?? 6000) < 3000 && environmentMode === 'spacecraft') {
+  if ((latest?.physicalActivity ?? 0) < 6000 && environmentMode === 'spacecraft') {
     dynamicAlerts.push({
       id: 'live-alert-musculoskeletal',
       metricName: 'Microgravity Bone & Muscle Loss: Under Exercise Target',
       severity: 'warning',
-      questionTrigger: 'Has the astronaut logged fewer than 3,000 steps during this shift?',
+      questionTrigger: 'Has the astronaut logged fewer than 6,000 steps during this shift?',
       description: `Only ${(latest?.physicalActivity ?? 0).toLocaleString()} steps detected by Oraimo wrist sensor. In zero-G, lack of impact forces causes 1.0–1.5% bone mineral loss per month into the kidneys (kidney stone risk).`,
       observedValue: `${(latest?.physicalActivity ?? 0).toLocaleString()} steps`,
       threshold: '6,000+ steps (NASA T2 Exercise Target)',
