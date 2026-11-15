@@ -374,7 +374,9 @@ button:active,
 .top-header-stats {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 /* Status Pill: Crisp, Icon-Driven, Zero Glowing Dots */
@@ -533,6 +535,20 @@ button:active,
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .vitals-matrix-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .vitals-matrix-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 .vitals-matrix-row.secondary-row {
@@ -732,6 +748,13 @@ button:active,
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   flex: 1;
+}
+
+@media (max-width: 860px) {
+  .charts-full-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
 }
 
 .single-chart-card {
