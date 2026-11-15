@@ -1,30 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
-import {
-  Activity,
-  Bell,
-  ClipboardList,
-  Globe,
-  LogIn,
-  LogOut,
-  Radio,
-  Rocket,
-  TrendingUp,
-  User,
-  Watch,
-} from 'lucide-react'
+import { BrowserRouter, Navigate, Route, Routes, useParams, useSearchParams } from 'react-router-dom'
+import { AlertTriangle, CheckCircle2, Watch, Radio, RefreshCw, Menu } from 'lucide-react'
 import EarthWatchConsole from './EarthWatchConsole'
 import PublicLoginPage from './components/PublicLoginPage'
+import AuralMedLandingPage from './components/AuralMedLandingPage'
+import AstronautSidebar from './components/AstronautSidebar'
 import DailyVitalsView from './components/DailyVitalsView'
 import HealthTrendsView from './components/HealthTrendsView'
 import MedicalAdviceView from './components/MedicalAdviceView'
 import CheckupHistoryView from './components/CheckupHistoryView'
 import MissionProfileView from './components/MissionProfileView'
 import useWearableBluetooth from './hooks/useWearableBluetooth'
-import { TopBar, SectionTabs, StatusStrip, Button, StatusChip } from './ui'
 import './App.css'
 
 function getFallbackDashboard(id) {
+  const resolvedId =
+    id === 'A-2056' || id === 2 || id === '2'
+      ? 2
+      : id === 'A-2089' || id === 3 || id === '3'
+      ? 3
+      : 1
   const crewMap = {
     1: {
       profile: {
@@ -261,7 +256,7 @@ function getFallbackDashboard(id) {
       },
     },
   }
-  return crewMap[id] || crewMap[1]
+  return crewMap[resolvedId] || crewMap[1]
 }
 
 function App() {
@@ -327,6 +322,20 @@ function App() {
         <Route
           path="/"
           element={
+            <AuralMedLandingPage
+              sessionUser={sessionUser}
+              onAuthenticated={setSessionUser}
+              onLogout={handleLogout}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
+          }
+        />
+
+        {/* Dedicated Standalone Astronaut Login Route */}
+        <Route
+          path="/login"
+          element={
             sessionUser ? (
               <Navigate to={`/astronaut/dashboard/${sessionUser.astronautId}`} replace />
             ) : (
@@ -371,9 +380,17 @@ function App() {
 
 function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   const { id } = useParams()
-  const astronautId = Number(id) || 1
+  const astronautId =
+    id === 'A-2056' || id === 2 || id === '2'
+      ? 2
+      : id === 'A-2089' || id === 3 || id === '3'
+      ? 3
+      : 1
   const [dashboardData, setDashboardData] = useState(() => getFallbackDashboard(astronautId))
-  const [activeTab, setActiveTab] = useState('vitals')
+  const [searchParams] = useSearchParams()
+  const initialTab = searchParams.get('tab') || 'vitals'
+  const [activeTab, setActiveTab] = useState(initialTab)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [timeframe, setTimeframe] = useState('week')
   const [scenarioMode, setScenarioMode] = useState('nominal') // 'nominal' | 'tachycardia' | 'hypoxia' | 'radiation'
   const [environmentMode, setEnvironmentMode] = useState('spacecraft') // 'spacecraft' | 'lunar_base' | 'mars_eva'
@@ -419,11 +436,124 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     connectDevice: connectBleWatch,
     disconnectDevice: disconnectBleWatch,
     isConnected: isBleConnected,
+    triggerOraimoSync,
+    isSyncing: isBleSyncing,
+    lastVitals: bleLastVitals,
+    batteryLevel: bleBattery,
+    packetCount: blePacketCount,
   } = useWearableBluetooth({
-    onHeartRateUpdate: ({ heartRate }) => {
-      setLiveVitals((prev) => (prev ? { ...prev, heartRate } : prev))
+    onHeartRateUpdate: ({ heartRate, steps, bloodOxygen, stress }) => {
+      // 1. Update Astronaut UI local vitals
+      setLiveVitals((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          ...(heartRate ? { heartRate } : {}),
+          ...(typeof steps === 'number' && steps > 0 ? { physicalActivity: steps } : {}),
+          ...(bloodOxygen ? { bloodOxygen } : {}),
+          ...(stress ? { mentalStrain: stress } : {}),
+        }
+      })
+
+      // 2. Uplink live watch telemetry to Go backend so Earth Center and DB receive it
+      const payload = {
+        device: bleDeviceName || 'Oraimo Watch 2 Pro',
+        heartRate: heartRate || 0,
+        steps: typeof steps === 'number' ? steps : 0,
+        spO2: bloodOxygen || 98,
+        rawText: `Web Bluetooth GATT Stream · HR ${heartRate} bpm · Steps ${steps || 0}`,
+      }
+
+      fetch('/api/wearable/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).catch(() => {})
+
+      // 3. 0ms instant tab-to-tab broadcast to Earth Watch Console
+      try {
+        const bc = new BroadcastChannel('aura_med_telemetry')
+        bc.postMessage({
+          type: 'WEARABLE_UPDATE',
+          astronautId,
+          isConnected: true,
+          deviceName: bleDeviceName || 'Oraimo Watch 2 Pro',
+          heartRate: heartRate || 0,
+          steps: steps || 0,
+          bloodOxygen: bloodOxygen || 98,
+          timestamp: Date.now(),
+        })
+        bc.close()
+      } catch {}
+
+      // 4. Persist in localStorage for instant cross-view recovery
+      try {
+        localStorage.setItem(
+          'aura_med_live_wearable',
+          JSON.stringify({
+            astronautId,
+            isConnected: true,
+            deviceName: bleDeviceName || 'Oraimo Watch 2 Pro',
+            heartRate: heartRate || 0,
+            steps: steps || 0,
+            bloodOxygen: bloodOxygen || 98,
+            timestamp: Date.now(),
+          })
+        )
+      } catch {}
+    },
+    onDisconnect: () => {
+      try {
+        const bc = new BroadcastChannel('aura_med_telemetry')
+        bc.postMessage({
+          type: 'WEARABLE_DISCONNECT',
+          astronautId,
+          isConnected: false,
+          timestamp: Date.now(),
+        })
+        bc.close()
+      } catch {}
+      try {
+        localStorage.removeItem('aura_med_live_wearable')
+      } catch {}
     },
   })
+
+  // Listen for telemetry or comms updates broadcast from Earth Watch Console or other tabs
+  useEffect(() => {
+    let telemetryChannel
+    let commsChannel
+
+    try {
+      telemetryChannel = new BroadcastChannel('aura_med_telemetry')
+      telemetryChannel.onmessage = (event) => {
+        if (event.data?.type === 'WEARABLE_UPDATE' && event.data.heartRate > 0) {
+          setLiveVitals((prev) => ({
+            ...prev,
+            heartRate: event.data.heartRate,
+            ...(typeof event.data.steps === 'number' && event.data.steps > 0
+              ? { physicalActivity: event.data.steps }
+              : {}),
+            ...(event.data.bloodOxygen ? { bloodOxygen: event.data.bloodOxygen } : {}),
+          }))
+        }
+      }
+    } catch {}
+
+    try {
+      commsChannel = new BroadcastChannel('aura_med_comms')
+      commsChannel.onmessage = (event) => {
+        if (event.data?.type === 'NEW_ADVISORY' && event.data.message) {
+          setHoustonMessages((prev) => [event.data.message, ...prev])
+        }
+      }
+    } catch {}
+
+    return () => {
+      telemetryChannel?.close()
+      commsChannel?.close()
+    }
+  }, [])
 
   // Live Wearable Relay Bridge (MacroDroid / Direct Device HTTP push)
   const [wearableBridge, setWearableBridge] = useState({
@@ -726,12 +856,12 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   }
 
   // Microgravity Musculoskeletal & Bone Loss Warning (Directly tied to Oraimo Watch steps)
-  if ((latest?.physicalActivity ?? 6000) < 3000 && environmentMode === 'spacecraft') {
+  if ((latest?.physicalActivity ?? 0) < 6000 && environmentMode === 'spacecraft') {
     dynamicAlerts.push({
       id: 'live-alert-musculoskeletal',
       metricName: 'Microgravity Bone & Muscle Loss: Under Exercise Target',
       severity: 'warning',
-      questionTrigger: 'Has the astronaut logged fewer than 3,000 steps during this shift?',
+      questionTrigger: 'Has the astronaut logged fewer than 6,000 steps during this shift?',
       description: `Only ${(latest?.physicalActivity ?? 0).toLocaleString()} steps detected by Oraimo wrist sensor. In zero-G, lack of impact forces causes 1.0–1.5% bone mineral loss per month into the kidneys (kidney stone risk).`,
       observedValue: `${(latest?.physicalActivity ?? 0).toLocaleString()} steps`,
       threshold: '6,000+ steps (NASA T2 Exercise Target)',
@@ -760,123 +890,113 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
     return target.includes('crew') || target.includes('commander') || target.includes('officer') || (astroName && target.includes(astroName.split(' ')[0]))
   })
 
-  const ASTRONAUT_TABS = [
-    { id: 'vitals', label: 'Daily Vitals', icon: Activity, subtitle: 'Heart, Oxygen, Pressure', group: 'biometrics' },
-    { id: 'trends', label: 'Health Trends', icon: TrendingUp, subtitle: 'Time Charts & Changes', group: 'biometrics' },
-    { id: 'notices', label: 'Medical Advice', icon: Bell, subtitle: `${dynamicAlerts.length} Active Notices`, badge: dynamicAlerts.length, group: 'clinical' },
-    { id: 'history', label: 'Checkup History', icon: ClipboardList, subtitle: 'Past Logs & Rest Times', group: 'clinical' },
-    { id: 'profile', label: 'Mission Profile', icon: User, subtitle: 'Flight Status & Watch Sync', group: 'spacecraft' },
-  ]
-
   return (
-    <div className="hd-astronaut-layout">
-      {/* Unified Mission Ergonomics TopBar */}
-      <TopBar
-        brandIcon={Rocket}
-        brandTitle="AURA-MED"
-        brandSubtitle="Astronaut Health Desk"
-        sideChipText="Crew Side"
-        brandLink={`/astronaut/dashboard/${profile.id || profile.astronautId}`}
-        crewIdentity={{
-          avatarUrl: profile.avatarUrl,
-          fullName: profile.fullName,
-          astronautId: profile.astronautId,
-          mission: profile.mission,
-        }}
-        primaryAction={
-          <Button variant="primary" to="/console">
-            <Globe size={16} strokeWidth={2} />
-            <span>Earth Mission Control</span>
-          </Button>
-        }
+    <div className="workstation-app-layout">
+      {/* Left Navigation Bar (Sidebar) */}
+      <AstronautSidebar
+        profile={profile}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        dynamicAlertsCount={dynamicAlerts.length}
         theme={theme}
         onToggleTheme={onToggleTheme}
-        authAction={
-          session ? (
-            <Button variant="outline" onClick={onLogout} aria-label="Log Out">
-              <LogOut size={15} strokeWidth={2} />
-              <span>Log Out</span>
-            </Button>
-          ) : (
-            <Button variant="outline" to="/" aria-label="Sign In">
-              <LogIn size={15} strokeWidth={2} />
-              <span>Sign In</span>
-            </Button>
-          )
-        }
+        session={session}
+        onLogout={onLogout}
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
       />
 
-      {/* Row of Section Tabs */}
-      <SectionTabs
-        tabs={ASTRONAUT_TABS}
-        activeTab={activeTab}
-        onChange={setActiveTab}
-      />
-
-      {/* System Status Strip */}
-      <StatusStrip
-        wearableStatus={{
-          isConnected: wearableBridge.isConnected || isBleConnected,
-          isScanning: bleStatus === 'connecting',
-          battery: wearableBridge.isConnected ? 88 : isBleConnected ? 92 : undefined,
-          source: wearableBridge.isConnected ? wearableBridge.deviceName : bleDeviceName,
-        }}
-        activeAlert={
-          isPulseElevated
-            ? 'Tachycardia Surge (>120 bpm)'
-            : dynamicAlerts.length > 0 && dynamicAlerts[0].severity !== 'normal'
-              ? dynamicAlerts[0].description
-              : null
-        }
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          <div className="scenario-selector-pill">
-            <span className="scenario-label">Environment:</span>
-            <select
-              className="scenario-select"
-              value={environmentMode}
-              onChange={(e) => setEnvironmentMode(e.target.value)}
-              title="Adapt telemetry to different space environments"
-            >
-              <option value="spacecraft">Transit Spacecraft (0.00g)</option>
-              <option value="lunar_base">Lunar Outpost (0.16g)</option>
-              <option value="mars_eva">Mars Surface EVA (0.38g)</option>
-            </select>
-          </div>
-
-          <div className="scenario-selector-pill">
-            <span className="scenario-label">Scenario:</span>
-            <select
-              className="scenario-select"
-              value={scenarioMode}
-              onChange={(e) => setScenarioMode(e.target.value)}
-              title="Simulate realistic spaceflight physiological scenarios"
-            >
-              <option value="nominal">Normal Flight (Nominal)</option>
-              <option value="tachycardia">Chest Pounding (&gt;120 bpm)</option>
-              <option value="hypoxia">Cabin Hypoxia (Air Issue)</option>
-              <option value="radiation">Solar Radiation Storm</option>
-            </select>
-          </div>
-
-          {wearableBridge.isConnected ? (
+      {/* Right Main Viewport */}
+      <div className="main-viewport-content">
+        <header className="viewport-top-header">
+          <div className="header-title-wrapper">
             <button
               type="button"
-              className="wearable-connect-btn connected"
-              style={{ cursor: 'pointer' }}
-              title="Live hardware telemetry streaming from Oraimo Watch via Mobile Relay."
-              onClick={() =>
-                alert(
-                  `Oraimo Watch Live Relay:\nDevice: ${wearableBridge.deviceName}\nHeart Rate: ${wearableBridge.heartRate} bpm\nSteps: ${wearableBridge.steps}\nLast Ping: ${wearableBridge.lastSeen}`
-                )
-              }
+              className="mobile-hamburger-btn"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              aria-label="Open Navigation Menu"
             >
-              <Watch size={13} strokeWidth={2} />
-              <span>
-                {wearableBridge.deviceName} ({wearableBridge.heartRate} bpm LIVE)
-              </span>
+              <Menu size={20} strokeWidth={2} />
             </button>
-          ) : (
+            <div>
+              <div className="breadcrumb-line">
+                <span>{profile.fullName}</span> &rsaquo;{' '}
+                <strong className="active-view-name">
+                  {activeTab === 'vitals' && 'Daily Vitals Overview'}
+                  {activeTab === 'trends' && 'Health Trends & Comparison Charts'}
+                  {activeTab === 'notices' && 'Medical Notices & Automated Advice'}
+                  {activeTab === 'history' && 'Checkup History & Recent Logs'}
+                  {activeTab === 'profile' && 'Astronaut & Mission Flight Profile'}
+                </strong>
+              </div>
+              <h1>
+                {activeTab === 'vitals' && `${profile.fullName}'s Dynamic Health Telemetry`}
+                {activeTab === 'trends' && 'Vital Sign Changes Over Time'}
+                {activeTab === 'notices' && 'Onboard Medical Recommendations'}
+                {activeTab === 'history' && 'Chronological Medical Check History'}
+                {activeTab === 'profile' && 'Spacecraft Environment & Profile'}
+              </h1>
+            </div>
+          </div>
+
+          <div className="top-header-stats">
+            <span className="side-confirmation-tag astronaut">Astronaut Workstation (Crew Side)</span>
+
+            {/* Environmental Mission Context Switcher (content.md line 14) */}
+            <div className="scenario-selector-pill">
+              <span className="scenario-label">Environment:</span>
+              <select
+                className="scenario-select"
+                value={environmentMode}
+                onChange={(e) => setEnvironmentMode(e.target.value)}
+                title="Adapt telemetry to different space environments"
+              >
+                <option value="spacecraft">Transit Spacecraft (0.00g)</option>
+                <option value="lunar_base">Lunar Outpost (0.16g)</option>
+                <option value="mars_eva">Mars Surface EVA (0.38g)</option>
+              </select>
+            </div>
+
+            {/* Scenario Anomaly Simulation Switcher */}
+            <div className="scenario-selector-pill">
+              <span className="scenario-label">Scenario:</span>
+              <select
+                className="scenario-select"
+                value={scenarioMode}
+                onChange={(e) => setScenarioMode(e.target.value)}
+                title="Simulate realistic spaceflight physiological scenarios"
+              >
+                <option value="nominal">Normal Flight (All Green &amp; Healthy)</option>
+                <option value="tachycardia">If Heart Races: Chest Pounding (&gt;120 bpm)</option>
+                <option value="hypoxia">If Air Goes Bad: Gasping &amp; Headache</option>
+                <option value="radiation">If Radiation Alarm Sounds: Solar Storm Outside</option>
+              </select>
+            </div>
+
+            <div className={`status-pill ${statusClass}`}>
+              {isPulseElevated ? (
+                <AlertTriangle size={14} strokeWidth={2.5} />
+              ) : (
+                <CheckCircle2 size={14} strokeWidth={2.5} />
+              )}
+              <strong>{statusLabel}</strong>
+            </div>
+
+            {/* Interactive Wearable Bluetooth & Mobile Relay Controls */}
+            {wearableBridge.isConnected && (
+              <div
+                className="wearable-connect-btn connected"
+                style={{ cursor: 'pointer' }}
+                title="Live hardware telemetry streaming from Oraimo Watch via Mobile Relay. Click to view bridge details."
+                onClick={() => alert(`Oraimo Watch Live Relay:\nDevice: ${wearableBridge.deviceName}\nHeart Rate: ${wearableBridge.heartRate} bpm\nSteps: ${wearableBridge.steps}\nLast Ping: ${wearableBridge.lastSeen}`)}
+              >
+                <Watch size={14} strokeWidth={2} />
+                <span>
+                  {wearableBridge.deviceName} ({wearableBridge.heartRate} bpm Relay)
+                </span>
+              </div>
+            )}
+
             <button
               type="button"
               className={`wearable-connect-btn ${isBleConnected ? 'connected' : ''}`}
@@ -884,49 +1004,31 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               title={
                 isBleConnected
                   ? 'Click to disconnect Oraimo Watch'
-                  : 'Pair via Web Bluetooth or stream live via phone MacroDroid'
+                  : 'Pair directly via Chrome Web Bluetooth (Oraimo SEWear Telemetry Protocol Engine)'
               }
             >
-              <Watch size={13} strokeWidth={2} />
+              <Watch size={14} strokeWidth={2} />
               <span>
                 {isBleConnected
-                  ? `${bleDeviceName || 'Oraimo Watch'} (Live BLE)`
+                  ? `${bleDeviceName || 'Oraimo Watch'} (Direct BLE)`
                   : bleStatus === 'connecting'
-                    ? 'Pairing BLE...'
-                    : 'Pair Oraimo Watch'}
+                  ? 'Scanning BLE...'
+                  : 'Pair Oraimo Watch (BLE)'}
               </span>
             </button>
-          )}
-        </div>
-      </StatusStrip>
 
-      {/* Main Viewport */}
-      <div className="main-viewport-content">
-        <header className="viewport-top-header">
-          <div>
-            <div className="breadcrumb-line">
-              <span>{profile.fullName}</span> &rsaquo;{' '}
-              <strong className="active-view-name">
-                {activeTab === 'vitals' && 'Daily Vitals Overview'}
-                {activeTab === 'trends' && 'Health Trends & Comparison Charts'}
-                {activeTab === 'notices' && 'Medical Notices & Automated Advice'}
-                {activeTab === 'history' && 'Checkup History & Recent Logs'}
-                {activeTab === 'profile' && 'Astronaut & Mission Flight Profile'}
-              </strong>
-            </div>
-            <h1>
-              {activeTab === 'vitals' && `${profile.fullName}'s Dynamic Health Telemetry`}
-              {activeTab === 'trends' && 'Vital Sign Changes Over Time'}
-              {activeTab === 'notices' && 'Onboard Medical Recommendations'}
-              {activeTab === 'history' && 'Chronological Medical Check History'}
-              {activeTab === 'profile' && 'Spacecraft Environment & Profile'}
-            </h1>
-          </div>
-
-          <div className="top-header-stats">
-            <StatusChip variant={statusClass}>
-              {statusLabel}
-            </StatusChip>
+            {isBleConnected && (
+              <button
+                type="button"
+                className="wearable-sync-btn"
+                onClick={triggerOraimoSync}
+                disabled={isBleSyncing}
+                title="Wake sensors and stream live vitals via Oraimo SEWear protocol"
+              >
+                <RefreshCw size={12} className={isBleSyncing ? 'animate-spin' : ''} />
+                <span>{isBleSyncing ? 'Syncing...' : 'Sync Vitals'}</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -966,6 +1068,7 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
               upcomingReminder={upcomingReminder}
               onCompleteReminder={() => setUpcomingReminder((prev) => ({ ...prev, taken: true }))}
               onJumpToTrends={() => setActiveTab('trends')}
+              onJumpToMedicalAdvice={() => setActiveTab('notices')}
             />
           )}
 
@@ -983,6 +1086,10 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
             <MedicalAdviceView
               dynamicAlerts={dynamicAlerts}
               onResolveAlert={() => setScenarioMode('nominal')}
+              latest={latest}
+              activeAstronaut={profile}
+              scenarioMode={scenarioMode}
+              environmentMode={environmentMode}
             />
           )}
 

@@ -1,8 +1,6 @@
 import React from 'react'
-import { User, Radio, FileText, Wifi } from 'lucide-react'
-import { StatusChip, Accordion } from '../ui'
 
-export function MissionProfileView({ profile = {}, environmentMode = 'spacecraft' }) {
+export function MissionProfileView({ profile, environmentMode = 'spacecraft' }) {
   const envTitles = {
     spacecraft: 'Deep-Space Mars Transit Habitat (0.00g)',
     lunar_base: 'Artemis Lunar Outpost (0.16g Shackleton Base)',
@@ -22,81 +20,63 @@ export function MissionProfileView({ profile = {}, environmentMode = 'spacecraft
   }[environmentMode] || '12 minutes, 44 seconds'
 
   return (
-    <div className="view-pane profile-pane hd-profile-container">
-      <div className="hd-profile-grid">
-        {/* Card 1: Crew Profile & Assignment */}
-        <div className="hd-profile-card">
-          <h3 className="hd-profile-title">
-            <User size={18} strokeWidth={2} style={{ color: 'var(--accent-color)' }} />
-            Crew Profile &amp; Assignment
-          </h3>
-          <div className="hd-profile-rows">
-            <div className="hd-profile-row">
-              <span className="hd-profile-label">Astronaut Name:</span>
-              <strong className="hd-profile-val">{profile.fullName || '—'}</strong>
-            </div>
-            <div className="hd-profile-row">
-              <span className="hd-profile-label">Astronaut ID:</span>
-              <strong className="hd-profile-val hd-profile-val--mono">{profile.astronautId || '—'}</strong>
-            </div>
-            <div className="hd-profile-row">
-              <span className="hd-profile-label">Mission:</span>
-              <strong className="hd-profile-val">{profile.mission || '—'}</strong>
-            </div>
-            <div className="hd-profile-row">
-              <span className="hd-profile-label">Assignment:</span>
-              <strong className="hd-profile-val">Propulsion Systems &amp; Spacecraft Commander</strong>
-            </div>
+    <div className="view-pane profile-pane">
+      <div className="profile-details-grid">
+        <div className="profile-info-card">
+          <h3>Crew Profile &amp; Assignment</h3>
+          <div className="info-key-val">
+            <span>Astronaut Name:</span>
+            <strong>{profile.fullName}</strong>
           </div>
-
-          <Accordion
-            title="Health Overview & Bio"
-            icon={<FileText size={16} />}
-            defaultOpen={false}
-          >
-            <p className="hd-profile-bio">{profile.personalOverview || 'No bio overview registered.'}</p>
-          </Accordion>
+          <div className="info-key-val">
+            <span>Astronaut ID:</span>
+            <strong>{profile.astronautId}</strong>
+          </div>
+          <div className="info-key-val">
+            <span>Mission:</span>
+            <strong>{profile.mission}</strong>
+          </div>
+          <div className="info-key-val">
+            <span>Assignment:</span>
+            <strong>Propulsion Systems &amp; Spacecraft Commander</strong>
+          </div>
+          <details className="view-accordion">
+            <summary>Health Overview &amp; Bio</summary>
+            <div className="accordion-body">
+              <p className="profile-bio-text">{profile.personalOverview}</p>
+            </div>
+          </details>
         </div>
 
-        {/* Card 2: Wearable & Ship Telemetry Links */}
-        <div className="hd-profile-card">
-          <h3 className="hd-profile-title">
-            <Radio size={18} strokeWidth={2} style={{ color: 'var(--accent-color)' }} />
-            Wearable &amp; Ship Telemetry Links
-          </h3>
-          <div className="hd-profile-rows">
-            <div className="hd-profile-row">
-              <span className="hd-profile-label">Smart Watch Status:</span>
-              <StatusChip variant="good">Connected (Oraimo Watch via Bluetooth)</StatusChip>
-            </div>
-            <div className="hd-profile-row">
-              <span className="hd-profile-label">Operational Environment:</span>
-              <strong className="hd-profile-val">{envTitles}</strong>
-            </div>
+        <div className="profile-info-card">
+          <h3>Wearable &amp; Ship Telemetry Links</h3>
+          <div className="info-key-val">
+            <span>Smart Watch Status:</span>
+            <strong className="status-good-text">Connected (Oraimo Watch via Bluetooth)</strong>
           </div>
-
-          <Accordion
-            title="Telemetry Link & Environment Details"
-            icon={<Wifi size={16} />}
-            defaultOpen={false}
-          >
-            <div className="hd-profile-rows">
-              <div className="hd-profile-row">
-                <span className="hd-profile-label">Distance from Earth:</span>
-                <strong className="hd-profile-val hd-profile-val--mono">{envDistances}</strong>
+          <div className="info-key-val">
+            <span>Operational Environment:</span>
+            <strong>{envTitles}</strong>
+          </div>
+          <details className="view-accordion">
+            <summary>Telemetry Link &amp; Environment Details</summary>
+            <div className="accordion-body">
+              <div className="info-key-val">
+                <span>Distance from Earth:</span>
+                <strong>{envDistances}</strong>
               </div>
-              <div className="hd-profile-row">
-                <span className="hd-profile-label">Radio Delay to Houston:</span>
-                <strong className="hd-profile-val hd-profile-val--mono">{envDelays}</strong>
+              <div className="info-key-val">
+                <span>Radio Delay to Houston:</span>
+                <strong>{envDelays}</strong>
               </div>
-              <div className="hd-profile-row">
-                <span className="hd-profile-label">Autonomous Computer:</span>
-                <strong className="hd-profile-val">
-                  Clinical Decision Engine Active (<span style={{ color: 'var(--hd-green)' }}>Ready</span>)
+              <div className="info-key-val">
+                <span>Autonomous Computer:</span>
+                <strong>
+                  Clinical Decision Engine Active (<span className="status-good-text">Ready</span>)
                 </strong>
               </div>
             </div>
-          </Accordion>
+          </details>
         </div>
       </div>
     </div>
