@@ -75,6 +75,10 @@ export function DailyVitalsView({
   const isHrAbnormal = isHrLow || isHrHigh
   const hrStatusTag = isHrLow ? 'LOW' : isHrHigh ? 'ELEVATED' : 'NOMINAL'
 
+  const currentSteps = typeof latest?.physicalActivity === 'number' ? latest.physicalActivity : 0
+  const isStepsUnderTarget = currentSteps < 6000
+  const stepsStatusTag = currentSteps < 6000 ? 'UNDER TARGET' : 'GOAL REACHED'
+
   const isTempLow = Number(latest.bodyTemperature) < 36.0
   const isTempHigh = Number(latest.bodyTemperature) > 37.5
   const isTempAbnormal = isTempLow || isTempHigh
@@ -183,17 +187,17 @@ export function DailyVitalsView({
     steps: {
       title: 'Daily Exercise Steps (Mechanical Loading)',
       unit: 'steps / 24h',
-      getValue: () => (latest?.physicalActivity ?? 6000).toLocaleString(),
+      getValue: () => currentSteps.toLocaleString(),
       range: 'NASA HRP Target: 6,000+ daily steps',
-      isAbnormal: () => (latest?.physicalActivity ?? 6000) < 3000,
+      isAbnormal: () => isStepsUnderTarget,
       statusText: () =>
-        (latest?.physicalActivity ?? 6000) < 3000 ? 'UNDER TARGET (CRITICAL)' : 'ACTIVE',
+        isStepsUnderTarget ? 'UNDER TARGET (< 6,000 steps)' : 'GOAL REACHED (NOMINAL)',
       whyItMatters:
         "Wolff's Law dictates that bones remodel in response to mechanical impact. Without daily cyclic footfall impacts (6,000 steps), microgravity triggers 1.0–1.5% bone mineral density loss per month (osteopenia), skeletal calcium leaching into blood, kidney stone formation, and soleus muscle atrophy.",
       howToMeasure:
         'Live Oraimo tri-axial accelerometer wrist counting combined with T2 Treadmill bungee-harness stride load sensors.',
       whatIfAbnormal:
-        'If < 3,000 steps: Critical musculoskeletal deconditioning risk. Complete mandatory 45-min bungee-loaded resistance treadmill session immediately to preserve skeletal density.',
+        'If under 6,000 steps: Musculoskeletal deconditioning risk. Complete mandatory 45-min bungee-loaded resistance treadmill session immediately to preserve skeletal density.',
     },
     nutrition: {
       title: 'Nutrition & Fluid Balance',
@@ -381,7 +385,7 @@ export function DailyVitalsView({
 
         {/* 2. Daily Exercise Steps Card (Placed right after HR for high visibility) */}
         <article
-          className={`vital-block clickable ${(latest?.physicalActivity ?? 6000) < 3000 ? 'warning' : 'good'}`}
+          className={`vital-block clickable ${isStepsUnderTarget ? 'warning' : 'good'}`}
           onClick={() => setActiveModalKey('steps')}
           role="button"
           tabIndex={0}
@@ -391,13 +395,13 @@ export function DailyVitalsView({
           <div className="block-head">
             <span className="block-title">Daily Exercise Steps</span>
             <div className="block-head-right">
-              <span className={`vital-tag ${(latest?.physicalActivity ?? 6000) < 3000 ? 'warning' : 'nominal'}`}>
-                {(latest?.physicalActivity ?? 6000) < 3000 ? 'UNDER TARGET' : 'ACTIVE'}
+              <span className={`vital-tag ${isStepsUnderTarget ? 'warning' : 'nominal'}`}>
+                {stepsStatusTag}
               </span>
             </div>
           </div>
           <div className="block-val-group">
-            <strong className="block-num">{(latest?.physicalActivity ?? 6000).toLocaleString()}</strong>
+            <strong className="block-num">{currentSteps.toLocaleString()}</strong>
             <span className="block-unit">steps</span>
           </div>
           <span className="block-range">Goal: 6,000+ steps</span>
