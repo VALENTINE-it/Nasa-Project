@@ -41,13 +41,13 @@ type config struct {
 func loadConfig() config {
 	c := config{
 		dbPath:             getEnv("DB_PATH", filepath.Join(".", "data", "aura_med.db")),
-		corsAllowedOrigins: parseOrigins(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080")),
+		corsAllowedOrigins: parseOrigins(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")),
 		demoPasswords: map[string]string{
 			"A-2041": getEnv("DEMO_PASSWORD_A2041", ""),
 			"A-2056": getEnv("DEMO_PASSWORD_A2056", ""),
 			"A-2089": getEnv("DEMO_PASSWORD_A2089", ""),
 		},
-		port: getEnv("BACKEND_PORT", "8080"),
+		port: getEnv("PORT", getEnv("BACKEND_PORT", "8080")),
 	}
 	return c
 }
