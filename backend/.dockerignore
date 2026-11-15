@@ -1,0 +1,34 @@
+# Binaries
+aura-med-backend
+*.exe
+*.out
+
+# Test files
+*_test.go
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Data (will be mounted as volume)
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
