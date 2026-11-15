@@ -4,18 +4,17 @@ import {
   Activity,
   ArrowRight,
   Check,
-  CheckCircle2,
-  Clock,
-  Dna,
-  Heart,
-  Info,
+  FlaskConical,
+  HeartPulse,
   Menu,
   Radio,
-  Shield,
+  Satellite,
+  ShieldCheck,
   Sparkles,
   Stethoscope,
   User,
   Watch,
+  Waves,
   X,
 } from 'lucide-react'
 import '../LandingPage.css'
@@ -28,7 +27,7 @@ const DEMO_USERS = [
     password: 'mission-2041',
     name: 'Elena Park',
     role: 'Mission Commander',
-    focus: 'Circadian stability & cardiovascular deconditioning',
+    focus: 'Heart health & sleep rhythm in space',
   },
   {
     id: 2,
@@ -37,7 +36,7 @@ const DEMO_USERS = [
     password: 'mission-2056',
     name: 'Daniel Ortiz',
     role: 'Medical & Systems Officer',
-    focus: 'Microgravity muscle atrophy countermeasures',
+    focus: 'Daily workouts & muscle strength',
   },
   {
     id: 3,
@@ -46,74 +45,67 @@ const DEMO_USERS = [
     password: 'mission-2089',
     name: 'Priya Shah',
     role: 'Science Specialist',
-    focus: 'Deep-space radiation immunology & bone density',
+    focus: 'Immune defense & bone strength',
   },
 ]
 
-const LIVE_VITALS_PREVIEW = [
-  { value: '78', unit: 'bpm', label: 'Heart Rate (Pulse Telemetry)', source: 'Oraimo Watch 2 Pro (GATT Stream)', tone: 'mint' },
-  { value: '98', unit: '% SpO2', label: 'Blood Oxygen (Oximetry)', source: 'Oraimo Optical Sensor Strap', tone: 'blue' },
-  { value: '6,840', unit: 'steps', label: 'Mechanical Footfall Strides', source: 'Live Tri-Axial Accelerometer', tone: 'amber' },
-  { value: '36.8°', unit: 'C', label: 'Core Body Temperature', source: 'Spacecraft Medical Radio Capsule', tone: 'violet' },
-]
-
-const AUTONOMY_PILLARS = [
+const HOW_IT_WORKS = [
   {
     number: '01',
-    icon: 'wave',
-    title: 'Continuous Read',
-    copy: 'Live Web Bluetooth GATT telemetry ingests wrist PPG pulse and tri-axial acceleration every 2 seconds without cloud dependencies.',
+    icon: 'waves',
+    title: 'Track Vitals',
+    copy: 'Collects heart rate, footsteps, and sleep directly from the watch every 2 seconds—no internet or cloud required.',
   },
   {
     number: '02',
-    icon: 'pulse',
-    title: 'Autonomous Predict',
-    copy: 'Onboard algorithms compare biometrics against personalized astronaut baselines, detecting early hypoxia, space fever, or osteopenia trends.',
+    icon: 'shield',
+    title: 'Spot Warning Signs',
+    copy: 'Compares current readings against your personal healthy baseline to notice low oxygen, fever, or fatigue early.',
   },
   {
     number: '03',
-    icon: 'spark',
-    title: 'Clinical Advise',
-    copy: 'Contextual NASA clinical decision support delivers immediate pharmacological guidance and countermeasure adjustments inside the habitat.',
+    icon: 'sparkles',
+    title: 'Get Clear Guidance',
+    copy: 'Gives astronauts simple, step-by-step health suggestions, medicine reminders, and daily workout tweaks.',
   },
 ]
 
 const SENSOR_CATEGORIES = [
   {
     badgeClass: 'badge-watch',
-    badgeText: 'Live Smart Wearable (Web Bluetooth GATT)',
+    badgeText: 'Smart Watch',
     icon: Watch,
-    title: 'Smart Watch & Sensor Strap',
-    desc: 'Real-time physiological telemetry streamed directly to the browser from the astronaut’s Oraimo Watch 2 Pro via BLE GATT Service 16186f00 without cloud hops.',
+    title: 'From the Oraimo Watch',
+    desc: 'Streams straight from your wrist to the screen over Bluetooth. Completely private and works 100% offline.',
     items: [
-      { name: 'Heart Rate (Pulse Telemetry)', desc: 'Continuous optical PPG pulse sensor (60–100 bpm baseline).' },
-      { name: 'Mechanical Impact Steps', desc: 'Tri-axial accelerometer tracking Wolff’s Law skeletal loading (Target: 6,000+ daily steps to prevent osteopenia).' },
-      { name: 'Sleep Duration & Wrist Actigraphy', desc: 'Nocturnal micro-movement tracking circadian disruption in 16 sunrises/day orbit.' },
+      { name: 'Heart Rate', desc: 'Continuous pulse monitoring to track how your heart adapts to zero gravity.' },
+      { name: 'Daily Movement', desc: 'Steps and activity counts to keep your bones and muscles strong.' },
+      { name: 'Sleep & Rest', desc: 'Tracks sleep duration and rest quality during deep-space travel.' },
     ],
   },
   {
     badgeClass: 'badge-spacecraft',
-    badgeText: 'Habitat Diagnostic Hardware',
+    badgeText: 'Cabin Equipment',
     icon: Stethoscope,
-    title: 'Spacecraft Medical Locker',
-    desc: 'Diagnostic equipment stored in Bulkhead Medical Locker 3, logged during scheduled morning flight clinical protocols.',
+    title: 'From the Medical Locker',
+    desc: 'Standard medical tools kept on board for daily check-ups and morning routines.',
     items: [
-      { name: 'Blood Pressure Perfusion', desc: 'Pneumatic oscillometric brachial cuff (120/80 mmHg nominal) monitoring cephalad fluid shifts.' },
-      { name: 'Core Body Temperature', desc: 'Tympanic IR / radio capsule monitoring persistent zero-g circadian elevation (“space fever”).' },
-      { name: 'Thoracic Respiration Rate', desc: 'Bio-impedance strap detecting hypercapnia and CO2 bubble accumulation during sleep berth rest.' },
-      { name: 'Galley Nutrition & Hydration', desc: 'RFID barcode scanner tracking caloric intake (2,840 kcal) and volumetric fluid intake (2.4 L).' },
+      { name: 'Blood Pressure', desc: 'Arm cuff measurements to check circulation and blood flow.' },
+      { name: 'Body Temperature', desc: 'Quick ear thermometer checks to watch for fever or overheating.' },
+      { name: 'Breathing Rate', desc: 'Breaths per minute to make sure cabin air is fresh and safe.' },
+      { name: 'Meals & Hydration', desc: 'Logging daily food intake and water balance.' },
     ],
   },
   {
     badgeClass: 'badge-nasa',
-    badgeText: 'NASA GeneLab & HRP Protocols',
-    icon: Dna,
-    title: 'Deep-Space Biomarkers & Omics',
-    desc: 'Biomarker surveillance grounded in NASA GeneLab Open Science Data and NASA Human Research Program deep-space flight investigations.',
+    badgeText: 'NASA Science',
+    icon: FlaskConical,
+    title: 'From NASA Flight Studies',
+    desc: 'Health guidelines and safe ranges backed by published NASA space medicine research.',
     items: [
-      { name: 'Salivary Cortisol (Neuroendocrine Stress)', desc: 'NASA HRP Salivette swab protocol (Nominal: 10–22 nmol/L) monitoring HPA-axis stress response.' },
-      { name: 'Latent Viral Reactivation (EBV / VZV)', desc: 'NASA GeneLab Dataset OSDR-379 protocol tracking dormant herpesviruses reactivated by cosmic radiation.' },
-      { name: 'T-Cell Ratio (CD4+ / CD8+)', desc: 'Microfluidic leukocyte surface marker assessment detecting space radiation-induced immunosuppression.' },
+      { name: 'Stress Hormone (Cortisol)', desc: 'Saliva swab tests that measure physical strain and mental stress.' },
+      { name: 'Immune Defense', desc: 'Checks that dormant childhood viruses stay inactive during long flights.' },
+      { name: 'T-Cell Health', desc: 'Monitors immune cell strength to keep you protected in deep space.' },
     ],
   },
 ]
@@ -125,8 +117,6 @@ export default function AuralMedLandingPage({
   sessionUser,
   onAuthenticated,
   onLogout,
-  theme,
-  onToggleTheme,
 }) {
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -160,7 +150,7 @@ export default function AuralMedLandingPage({
       })
 
       if (!response.ok) {
-        throw new Error('Incorrect flight credentials. Please try again.')
+        throw new Error('Incorrect credentials. Please try again.')
       }
 
       const user = await response.json()
@@ -192,7 +182,7 @@ export default function AuralMedLandingPage({
 
   return (
     <div className="site-shell">
-      {/* 1. MINIMALIST 100% NAVIGATION HEADER */}
+      {/* 1. SOLID, MINIMALIST NAVIGATION HEADER */}
       <header className="nav-wrap">
         <nav className="nav container" aria-label="Primary navigation">
           <a
@@ -205,22 +195,10 @@ export default function AuralMedLandingPage({
             aria-label="Aura-med home"
           >
             <span className="brand-mark">
-              <svg
-                aria-hidden="true"
-                fill="none"
-                height="18"
-                viewBox="0 0 24 24"
-                width="18"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.4"
-              >
-                <path d="M3 12h4l2-6 4 12 2-6h6" />
-              </svg>
+              <HeartPulse size={18} strokeWidth={2.4} />
             </span>
             <span>Aura-med</span>
-            <span className="brand-caption">NASA Autonomous Health Workstation</span>
+            <span className="brand-caption">Autonomous Health Workstation</span>
           </a>
 
           <div className={`nav-links ${isMenuOpen ? 'is-open' : ''}`}>
@@ -231,7 +209,7 @@ export default function AuralMedLandingPage({
                 scrollToSection('sources')
               }}
             >
-              NASA Data Sources
+              Data Sources
             </a>
             <a
               href="#how"
@@ -249,7 +227,7 @@ export default function AuralMedLandingPage({
                 scrollToSection('latency')
               }}
             >
-              Interplanetary Latency
+              Earth Delay
             </a>
             <a
               href="#access"
@@ -336,25 +314,24 @@ export default function AuralMedLandingPage({
       </header>
 
       <main id="top">
-        {/* 2. 100% FULL-WIDTH HERO SECTION */}
+        {/* 2. 100% FULL-WIDTH HERO SECTION (CLEAN, JARGON-FREE) */}
         <section className="hero">
           <div className="container hero-grid">
             <div className="hero-copy">
               <div className="eyebrow">
-                <span className="status-dot" />
-                <span>NASA Human Research Program · Autonomous Telemedicine</span>
+                <ShieldCheck size={14} color="#315cff" strokeWidth={2.4} />
+                <span>NASA Human Research Program · Autonomous Health System</span>
               </div>
 
               <h1>
-                Autonomous health intelligence,<br />
+                Instant health guidance,<br />
                 <em>140 million miles</em><br />
                 from Earth.
               </h1>
 
               <p className="hero-intro">
-                Aura-med pairs real-time smart wearable biometrics with autonomous edge clinical reasoning—protecting
-                astronauts during deep-space transit to Mars when speed-of-light communication delays make
-                real-time Earth medical support impossible.
+                Aura-med connects directly to the astronaut’s smart watch to monitor vitals and give
+                instant medical advice—keeping the crew safe when Earth is too far away to help in time.
               </p>
 
               <div className="hero-actions">
@@ -385,7 +362,7 @@ export default function AuralMedLandingPage({
                     scrollToSection('sources')
                   }}
                 >
-                  <span>NASA Data Sourcing &amp; Science</span>
+                  <span>See Where Data Comes From</span>
                   <ArrowRight size={14} strokeWidth={2.2} />
                 </a>
               </div>
@@ -393,25 +370,23 @@ export default function AuralMedLandingPage({
               <div className="trust-row">
                 <span>
                   <Watch size={15} strokeWidth={2.2} />
-                  <span>Direct Web Bluetooth Telemetry</span>
+                  <span>Direct Smart Watch Link</span>
                 </span>
                 <span>
-                  <Dna size={15} strokeWidth={2.2} />
-                  <span>NASA GeneLab OSDR-379 Validated</span>
+                  <FlaskConical size={15} strokeWidth={2.2} />
+                  <span>NASA Flight Research</span>
                 </span>
                 <span>
-                  <CheckCircle2 size={15} strokeWidth={2.2} />
-                  <span>NASA HRP Medical Protocols</span>
+                  <ShieldCheck size={15} strokeWidth={2.2} />
+                  <span>Tested Medical Guidelines</span>
                 </span>
               </div>
             </div>
 
-            {/* Holographic 3D Interactive Biometric Model */}
-            <div className="hero-visual" aria-label="Human health telemetry visualization">
+            {/* 3D Holographic Stage with Clean Solid Signal Badges (0 Colored Dots) */}
+            <div className="hero-visual" aria-label="3D human health model">
               <div className="orbit orbit-one" />
               <div className="orbit orbit-two" />
-              <div className="orbit-dot orbit-dot-one" />
-              <div className="orbit-dot orbit-dot-two" />
 
               <div className="hologram-stage">
                 <div className="model-frame">
@@ -430,59 +405,41 @@ export default function AuralMedLandingPage({
                 </div>
 
                 <div className="hologram-readout">
-                  <span>AURA-MED EDGE ENGINE</span>
-                  <strong>TELEMETRY ACTIVE · 0.00g</strong>
+                  <span>AURA-MED ONBOARD SYSTEM</span>
+                  <strong>VITALS MONITOR ACTIVE</strong>
                 </div>
               </div>
 
+              {/* Solid shaped signal badges (NO colored dots, crisp Lucide icons) */}
               <div className="signal-card signal-heart">
                 <span className="signal-icon">
-                  <Heart size={13} fill="currentColor" />
+                  <HeartPulse size={15} strokeWidth={2.4} />
                 </span>
                 <span>
-                  <strong>78</strong> bpm · Live PPG
+                  <strong>78</strong> bpm · Resting Heart Rate
                 </span>
               </div>
 
               <div className="signal-card signal-status">
-                <span className="status-dot" />
-                <span>GATT Stream Stable</span>
+                <span className="signal-icon signal-icon-mint">
+                  <Watch size={15} strokeWidth={2.2} />
+                </span>
+                <span>Oraimo Watch Connected</span>
               </div>
 
-              <div className="visual-caption">AURA-MED MISSION MEDICAL TELEMETRY · CREW 06 BASELINE</div>
+              <div className="visual-caption">AURA-MED CREW HEALTH MONITOR</div>
             </div>
-          </div>
-
-          {/* 4-Card Live Vitals Metric Strip */}
-          <div className="container metrics-grid">
-            {LIVE_VITALS_PREVIEW.map((metric) => (
-              <div className="metric-card" key={metric.label}>
-                <div className="metric-top">
-                  <span className={`metric-dot ${metric.tone}`} />
-                  <span>{metric.label}</span>
-                </div>
-                <div className="metric-value">
-                  {metric.value}
-                  {metric.unit && <small>{metric.unit}</small>}
-                </div>
-                <div className="metric-source-tag">
-                  <Watch size={11} />
-                  <span>{metric.source}</span>
-                </div>
-              </div>
-            ))}
           </div>
         </section>
 
-        {/* 3. DEDICATED NASA DATA SOURCING & TELEMETRY MATRIX (FACTUAL BREAKDOWN) */}
+        {/* 3. DEDICATED DATA SOURCING MATRIX (FACTUAL & SIMPLE) */}
         <section className="sources-section" id="sources">
           <div className="container">
-            <span className="section-kicker">DATA ORIGINS &amp; SENSOR MATRIX</span>
-            <h2>Where our clinical data comes from.</h2>
+            <span className="section-kicker">DATA SOURCES</span>
+            <h2>Where your health data comes from.</h2>
             <p>
-              Aura-med strictly distinguishes between biometrics captured continuously by the smart watch,
-              hardware diagnostic telemetry measured inside the habitat locker, and deep-space biomarkers
-              derived from peer-reviewed NASA research archives.
+              Aura-med keeps things simple and honest: some numbers come live from your watch,
+              some come from cabin medical tools, and our guidelines are built on NASA flight research.
             </p>
 
             <div className="sources-grid">
@@ -491,7 +448,7 @@ export default function AuralMedLandingPage({
                 return (
                   <article className="source-card" key={cat.title}>
                     <span className={`source-badge ${cat.badgeClass}`}>
-                      <CatIcon size={12} strokeWidth={2.4} />
+                      <CatIcon size={14} strokeWidth={2.4} />
                       <span>{cat.badgeText}</span>
                     </span>
                     <h3>{cat.title}</h3>
@@ -500,7 +457,9 @@ export default function AuralMedLandingPage({
                     <div className="source-metrics-list">
                       {cat.items.map((item) => (
                         <div className="source-item" key={item.name}>
-                          <Check size={14} className="text-emerald-500" style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                          <span className="source-check-icon">
+                            <Check size={11} strokeWidth={2.8} />
+                          </span>
                           <div>
                             <strong>{item.name}: </strong>
                             <span>{item.desc}</span>
@@ -515,36 +474,34 @@ export default function AuralMedLandingPage({
           </div>
         </section>
 
-        {/* 4. INTERPLANETARY LATENCY SECTION (SPEED-OF-LIGHT DELAY) */}
+        {/* 4. COMMUNICATION DELAY (SPEED-OF-LIGHT DELAY) */}
         <section className="latency-section" id="latency">
           <div className="container latency-grid">
             <div>
-              <span className="section-kicker">THE INTERPLANETARY DELAY</span>
+              <span className="section-kicker">COMMUNICATION DELAY</span>
               <h2>
-                Earth can’t answer<br />
-                in time.
+                Earth is too far<br />
+                to reply in time.
               </h2>
               <p>
-                During deep-space transit to Mars, radio signals traveling at the speed of light require
-                between 4 and 24 minutes one-way (up to 48-minute round-trip).
-                In acute hypoxic emergencies, arrhythmias, or toxic CO2 pooling, waiting for Houston
-                flight surgeons is not viable. Aura-med provides autonomous onboard clinical decision
-                support right inside the habitat.
+                On a journey to Mars, radio signals take between 4 and 24 minutes to travel each way.
+                In an emergency, astronauts cannot wait up to 48 minutes for Houston to answer.
+                Aura-med runs completely on board, giving instant answers in under a second.
               </p>
             </div>
 
             <div className="latency-bars">
               <div className="latency-label">
-                <span>Houston Flight Surgeon Advice (Speed of Light)</span>
-                <strong>25+ min comms delay</strong>
+                <span>Radio message to Mission Control on Earth</span>
+                <strong>25+ min delay</strong>
               </div>
               <div className="track">
                 <span className="earth-bar" />
               </div>
 
               <div className="latency-label">
-                <span>Aura-med Autonomous Onboard Guidance</span>
-                <strong>Instant (&lt; 1.2s edge inference)</strong>
+                <span>Aura-med on-board guidance</span>
+                <strong>Instant (&lt; 1 sec)</strong>
               </div>
               <div className="track">
                 <span className="aural-bar" />
@@ -553,23 +510,23 @@ export default function AuralMedLandingPage({
           </div>
         </section>
 
-        {/* 5. CLOSED-LOOP TELEMEDICINE (BUILT FOR AUTONOMY) */}
+        {/* 5. HOW IT WORKS (SIMPLE & SOLID) */}
         <section className="process-section" id="how">
           <div className="container">
             <div className="section-heading inverse">
-              <span className="section-kicker">CLOSED-LOOP TELEMEDICINE</span>
-              <h2>Read. Predict. Advise.</h2>
-              <p>Clinical intelligence that operates continuously, even when Earth is 140 million miles away.</p>
+              <span className="section-kicker">HOW IT WORKS</span>
+              <h2>Track. Understand. Guide.</h2>
+              <p>A complete health cycle that runs continuously, with or without a connection to Earth.</p>
             </div>
 
             <div className="steps-grid">
-              {AUTONOMY_PILLARS.map((step) => (
+              {HOW_IT_WORKS.map((step) => (
                 <article className="step-card" key={step.title}>
                   <div className="step-top">
                     <span className="step-icon">
-                      {step.icon === 'wave' && <Activity size={18} strokeWidth={2} />}
-                      {step.icon === 'pulse' && <Heart size={18} strokeWidth={2} />}
-                      {step.icon === 'spark' && <Sparkles size={18} strokeWidth={2} />}
+                      {step.icon === 'waves' && <Waves size={20} strokeWidth={2.2} />}
+                      {step.icon === 'shield' && <ShieldCheck size={20} strokeWidth={2.2} />}
+                      {step.icon === 'sparkles' && <Sparkles size={20} strokeWidth={2.2} />}
                     </span>
                     <span className="step-number">{step.number}</span>
                   </div>
@@ -581,36 +538,37 @@ export default function AuralMedLandingPage({
           </div>
         </section>
 
-        {/* 6. WHOLE-BODY COUNTERMEASURE INSIGHT */}
+        {/* 6. DAILY EXERCISE & MUSCLE HEALTH */}
         <section className="insight-section">
           <div className="container insight-grid">
             <div className="insight-copy">
-              <span className="section-kicker">MUSCULOSKELETAL COUNTERMEASURES</span>
+              <span className="section-kicker">DAILY EXERCISE</span>
               <h2>
-                Muscle loss,<br />
-                countered by motion.
+                Protecting muscles<br />
+                and bones in space.
               </h2>
               <p>
-                In zero-gravity, Wolff’s Law dictates rapid bone mineral density leaching (1.0–1.5% loss per month)
-                and soleus muscle atrophy. Aura-med continuously tracks live mechanical footfall strides from the
-                Oraimo wearable, detects exertion deficits, and automatically prescribes countermeasure workouts.
+                Without gravity pulling on the body, bones weaken and muscles lose tone quickly without
+                daily loading. Aura-med tracks your daily steps from the watch, spots activity drops,
+                and suggests the right workouts to keep you fit.
               </p>
               <div className="tag-row">
-                <span>Wolff's Law Mechanical Loading</span>
-                <span>T2 Resistance Treadmill</span>
-                <span>Osteopenia Prevention</span>
-                <span>Circadian Phase</span>
+                <span>Bone Strength</span>
+                <span>Treadmill Runs</span>
+                <span>Muscle Retention</span>
+                <span>Sleep Rhythm</span>
               </div>
             </div>
 
             <div className="chart-card">
               <div className="chart-head">
                 <div>
-                  <span>ACTIVITY LOADING</span>
-                  <h3>Daily Stride Steps</h3>
+                  <span>ACTIVITY TRACKER</span>
+                  <h3>Daily Step Count</h3>
                 </div>
                 <span className="target-pill">
-                  <i /> NASA HRP Target: 6,000+
+                  <Activity size={13} strokeWidth={2.4} />
+                  <span>Goal: 6,000+ steps</span>
                 </span>
               </div>
 
@@ -634,11 +592,11 @@ export default function AuralMedLandingPage({
 
               <div className="recommendation">
                 <span>
-                  <Sparkles size={16} />
+                  <Sparkles size={16} strokeWidth={2.2} />
                 </span>
                 <div>
-                  <strong>Today’s Autonomous Countermeasure Prescription</strong>
-                  <p>Add a 45-minute bungee-loaded resistance treadmill session (T2) to sustain bone density.</p>
+                  <strong>Today’s Recommended Workout</strong>
+                  <p>Add a 45-minute treadmill session with resistance bungees to keep your bones strong.</p>
                 </div>
                 <ArrowRight size={16} strokeWidth={2.2} />
               </div>
@@ -651,37 +609,36 @@ export default function AuralMedLandingPage({
           <div className="container">
             <div className="access-heading">
               <div>
-                <span className="section-kicker">MISSION ACCESS</span>
+                <span className="section-kicker">MISSION PORTALS</span>
                 <h2>
-                  Two portals.<br />
-                  One unified system.
+                  Two views.<br />
+                  One connected system.
                 </h2>
               </div>
               <p>
-                A connected clinical network: simplified self-monitoring for astronauts living in microgravity,
-                and comprehensive telemetry inspection for flight surgeons monitoring from Earth.
+                Designed specifically for astronauts living in space and flight doctors monitoring from Earth.
               </p>
             </div>
 
             <div className="access-grid">
-              {/* PORTAL 1: ASTRONAUT WORKSTATION (CREW VIEW) */}
+              {/* PORTAL 1: ASTRONAUT VIEW */}
               <article className="access-card light-card">
                 <div className="access-icon">
                   <User size={20} strokeWidth={2.2} />
                 </div>
                 <div>
-                  <span className="card-label">CREW VIEW</span>
+                  <span className="card-label">ASTRONAUT VIEW</span>
                   <h3>Astronaut Health Desk</h3>
                   <p>
-                    Clean, simplified vitals self-monitoring with live smart watch telemetry, collapsible
-                    clinical diagnostics, deep-space biomarkers, and immediate clinical SOPs.
+                    A private, distraction-free screen to check your vitals, view daily workout targets,
+                    and follow health advice.
                   </p>
                 </div>
 
                 {/* 1-Click Crew Quick Pick */}
                 <div className="landing-crew-selector">
                   <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b' }}>
-                    Select Astronaut Flight Profile:
+                    Select an astronaut profile:
                   </span>
                   {DEMO_USERS.map((crew) => (
                     <button
@@ -692,7 +649,7 @@ export default function AuralMedLandingPage({
                     >
                       <div className="landing-crew-info">
                         <span className="landing-crew-name">{crew.name}</span>
-                        <span className="landing-crew-role">{crew.role}</span>
+                        <span className="landing-crew-role">{crew.role} · {crew.focus}</span>
                       </div>
                       <span className="landing-crew-id">{crew.astronautId}</span>
                     </button>
@@ -711,10 +668,10 @@ export default function AuralMedLandingPage({
                   >
                     <span>
                       {isSubmitting
-                        ? 'Authenticating...'
+                        ? 'Logging in...'
                         : sessionUser
                         ? `Open ${sessionUser.fullName.split(' ')[0]}'s View`
-                        : `Sign In as ${selectedCrew.name.split(' ')[0]}`}
+                        : `Launch ${selectedCrew.name.split(' ')[0]}'s Desk`}
                     </span>
                     <ArrowRight size={15} strokeWidth={2.2} />
                   </button>
@@ -723,60 +680,34 @@ export default function AuralMedLandingPage({
                     type="button"
                     className="button button-outline"
                     onClick={() => setIsLoginModalOpen(true)}
-                    title="Sign in with custom flight credentials"
+                    title="Sign in with custom credentials"
                   >
-                    Custom
+                    Custom Login
                   </button>
                 </div>
               </article>
 
-              {/* PORTAL 2: EARTH MISSION CONTROL (GROUND VIEW) */}
+              {/* PORTAL 2: MISSION CONTROL VIEW */}
               <article className="access-card dark-card">
                 <div className="access-icon">
                   <Radio size={20} strokeWidth={2.2} />
                 </div>
                 <div>
-                  <span className="card-label">GROUND VIEW</span>
-                  <h3>Earth Watch Console</h3>
+                  <span className="card-label">MISSION CONTROL VIEW</span>
+                  <h3>Earth Monitoring Console</h3>
                   <p>
-                    Full-fleet bio-telemetry matrix for flight surgeons at Houston Mission Control: 8 clinical
-                    gauges, Bluetooth pairing probes, habitat life support monitoring, and doctor advisories.
+                    A fleet dashboard for doctors in Houston to monitor crew vitals, review trends,
+                    and send non-urgent advice.
                   </p>
                 </div>
 
-                <div
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '8px',
-                    padding: '14px',
-                    width: '100%',
-                    marginTop: '18px',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      color: '#38bdf8',
-                      fontSize: '11.5px',
-                      fontWeight: '700',
-                    }}
-                  >
-                    <Activity size={13} />
-                    <span>Active Telemetry Hub: Mission Control Room 3</span>
+                <div className="earth-console-callout">
+                  <div className="earth-callout-header">
+                    <Satellite size={14} strokeWidth={2.2} />
+                    <span>Live Ground Station Feed · Houston Room 3</span>
                   </div>
-                  <p
-                    style={{
-                      fontSize: '11px',
-                      color: '#94a3b8',
-                      marginTop: '4px',
-                      lineHeight: '1.5',
-                    }}
-                  >
-                    Continuous multi-astronaut telemetry feed, flight phase tracking, closed-loop Houston advisories,
-                    and clinical triage with simulated 12m 44s speed-of-light radio delay.
+                  <p className="earth-callout-copy">
+                    Continuous crew telemetry, mission timeline, and medical records with simulated speed-of-light radio delay.
                   </p>
                 </div>
 
@@ -785,7 +716,7 @@ export default function AuralMedLandingPage({
                   className="button button-light"
                   style={{ width: '100%', marginTop: 'auto' }}
                 >
-                  <span>Open Earth Monitor Console</span>
+                  <span>Open Earth Console</span>
                   <ArrowRight size={15} strokeWidth={2.2} />
                 </Link>
               </article>
@@ -843,7 +774,7 @@ export default function AuralMedLandingPage({
               }}
             >
               <div className="landing-modal-field">
-                <label htmlFor="modal-username">Flight Username</label>
+                <label htmlFor="modal-username">Username</label>
                 <input
                   id="modal-username"
                   type="text"
@@ -855,7 +786,7 @@ export default function AuralMedLandingPage({
               </div>
 
               <div className="landing-modal-field">
-                <label htmlFor="modal-password">Security Passcode</label>
+                <label htmlFor="modal-password">Password</label>
                 <input
                   id="modal-password"
                   type="password"
@@ -871,7 +802,7 @@ export default function AuralMedLandingPage({
                 className="button landing-modal-submit"
                 disabled={isSubmitting}
               >
-                <span>{isSubmitting ? 'Authenticating...' : 'Open Health Workstation'}</span>
+                <span>{isSubmitting ? 'Logging in...' : 'Open Health Workstation'}</span>
                 <ArrowRight size={15} strokeWidth={2.2} />
               </button>
             </form>
@@ -891,25 +822,13 @@ export default function AuralMedLandingPage({
             }}
           >
             <span className="brand-mark">
-              <svg
-                aria-hidden="true"
-                fill="none"
-                height="16"
-                viewBox="0 0 24 24"
-                width="16"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.4"
-              >
-                <path d="M3 12h4l2-6 4 12 2-6h6" />
-              </svg>
+              <HeartPulse size={16} strokeWidth={2.4} />
             </span>
             <span>Aura-med</span>
           </a>
 
-          <p>NASA Autonomous Deep-Space Health Workstation · Artemis Mars Transit Simulation</p>
-          <span>Grounded in NASA GeneLab OSDR-379 &amp; NASA HRP Protocols</span>
+          <p>Autonomous Deep-Space Health Workstation · Artemis Mars Transit</p>
+          <span>Built with NASA Open Science &amp; Clinical Protocols</span>
         </div>
       </footer>
     </div>
