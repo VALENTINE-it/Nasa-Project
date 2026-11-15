@@ -616,7 +616,7 @@ func fetchDashboardData(astronautID int) (dashboardResponse, error) {
 	}
 	response.Profile = profile
 
-	rows, err := db.Query(`SELECT id, astronaut_id, heart_rate, blood_pressure_systolic, blood_pressure_diastolic, blood_oxygen, body_temperature, respiratory_rate, sleep_duration_hours, physical_activity, recorded_at FROM health_records WHERE astronaut_id = ? ORDER BY recorded_at DESC`, astronautID)
+	rows, err := db.Query(`SELECT id, astronaut_id, heart_rate, blood_pressure_systolic, blood_pressure_diastolic, blood_oxygen, body_temperature, respiratory_rate, sleep_duration_hours, physical_activity, recorded_at FROM health_records WHERE astronaut_id = ? ORDER BY id DESC LIMIT 50`, astronautID)
 	if err != nil {
 		return response, err
 	}
