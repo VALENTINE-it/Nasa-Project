@@ -4,6 +4,7 @@ import {
   Activity,
   ArrowRight,
   Check,
+  Database,
   FlaskConical,
   HeartPulse,
   Menu,
@@ -470,6 +471,21 @@ export default function AuralMedLandingPage({
                   </article>
                 )
               })}
+            </div>
+
+            {/* Small note after the 3 cards specifying NASA HRP and NASA OSDR */}
+            <div className="sources-citation-note">
+              <div className="sources-citation-inner">
+                <span className="sources-citation-pill">
+                  <Database size={13} strokeWidth={2.4} />
+                  <span>NASA Research Data</span>
+                </span>
+                <p className="sources-citation-text">
+                  Flight health guidelines, diagnostic thresholds, and spaceflight baselines are sourced directly from the{' '}
+                  <strong>NASA HRP (Human Research Program)</strong> and the{' '}
+                  <strong>NASA OSDR (Open Science Data Repository)</strong>.
+                </p>
+              </div>
             </div>
           </div>
         </section>
