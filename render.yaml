@@ -1,0 +1,47 @@
+services:
+  # Backend API (Go)
+  - type: web
+    name: aura-med-backend
+    runtime: go
+    rootDir: backend
+    buildCommand: go build -o main .
+    startCommand: ./main
+    envVars:
+      - key: BACKEND_PORT
+        value: "8080"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://aura-med-frontend.onrender.com,http://localhost:5173"
+      - key: DB_PATH
+        value: /var/data/aura_med.db
+      - key: DEMO_PASSWORD_A2041
+        sync: false
+      - key: DEMO_PASSWORD_A2056
+        sync: false
+      - key: DEMO_PASSWORD_A2089
+        sync: false
+      - key: SESSION_COOKIE_NAME
+        value: aura_session
+      - key: MAX_REQUESTS_PER_MIN
+        value: "60"
+    disk:
+      name: aura-med-data
+      mountPath: /var/data
+      sizeGB: 1
+
+  # Frontend (Static Site)
+  - type: web
+    name: aura-med-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://aura-med-backend.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://aura-med-backend.onrender.com
