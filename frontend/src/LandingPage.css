@@ -68,10 +68,10 @@
   left: 0;
   width: 100%;
   z-index: 50;
-  border-bottom: 1px solid var(--aural-line);
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 14, 28, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   transition: background-color 180ms var(--ease-out), border-color 180ms var(--ease-out);
 }
 
@@ -90,7 +90,7 @@
   font-size: 19px;
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--aural-ink);
+  color: #ffffff;
   text-decoration: none;
   cursor: pointer;
 }
@@ -113,10 +113,10 @@
 .site-shell .brand-caption {
   font-size: 11.5px;
   font-weight: 600;
-  color: var(--aural-muted);
+  color: #93c5fd;
   letter-spacing: 0.02em;
   padding-left: 10px;
-  border-left: 1px solid var(--aural-line);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
   display: none;
 }
 
@@ -134,17 +134,17 @@
   margin-right: 28px;
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--aural-muted);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .site-shell .nav-links a {
-  color: var(--aural-muted);
+  color: rgba(255, 255, 255, 0.82);
   text-decoration: none;
   transition: color 140ms var(--ease-out);
 }
 
 .site-shell .nav-links a:hover {
-  color: var(--aural-blue);
+  color: #ffffff;
 }
 
 .site-shell .nav-actions {
@@ -200,16 +200,17 @@
 }
 
 .site-shell .button-outline {
-  background: transparent;
-  color: var(--aural-ink);
-  border: 1px solid var(--aural-line);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .site-shell .button-outline:hover {
-    background: var(--aural-surface-subtle);
-    border-color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.45);
+    color: #ffffff;
     transform: translateY(-1px);
   }
 }
@@ -219,13 +220,16 @@
 }
 
 /* --------------------------------------------------------------------------
-   Hero Section — Clean, Solid Shapes, 100% Width
+   Hero Section — Clean, Solid Shapes, 100% Width with Space Station Background
    -------------------------------------------------------------------------- */
 .site-shell .hero {
-  padding: 116px 0 72px;
-  background: #ffffff;
+  padding: 136px 0 84px;
+  background: linear-gradient(180deg, rgba(8, 14, 28, 0.72) 0%, rgba(9, 14, 30, 0.52) 40%, rgba(8, 13, 26, 0.94) 100%),
+              url('/hero-iss-orbit.jpg') no-repeat center center;
+  background-size: cover;
   position: relative;
-  border-bottom: 1px solid var(--aural-line);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .site-shell .hero-grid {
@@ -245,7 +249,12 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--aural-muted);
+  color: #93c5fd;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 5px 14px;
+  border-radius: 9999px;
+  backdrop-filter: blur(8px);
 }
 
 .site-shell .hero h1 {
@@ -254,19 +263,22 @@
   font-weight: 800;
   line-height: 1.08;
   letter-spacing: -0.03em;
-  color: var(--aural-ink);
+  color: #ffffff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.6);
 }
 
 .site-shell .hero h1 em {
   font-style: normal;
-  color: var(--aural-blue);
+  color: #60a5fa;
+  text-shadow: 0 0 35px rgba(96, 165, 250, 0.5);
 }
 
 .site-shell .hero-intro {
   max-width: 620px;
   font-size: 16.5px;
   line-height: 1.65;
-  color: var(--aural-muted);
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
 }
 
 .site-shell .hero-actions {
@@ -276,36 +288,50 @@
   margin-top: 30px;
 }
 
-.site-shell .text-link {
+.site-shell .hero-actions .button {
+  background: #315cff;
+  color: #ffffff;
+  box-shadow: 0 4px 22px rgba(49, 92, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-shell .hero-actions .button:hover {
+    background: #1b40d6;
+    box-shadow: 0 6px 28px rgba(49, 92, 255, 0.65);
+  }
+}
+
+.site-shell .hero .text-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 8px 0;
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--aural-ink-secondary);
+  color: #ffffff;
   text-decoration: none;
-  border-bottom: 1.5px solid #cbd5e1;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.4);
   transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out);
   cursor: pointer;
 }
 
-.site-shell .text-link:hover {
-  color: var(--aural-blue);
-  border-color: var(--aural-blue);
+.site-shell .hero .text-link:hover {
+  color: #93c5fd;
+  border-bottom-color: #93c5fd;
 }
 
-.site-shell .trust-row {
+.site-shell .hero .trust-row {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
   margin-top: 30px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--aural-subtle);
+  color: rgba(255, 255, 255, 0.82);
 }
 
-.site-shell .trust-row span {
+.site-shell .hero .trust-row span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -461,11 +487,12 @@
   gap: 10px;
   padding: 10px 14px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(12, 23, 48, 0.08);
-  box-shadow: 0 10px 24px rgba(12, 23, 48, 0.07);
+  background: rgba(10, 18, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
   font-size: 11.5px;
   font-weight: 600;
+  color: #e2e8f0;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 5;
@@ -475,7 +502,7 @@
 .site-shell .signal-card strong {
   font-size: 14px;
   font-family: 'Manrope', sans-serif;
-  color: var(--aural-ink);
+  color: #ffffff;
 }
 
 .site-shell .signal-icon {
