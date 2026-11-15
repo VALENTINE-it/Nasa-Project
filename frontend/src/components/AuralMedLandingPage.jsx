@@ -406,50 +406,61 @@ export default function AuralMedLandingPage({
               </div>
             </div>
 
-            {/* Holographic 3D Interactive Biometric Model */}
-            <div className="hero-visual" aria-label="Human health telemetry visualization">
-              <div className="orbit orbit-one" />
-              <div className="orbit orbit-two" />
-              <div className="orbit-dot orbit-dot-one" />
-              <div className="orbit-dot orbit-dot-two" />
-
-              <div className="hologram-stage">
-                <div className="model-frame">
-                  <iframe
-                    title="Interactive holographic human biometric model"
-                    src="https://sketchfab.com/models/e749bf773cd34e3f965ad23d01b3cf06/embed?autostart=1&camera=0&preload=1&transparent=1&ui_animations=0&ui_controls=0&ui_hint=0&ui_infos=0&ui_inspector=0&ui_stop=0&ui_watermark=0&dnt=1"
-                    allow="autoplay; fullscreen; xr-spatial-tracking"
-                    allowFullScreen
-                  />
+            {/* Aerospace-Grade Telemetry Stage (Instant 0ms, Emil Kowalski Spec) */}
+            <div className="telemetry-monitor-stage" aria-label="Oraimo Smart Watch 2 Pro Live Telemetry">
+              <div className="monitor-head">
+                <div className="monitor-head-left">
+                  <Watch size={14} color="#38bdf8" />
+                  <span>ORAIMO WATCH 2 PRO · LIVE GATT</span>
                 </div>
-
-                <div className="model-glass" aria-hidden="true">
-                  <span className="scan-line" />
-                  <span className="model-corner corner-one" />
-                  <span className="model-corner corner-two" />
-                </div>
-
-                <div className="hologram-readout">
-                  <span>AURA-MED EDGE ENGINE</span>
-                  <strong>TELEMETRY ACTIVE · 0.00g</strong>
-                </div>
-              </div>
-
-              <div className="signal-card signal-heart">
-                <span className="signal-icon">
-                  <Heart size={13} fill="currentColor" />
-                </span>
-                <span>
-                  <strong>78</strong> bpm · Live PPG
+                <span className="monitor-stream-pill">
+                  <span className="status-dot" />
+                  <span>GATT 16186f00 CONNECTED</span>
                 </span>
               </div>
 
-              <div className="signal-card signal-status">
-                <span className="status-dot" />
-                <span>GATT Stream Stable</span>
+              <div className="monitor-body">
+                <div className="monitor-ecg-canvas">
+                  <div className="ecg-meta">
+                    <span>LEAD II OPTICAL PPG</span>
+                    <span>78 BPM · REGULAR SINUS</span>
+                  </div>
+                  <svg className="ecg-svg" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M0,20 L40,20 L48,20 L52,14 L56,26 L60,20 L72,20 L76,12 L80,34 L84,4 L88,24 L92,20 L108,20 L116,16 L124,20 L150,20 L190,20 L198,20 L202,14 L206,26 L210,20 L222,20 L226,12 L230,34 L234,4 L238,24 L242,20 L258,20 L266,16 L274,20 L300,20" />
+                  </svg>
+                </div>
+
+                <div className="monitor-vitals-grid">
+                  <div className="monitor-vital-card">
+                    <span className="monitor-vital-label">Pulse Rate (PPG)</span>
+                    <div className="monitor-vital-val">78 <small>bpm</small></div>
+                    <div className="monitor-vital-note">Nominal Sinus Rhythm</div>
+                  </div>
+
+                  <div className="monitor-vital-card">
+                    <span className="monitor-vital-label">Blood Oxygen</span>
+                    <div className="monitor-vital-val">98% <small>SpO2</small></div>
+                    <div className="monitor-vital-note">Atmosphere Safe</div>
+                  </div>
+
+                  <div className="monitor-vital-card">
+                    <span className="monitor-vital-label">Daily Strides</span>
+                    <div className="monitor-vital-val">6,840 <small>steps</small></div>
+                    <div className="monitor-vital-note">Target Exceeded (+14%)</div>
+                  </div>
+
+                  <div className="monitor-vital-card">
+                    <span className="monitor-vital-label">Core Temp</span>
+                    <div className="monitor-vital-val">36.8° <small>C</small></div>
+                    <div className="monitor-vital-note">Zero-G Circadian Baseline</div>
+                  </div>
+                </div>
               </div>
 
-              <div className="visual-caption">AURA-MED MISSION MEDICAL TELEMETRY · CREW 06 BASELINE</div>
+              <div className="monitor-footer">
+                <span>Autonomous Telemetry · 0 Cloud Latency</span>
+                <span>Artemis Transit · Edge Station</span>
+              </div>
             </div>
           </div>
 

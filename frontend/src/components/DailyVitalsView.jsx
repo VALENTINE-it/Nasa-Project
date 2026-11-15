@@ -69,9 +69,22 @@ export function DailyVitalsView({
   const secretoryIgA = isStressOrRadiation ? '142 µg/mL' : '198 µg/mL'
   const tCellRatio = isStressOrRadiation ? '1.42 (Shifted)' : '1.85 (Balanced)'
 
-  // Alert calculations for collapsed headers (so astronauts immediately see warnings)
-  const isTempAbnormal = Number(latest.bodyTemperature) > 37.5
-  const isRespAbnormal = latest.respiratoryRate > 20 || latest.respiratoryRate < 10
+  // Alert calculations for collapsed headers & metrics (flags both below and above threshold)
+  const isHrLow = latest.heartRate < 55
+  const isHrHigh = latest.heartRate > 90
+  const isHrAbnormal = isHrLow || isHrHigh
+  const hrStatusTag = isHrLow ? 'LOW' : isHrHigh ? 'ELEVATED' : 'NOMINAL'
+
+  const isTempLow = Number(latest.bodyTemperature) < 36.0
+  const isTempHigh = Number(latest.bodyTemperature) > 37.5
+  const isTempAbnormal = isTempLow || isTempHigh
+  const tempStatusTag = isTempLow ? 'LOW' : isTempHigh ? 'SPACE FEVER' : 'NORMAL'
+
+  const isRespLow = latest.respiratoryRate < 10
+  const isRespHigh = latest.respiratoryRate > 20
+  const isRespAbnormal = isRespLow || isRespHigh
+  const respStatusTag = isRespLow ? 'LOW' : isRespHigh ? 'ELEVATED' : 'STEADY'
+
   const clinicalAlertsCount = (isTempAbnormal ? 1 : 0) + (isRespAbnormal ? 1 : 0)
 
   const isCortisolAbnormal = cortisolStatus === 'ELEVATED'
@@ -340,7 +353,7 @@ export function DailyVitalsView({
       <div className="vitals-matrix-row">
         {/* 1. Heart Rate Card */}
         <article
-          className={`vital-block clickable ${latest.heartRate > 90 ? 'warning' : 'good'}`}
+          className={`vital-block clickable ${isHrAbnormal ? 'warning' : 'good'}`}
           onClick={() => setActiveModalKey('hr')}
           role="button"
           tabIndex={0}
@@ -350,8 +363,8 @@ export function DailyVitalsView({
           <div className="block-head">
             <span className="block-title">Heart Rate</span>
             <div className="block-head-right">
-              <span className={`vital-tag ${latest.heartRate > 90 ? 'warning' : 'nominal'}`}>
-                {latest.heartRate > 90 ? 'ELEVATED' : 'NOMINAL'}
+              <span className={`vital-tag ${isHrAbnormal ? 'warning' : 'nominal'}`}>
+                {hrStatusTag}
               </span>
             </div>
           </div>
@@ -529,7 +542,7 @@ export function DailyVitalsView({
                 <span className="block-title">Body Temperature</span>
                 <div className="block-head-right">
                   <span className={`vital-tag ${isTempAbnormal ? 'warning' : 'nominal'}`}>
-                    {isTempAbnormal ? 'SPACE FEVER' : 'NORMAL'}
+                    {tempStatusTag}
                   </span>
                 </div>
               </div>
@@ -557,7 +570,7 @@ export function DailyVitalsView({
                 <span className="block-title">Breathing Rate</span>
                 <div className="block-head-right">
                   <span className={`vital-tag ${isRespAbnormal ? 'warning' : 'nominal'}`}>
-                    {isRespAbnormal ? 'ABNORMAL' : 'STEADY'}
+                    {respStatusTag}
                   </span>
                 </div>
               </div>
