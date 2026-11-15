@@ -1563,5 +1563,139 @@
   color: var(--text-secondary);
 }
 
+/* --------------------------------------------------------------------------
+   Astronaut Daily Vitals View (.hd-vital-*, .hd-vitals-*)
+   -------------------------------------------------------------------------- */
+.hd-vitals-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--hd-radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.hd-vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.hd-vital-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--hd-radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  transition: transform var(--hd-transition-fast), box-shadow var(--hd-transition-fast);
+}
+
+.hd-vital-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hd-shadow-sm);
+}
+
+.hd-vital-card--warning {
+  border-color: var(--hd-amber);
+}
+
+.hd-vital-card--danger {
+  border-color: var(--hd-red);
+}
+
+.hd-vital-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.hd-vital-card__title {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hd-vital-card__head-right {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.hd-vital-card__val-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.hd-vital-card__num {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.hd-vital-card__unit {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.hd-vital-card__range {
+  font-size: 0.725rem;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.hd-vital-card__desc {
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.hd-vital-edu-drawer {
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  background-color: var(--accent-bg);
+  border: 1px solid var(--hd-cobalt-border);
+  border-radius: var(--hd-radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  animation: hd-fade-in var(--hd-transition-fast);
+}
+
+.hd-vital-edu-drawer strong {
+  color: var(--text-primary);
+}
+
+.hd-vitals-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--hd-radius-md);
+  margin-top: 1rem;
+}
+
+
 
 
