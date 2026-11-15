@@ -509,6 +509,7 @@ button:active,
   flex-direction: column;
   gap: 16px;
   padding-bottom: 48px;
+  flex-shrink: 0;
 }
 
 /* =========================================================
@@ -1518,6 +1519,7 @@ button:active,
   box-shadow: var(--shadow-card);
   overflow: hidden;
   transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  flex-shrink: 0;
 }
 
 .collapsible-vitals-card.collapsed {
@@ -1673,6 +1675,37 @@ button:active,
 
 .inspo-chevron {
   color: #f43f5e !important; /* Vivid pink from inspo photo */
+}
+
+/* Native <details> and <summary> disclosure rules */
+details.collapsible-vitals-card > summary {
+  list-style: none;
+}
+
+details.collapsible-vitals-card > summary::-webkit-details-marker,
+details.collapsible-vitals-card > summary::marker {
+  display: none !important;
+}
+
+/* Chevron switching for native <details> */
+details.collapsible-vitals-card .inspo-chevron-up {
+  display: none !important;
+}
+
+details.collapsible-vitals-card .inspo-chevron-down {
+  display: inline-flex !important;
+}
+
+details.collapsible-vitals-card[open] .inspo-chevron-up {
+  display: inline-flex !important;
+}
+
+details.collapsible-vitals-card[open] .inspo-chevron-down {
+  display: none !important;
+}
+
+details.collapsible-vitals-card[open] {
+  border-color: var(--border-hover, rgba(255, 255, 255, 0.22));
 }
 
 .collapsible-chevron {
