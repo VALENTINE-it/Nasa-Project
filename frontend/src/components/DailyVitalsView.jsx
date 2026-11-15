@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   ExternalLink,
   ChevronDown,
+  ChevronUp,
   Watch,
   Stethoscope,
 } from 'lucide-react'
@@ -453,20 +454,33 @@ export function DailyVitalsView({
       </div>
 
       {/* =========================================================================
-          TIER 2: SECONDARY CLINICAL BIOMETRICS (COLLAPSIBLE ACCORDION)
-          Keeps the astronaut screen clean and spacious; alerts bubble to header.
+          TIER 2: SECONDARY CLINICAL BIOMETRICS (INSPO ACCORDION CARD)
+          Matches inspo photo: clean rounded card, left title, right vivid chevron.
+          Clicking anywhere on the card/header reveals the secondary cards.
           ========================================================================= */}
-      <section className={`collapsible-vitals-section ${clinicalAlertsCount > 0 ? 'has-alert' : ''}`}>
-        <button
-          type="button"
-          className="collapsible-header-btn"
-          onClick={() => setIsClinicalExpanded((prev) => !prev)}
+      <section
+        className={`collapsible-vitals-card ${isClinicalExpanded ? 'expanded' : 'collapsed'} ${clinicalAlertsCount > 0 ? 'has-alert' : ''}`}
+        onClick={!isClinicalExpanded ? () => setIsClinicalExpanded(true) : undefined}
+      >
+        <div
+          className="collapsible-card-header"
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsClinicalExpanded((prev) => !prev)
+          }}
+          role="button"
+          tabIndex={0}
           aria-expanded={isClinicalExpanded}
-          aria-label="Toggle Secondary Clinical Diagnostics"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setIsClinicalExpanded((prev) => !prev)
+            }
+          }}
         >
           <div className="collapsible-header-left">
             <div className="collapsible-icon-box">
-              <Stethoscope size={16} />
+              <Stethoscope size={18} strokeWidth={2.2} />
             </div>
             <div className="collapsible-title-wrap">
               <div className="collapsible-title">Secondary Clinical Diagnostics &amp; Metabolism</div>
@@ -479,21 +493,24 @@ export function DailyVitalsView({
           <div className="collapsible-header-right">
             {clinicalAlertsCount > 0 ? (
               <span className="collapsible-alert-pill">
-                <AlertTriangle size={12} />
+                <AlertTriangle size={12} strokeWidth={2.5} />
                 <span>{clinicalAlertsCount} Flagged</span>
               </span>
             ) : (
               <span className="collapsible-nominal-pill">Nominal (4 Metrics)</span>
             )}
-            <ChevronDown
-              size={18}
-              className={`collapsible-chevron ${isClinicalExpanded ? 'rotated' : ''}`}
-            />
+            <span className="inspo-chevron-wrap">
+              {isClinicalExpanded ? (
+                <ChevronUp size={20} strokeWidth={2.8} className="inspo-chevron" />
+              ) : (
+                <ChevronDown size={20} strokeWidth={2.8} className="inspo-chevron" />
+              )}
+            </span>
           </div>
-        </button>
+        </div>
 
         {isClinicalExpanded && (
-          <div className="collapsible-body">
+          <div className="collapsible-card-body">
             <div className="vitals-matrix-row">
               {/* Blood Pressure Card */}
               <article
@@ -608,20 +625,33 @@ export function DailyVitalsView({
       </section>
 
       {/* =========================================================================
-          TIER 3: SALIVARY IMMUNE & VIRAL SURVEILLANCE (COLLAPSIBLE ACCORDION)
-          Deep-space biomarkers (NASA OSDR-379); collapsed by default for calm UI.
+          TIER 3: SALIVARY IMMUNE & VIRAL SURVEILLANCE (INSPO ACCORDION CARD)
+          Deep-space biomarkers (NASA OSDR-379); collapsed by default.
+          Clicking anywhere on the card/header reveals the biomarker cards.
           ========================================================================= */}
-      <section className={`collapsible-vitals-section ${immuneAlertsCount > 0 ? 'has-alert' : ''}`}>
-        <button
-          type="button"
-          className="collapsible-header-btn"
-          onClick={() => setIsImmuneExpanded((prev) => !prev)}
+      <section
+        className={`collapsible-vitals-card ${isImmuneExpanded ? 'expanded' : 'collapsed'} ${immuneAlertsCount > 0 ? 'has-alert' : ''}`}
+        onClick={!isImmuneExpanded ? () => setIsImmuneExpanded(true) : undefined}
+      >
+        <div
+          className="collapsible-card-header"
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsImmuneExpanded((prev) => !prev)
+          }}
+          role="button"
+          tabIndex={0}
           aria-expanded={isImmuneExpanded}
-          aria-label="Toggle Salivary Immune Biomarkers and Latent Viral Surveillance"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setIsImmuneExpanded((prev) => !prev)
+            }
+          }}
         >
           <div className="collapsible-header-left">
             <div className="collapsible-icon-box">
-              <Dna size={16} />
+              <Dna size={18} strokeWidth={2.2} />
             </div>
             <div className="collapsible-title-wrap">
               <div className="collapsible-title">
@@ -636,21 +666,24 @@ export function DailyVitalsView({
           <div className="collapsible-header-right">
             {immuneAlertsCount > 0 ? (
               <span className="collapsible-alert-pill">
-                <AlertTriangle size={12} />
+                <AlertTriangle size={12} strokeWidth={2.5} />
                 <span>{immuneAlertsCount} Flagged</span>
               </span>
             ) : (
               <span className="collapsible-nominal-pill">Surveillance Active (3 Biomarkers)</span>
             )}
-            <ChevronDown
-              size={18}
-              className={`collapsible-chevron ${isImmuneExpanded ? 'rotated' : ''}`}
-            />
+            <span className="inspo-chevron-wrap">
+              {isImmuneExpanded ? (
+                <ChevronUp size={20} strokeWidth={2.8} className="inspo-chevron" />
+              ) : (
+                <ChevronDown size={20} strokeWidth={2.8} className="inspo-chevron" />
+              )}
+            </span>
           </div>
-        </button>
+        </div>
 
         {isImmuneExpanded && (
-          <div className="collapsible-body">
+          <div className="collapsible-card-body">
             <div className="vitals-matrix-row secondary-row">
               {/* Salivary Cortisol Card */}
               <article
