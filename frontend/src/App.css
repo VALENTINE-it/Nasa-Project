@@ -3043,6 +3043,628 @@ details.collapsible-vitals-card[open] {
   }
 }
 
+/* =========================================================
+   NASA DATA-DRIVEN MEDICAL CO-PILOT & SPLIT LAYOUT
+   Grounded in NASA HRP & OSDR APIs · Zero External LLM
+   ========================================================= */
+
+.medical-view-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+}
+
+.medical-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.medical-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.nasa-grounded-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background: rgba(49, 92, 255, 0.08);
+  border: 1px solid rgba(49, 92, 255, 0.25);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #315cff;
+  letter-spacing: 0.02em;
+}
+
+.telemetry-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+}
+
+[data-theme="dark"] .telemetry-sync-pill {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.medical-segment-group {
+  display: inline-flex;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.medical-segment-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.medical-segment-btn:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .medical-segment-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.medical-segment-btn.active {
+  background: #315cff;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(49, 92, 255, 0.3);
+}
+
+/* Split Column Layout */
+.medical-advice-split-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.medical-sops-column {
+  flex: 1 1 56%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.medical-copilot-column {
+  flex: 1 1 44%;
+  min-width: 0;
+  position: sticky;
+  top: 0;
+}
+
+.medical-advice-split-layout.mode-sops .medical-sops-column {
+  flex: 1 1 100%;
+}
+
+.medical-advice-split-layout.mode-copilot .medical-copilot-column {
+  flex: 1 1 100%;
+}
+
+/* NASA Co-Pilot Card Container */
+.nasa-copilot-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 180px);
+  min-height: 580px;
+  max-height: 850px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.copilot-header {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(16, 36, 84, 0.03) 0%, rgba(49, 92, 255, 0.08) 100%);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+[data-theme="dark"] .copilot-header {
+  background: linear-gradient(135deg, rgba(16, 36, 84, 0.4) 0%, rgba(49, 92, 255, 0.16) 100%);
+}
+
+.copilot-identity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.copilot-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.copilot-avatar-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #315cff;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(49, 92, 255, 0.35);
+}
+
+.copilot-title-text h3 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.copilot-title-text small {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.copilot-reset-btn {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-tertiary);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.copilot-reset-btn:hover {
+  background: var(--bg-surface-secondary);
+  color: var(--text-primary);
+}
+
+/* Live Telemetry Strip */
+.copilot-telemetry-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  overflow-x: auto;
+}
+
+.telemetry-metric-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.telemetry-metric-item strong {
+  color: var(--text-primary);
+}
+
+.telemetry-metric-item.alert strong {
+  color: #ef4444;
+}
+
+.telemetry-metric-item.warn strong {
+  color: #d97706;
+}
+
+/* Quick Suggestion Chips */
+.copilot-quick-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.copilot-quick-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.copilot-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 120ms ease;
+}
+
+.copilot-chip-btn:hover {
+  background: #315cff;
+  border-color: #315cff;
+  color: #ffffff;
+}
+
+/* Chat Feed Stream */
+.copilot-chat-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bg-app);
+}
+
+.copilot-msg-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.copilot-msg-bubble.user {
+  align-self: flex-end;
+  max-width: 85%;
+}
+
+.copilot-user-text {
+  background: #1e293b;
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 12px 12px 2px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .copilot-user-text {
+  background: #2563eb;
+}
+
+.copilot-timestamp {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  align-self: flex-end;
+}
+
+/* Bot Response Card */
+.copilot-msg-bubble.bot {
+  align-self: flex-start;
+  width: 100%;
+}
+
+.copilot-bot-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 12px 12px 12px 2px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.copilot-bot-card.critical {
+  border-left: 4px solid #ef4444;
+}
+
+.copilot-bot-card.warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.copilot-bot-card.nominal {
+  border-left: 4px solid #10b981;
+}
+
+.bot-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bot-domain-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #315cff;
+}
+
+.bot-severity-tag {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.bot-severity-tag.critical {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.bot-severity-tag.warning {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.bot-severity-tag.nominal {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+[data-theme="dark"] .bot-severity-tag.critical {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+[data-theme="dark"] .bot-severity-tag.warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .bot-severity-tag.nominal {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.bot-card-heading h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.bot-delta-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.bot-delta-pill strong {
+  color: var(--text-primary);
+}
+
+.bot-clinical-assessment {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.bot-action-steps-box {
+  background: rgba(49, 92, 255, 0.03);
+  border: 1px solid rgba(49, 92, 255, 0.15);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+[data-theme="dark"] .bot-action-steps-box {
+  background: rgba(49, 92, 255, 0.08);
+  border-color: rgba(49, 92, 255, 0.25);
+}
+
+.bot-action-steps-heading {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #315cff;
+}
+
+.bot-action-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.bot-step-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #315cff;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.bot-meta-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.bot-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.bot-meta-pill.link {
+  color: #315cff;
+  font-weight: 600;
+}
+
+.bot-meta-pill.link:hover {
+  text-decoration: underline;
+}
+
+.bot-jump-sop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #315cff;
+  border: none;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 120ms ease;
+  margin-top: 4px;
+}
+
+.bot-jump-sop-btn:hover {
+  background: #1b40d6;
+  box-shadow: 0 2px 8px rgba(49, 92, 255, 0.35);
+}
+
+/* Chat Input Bar */
+.copilot-input-bar {
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.copilot-input-field {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 13px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--bg-surface-secondary);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.copilot-input-field:focus {
+  border-color: #315cff;
+  box-shadow: 0 0 0 3px rgba(49, 92, 255, 0.15);
+}
+
+.copilot-send-btn {
+  padding: 10px 16px;
+  background: #315cff;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 120ms ease;
+  min-height: 40px;
+}
+
+.copilot-send-btn:hover:not(:disabled) {
+  background: #1b40d6;
+  box-shadow: 0 2px 8px rgba(49, 92, 255, 0.35);
+}
+
+.copilot-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive Stacking for Tablets & Mobile */
+@media (max-width: 1080px) {
+  .medical-advice-split-layout {
+    flex-direction: column;
+  }
+
+  .medical-sops-column,
+  .medical-copilot-column {
+    flex: 1 1 100%;
+    width: 100%;
+    position: static;
+  }
+
+  .nasa-copilot-card {
+    height: 520px;
+    max-height: 520px;
+  }
+}
+
+
 
 
 

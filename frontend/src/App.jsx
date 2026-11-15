@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useParams, useSearchParams } from 'react-router-dom'
 import { AlertTriangle, CheckCircle2, Watch, Radio, RefreshCw, Menu } from 'lucide-react'
 import EarthWatchConsole from './EarthWatchConsole'
 import PublicLoginPage from './components/PublicLoginPage'
@@ -387,7 +387,9 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
       ? 3
       : 1
   const [dashboardData, setDashboardData] = useState(() => getFallbackDashboard(astronautId))
-  const [activeTab, setActiveTab] = useState('vitals')
+  const [searchParams] = useSearchParams()
+  const initialTab = searchParams.get('tab') || 'vitals'
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [timeframe, setTimeframe] = useState('week')
   const [scenarioMode, setScenarioMode] = useState('nominal') // 'nominal' | 'tachycardia' | 'hypoxia' | 'radiation'
@@ -1084,6 +1086,10 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
             <MedicalAdviceView
               dynamicAlerts={dynamicAlerts}
               onResolveAlert={() => setScenarioMode('nominal')}
+              latest={latest}
+              activeAstronaut={profile}
+              scenarioMode={scenarioMode}
+              environmentMode={environmentMode}
             />
           )}
 

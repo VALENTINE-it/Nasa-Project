@@ -936,6 +936,9 @@ func main() {
 	mux.HandleFunc("/api/wearable/live", withCORS(handleWearableLive))
 	mux.HandleFunc("/api/comms/messages", withCORS(handleCommsMessages))
 	mux.HandleFunc("/api/comms/uplink", withCORS(handleCommsUplink))
+	mux.HandleFunc("/api/nasa/osdr/", withCORS(handleNasaOsdr))
+	mux.HandleFunc("/api/nasa/copilot/query", withCORS(handleNasaMedicalQuery))
+	mux.HandleFunc("/api/nasa/baselines", withCORS(handleNasaBaselines))
 	mux.HandleFunc("/api/astronauts/", withCORS(rateLimitMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.Contains(r.URL.Path, "/dashboard"):
