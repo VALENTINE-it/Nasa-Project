@@ -152,7 +152,7 @@ export function HealthTrendsView({
         <span>Live Telemetry Polylines</span>
       </div>
 
-      <div className="hd-trends-charts-grid">
+      <div className="hd-trends-charts-grid hd-stagger">
         <div className="hd-trends-chart-card">
           <div className="hd-trends-chart-header">
             <div>

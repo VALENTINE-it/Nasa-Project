@@ -523,7 +523,7 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                   </Alert>
                 )}
 
-                <div className="hd-roster-grid">
+                <div className="hd-roster-grid hd-stagger">
                   {displayedCrew.map((astro) => {
                     const currentVitals = astro.currentMetrics || astro.baseline[missionPhase]
                     const isSelected = astro.id === selectedAstronautId
@@ -905,7 +905,7 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 <span>Atmosphere &amp; Pressure</span>
               </div>
 
-              <div className="hd-sys-grid">
+              <div className="hd-sys-grid hd-stagger">
                 <div className="hd-sys-card">
                   <div className="hd-sys-card__header">
                     <span className="hd-sys-card__label">Cabin Oxygen (O2)</span>
@@ -948,7 +948,7 @@ export default function EarthWatchConsole({ onLogout, theme, onToggleTheme }) {
                 <span>Habitat Systems &amp; Environment</span>
               </div>
 
-              <div className="hd-sys-grid">
+              <div className="hd-sys-grid hd-stagger">
                 <div className="hd-sys-card">
                   <div className="hd-sys-card__header">
                     <span className="hd-sys-card__label">Room Temperature</span>
