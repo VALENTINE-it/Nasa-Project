@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-
 import { AlertTriangle, CheckCircle2, Watch, Radio, RefreshCw, Menu } from 'lucide-react'
 import EarthWatchConsole from './EarthWatchConsole'
 import PublicLoginPage from './components/PublicLoginPage'
+import AuralMedLandingPage from './components/AuralMedLandingPage'
 import AstronautSidebar from './components/AstronautSidebar'
 import DailyVitalsView from './components/DailyVitalsView'
 import HealthTrendsView from './components/HealthTrendsView'
@@ -314,6 +315,20 @@ function App() {
       <Routes>
         <Route
           path="/"
+          element={
+            <AuralMedLandingPage
+              sessionUser={sessionUser}
+              onAuthenticated={setSessionUser}
+              onLogout={handleLogout}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
+          }
+        />
+
+        {/* Dedicated Standalone Astronaut Login Route */}
+        <Route
+          path="/login"
           element={
             sessionUser ? (
               <Navigate to={`/astronaut/dashboard/${sessionUser.astronautId}`} replace />
