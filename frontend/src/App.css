@@ -35,6 +35,54 @@
 /* =========================================================
    WORKSTATION APP SHELL: LEFT SIDEBAR + MAIN VIEWPORT
    ========================================================= */
+.hd-astronaut-layout {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+}
+
+.hd-astronaut-layout .main-viewport-content {
+  width: 100%;
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: var(--bg-app);
+}
+
+.hd-astronaut-layout .viewport-top-header {
+  padding: 1.25rem 2rem;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.hd-astronaut-layout .viewport-top-header h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0 0;
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+}
+
+.hd-astronaut-layout .viewport-screen-body {
+  flex: 1 1 auto;
+  padding: 1.5rem 2rem;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .hd-astronaut-layout .viewport-top-header,
+  .hd-astronaut-layout .viewport-screen-body {
+    padding: 1rem;
+  }
+}
+
 .workstation-app-layout {
   width: 100vw;
   height: 100vh;
