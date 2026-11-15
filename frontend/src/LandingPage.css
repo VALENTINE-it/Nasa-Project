@@ -318,144 +318,240 @@
 }
 
 /* --------------------------------------------------------------------------
-   Aerospace-Grade Telemetry Stage (Replacing Heavy 3D Iframe)
-   Fast, 0ms load, clean visual telemetry architecture
+   Holographic 3D Interactive Biometric Model
    -------------------------------------------------------------------------- */
-.site-shell .telemetry-monitor-stage {
-  width: 100%;
-  max-width: 480px;
+.site-shell .hero-visual {
+  width: min(100%, 460px);
+  aspect-ratio: 1;
   margin-left: auto;
-  border-radius: 14px;
-  background: var(--aural-night);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 16px 48px rgba(12, 23, 48, 0.12);
+  position: relative;
+}
+
+.site-shell .orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  border: 1px solid rgba(49, 92, 255, 0.16);
+  transform: translate(-50%, -50%);
+}
+
+.site-shell .orbit-one {
+  width: 94%;
+  height: 94%;
+}
+
+.site-shell .orbit-two {
+  width: 70%;
+  height: 70%;
+  background: radial-gradient(circle, rgba(49, 92, 255, 0.08), transparent 70%);
+}
+
+.site-shell .orbit:before,
+.site-shell .orbit:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: rgba(49, 92, 255, 0.12);
+  transform: translate(-50%, -50%);
+}
+
+.site-shell .orbit:before {
+  width: 1px;
+  height: 110%;
+}
+
+.site-shell .orbit:after {
+  width: 110%;
+  height: 1px;
+}
+
+.site-shell .orbit-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--aural-blue);
+  box-shadow: 0 0 0 4px rgba(49, 92, 255, 0.1);
+  z-index: 3;
+}
+
+.site-shell .orbit-dot-one {
+  top: 15%;
+  left: 20%;
+}
+
+.site-shell .orbit-dot-two {
+  bottom: 30%;
+  right: 10%;
+  border-color: var(--aural-mint);
+}
+
+.site-shell .hologram-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 330px;
+  height: 420px;
+  border-radius: 36px;
+  transform: translate(-50%, -48%);
   overflow: hidden;
-  color: #ffffff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12), inset 0 0 60px rgba(49, 92, 255, 0.06);
+  border: 1px solid rgba(49, 92, 255, 0.15);
+  background: #090e1a;
+  z-index: 4;
 }
 
-.site-shell .monitor-head {
+.site-shell .model-frame {
+  position: absolute;
+  inset: -30px -35px -35px;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.site-shell .model-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.site-shell .model-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 49.8%, rgba(71, 111, 255, 0.08) 50%, transparent 50.2%),
+              linear-gradient(transparent 49.8%, rgba(71, 111, 255, 0.06) 50%, transparent 50.2%);
+  z-index: 2;
+}
+
+.site-shell .scan-line {
+  position: absolute;
+  top: 8%;
+  left: 8%;
+  width: 84%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #92fff2 25%, #ffffff 50%, #6287ff 75%, transparent);
+  box-shadow: 0 0 8px rgba(104, 255, 239, 0.8), 0 8px 24px rgba(79, 123, 255, 0.25);
+  opacity: 0;
+  animation: 4.8s ease-in-out infinite modelScan;
+}
+
+@keyframes modelScan {
+  0%, 12% {
+    opacity: 0;
+    top: 8%;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  78% {
+    opacity: 0.8;
+    top: 86%;
+  }
+  88%, 100% {
+    opacity: 0;
+    top: 86%;
+  }
+}
+
+.site-shell .model-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: rgba(49, 92, 255, 0.4);
+}
+
+.site-shell .corner-one {
+  top: 10%;
+  left: 8%;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+
+.site-shell .corner-two {
+  bottom: 10%;
+  right: 8%;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+
+.site-shell .hologram-readout {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 18px;
-  border-bottom: 1px solid var(--aural-night-line);
-  background: rgba(255, 255, 255, 0.02);
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: monospace;
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  pointer-events: none;
+  z-index: 3;
 }
 
-.site-shell .monitor-head-left {
+.site-shell .hologram-readout strong {
+  margin-top: 2px;
+  font-size: 9px;
+  color: #38bdf8;
+}
+
+.site-shell .signal-card {
+  position: absolute;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #94a3b8;
-  letter-spacing: 0.04em;
-}
-
-.site-shell .monitor-stream-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  color: #34d399;
-  font-size: 10.5px;
-  font-weight: 700;
-}
-
-.site-shell .monitor-body {
-  padding: 20px 22px;
-}
-
-.site-shell .monitor-ecg-canvas {
-  width: 100%;
-  height: 80px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--aural-night-line);
   padding: 8px 12px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.site-shell .ecg-meta {
-  display: flex;
-  justify-content: space-between;
-  font-family: monospace;
-  font-size: 9.5px;
-  color: #64748b;
-}
-
-.site-shell .ecg-svg {
-  width: 100%;
-  height: 40px;
-  color: #38bdf8;
-}
-
-.site-shell .ecg-svg path {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.site-shell .monitor-vitals-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.site-shell .monitor-vital-card {
-  padding: 12px 14px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--aural-night-line);
-}
-
-.site-shell .monitor-vital-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #94a3b8;
-}
-
-.site-shell .monitor-vital-val {
-  font-family: 'Manrope', sans-serif;
-  font-size: 20px;
-  font-weight: 800;
-  color: #ffffff;
-  margin-top: 2px;
-}
-
-.site-shell .monitor-vital-val small {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: #64748b;
-  margin-left: 4px;
-}
-
-.site-shell .monitor-vital-note {
-  font-size: 10px;
-  color: #38bdf8;
-  margin-top: 2px;
-}
-
-.site-shell .monitor-footer {
-  padding: 10px 18px;
-  border-top: 1px solid var(--aural-night-line);
-  background: rgba(255, 255, 255, 0.02);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(12, 23, 48, 0.1);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
   font-size: 11px;
-  color: #64748b;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 5;
+}
+
+.site-shell .signal-card strong {
+  font-size: 14px;
+}
+
+.site-shell .signal-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--aural-blue);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+}
+
+.site-shell .signal-heart {
+  top: 20%;
+  right: 2%;
+}
+
+.site-shell .signal-status {
+  bottom: 24%;
+  left: 0%;
+}
+
+.site-shell .visual-caption {
+  position: absolute;
+  bottom: 1%;
+  left: 50%;
+  transform: translate(-50%);
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: #94a3b8;
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------------------------
@@ -1326,7 +1422,7 @@
   .site-shell .trust-row {
     justify-content: center;
   }
-  .site-shell .telemetry-monitor-stage {
+  .site-shell .hero-visual {
     margin: 0 auto;
   }
 }
