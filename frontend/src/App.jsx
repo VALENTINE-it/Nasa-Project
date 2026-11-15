@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
-import { AlertTriangle, CheckCircle2, Watch, Radio, RefreshCw } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Watch, Radio, RefreshCw, Menu } from 'lucide-react'
 import EarthWatchConsole from './EarthWatchConsole'
 import PublicLoginPage from './components/PublicLoginPage'
 import AstronautSidebar from './components/AstronautSidebar'
@@ -362,6 +362,7 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
   const astronautId = Number(id) || 1
   const [dashboardData, setDashboardData] = useState(() => getFallbackDashboard(astronautId))
   const [activeTab, setActiveTab] = useState('vitals')
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [timeframe, setTimeframe] = useState('week')
   const [scenarioMode, setScenarioMode] = useState('nominal') // 'nominal' | 'tachycardia' | 'hypoxia' | 'radiation'
   const [environmentMode, setEnvironmentMode] = useState('spacecraft') // 'spacecraft' | 'lunar_base' | 'mars_eva'
@@ -873,29 +874,41 @@ function ProtectedDashboard({ session, onLogout, theme, onToggleTheme }) {
         onToggleTheme={onToggleTheme}
         session={session}
         onLogout={onLogout}
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
       />
 
       {/* Right Main Viewport */}
       <div className="main-viewport-content">
         <header className="viewport-top-header">
-          <div>
-            <div className="breadcrumb-line">
-              <span>{profile.fullName}</span> &rsaquo;{' '}
-              <strong className="active-view-name">
-                {activeTab === 'vitals' && 'Daily Vitals Overview'}
-                {activeTab === 'trends' && 'Health Trends & Comparison Charts'}
-                {activeTab === 'notices' && 'Medical Notices & Automated Advice'}
-                {activeTab === 'history' && 'Checkup History & Recent Logs'}
-                {activeTab === 'profile' && 'Astronaut & Mission Flight Profile'}
-              </strong>
+          <div className="header-title-wrapper">
+            <button
+              type="button"
+              className="mobile-hamburger-btn"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              aria-label="Open Navigation Menu"
+            >
+              <Menu size={20} strokeWidth={2} />
+            </button>
+            <div>
+              <div className="breadcrumb-line">
+                <span>{profile.fullName}</span> &rsaquo;{' '}
+                <strong className="active-view-name">
+                  {activeTab === 'vitals' && 'Daily Vitals Overview'}
+                  {activeTab === 'trends' && 'Health Trends & Comparison Charts'}
+                  {activeTab === 'notices' && 'Medical Notices & Automated Advice'}
+                  {activeTab === 'history' && 'Checkup History & Recent Logs'}
+                  {activeTab === 'profile' && 'Astronaut & Mission Flight Profile'}
+                </strong>
+              </div>
+              <h1>
+                {activeTab === 'vitals' && `${profile.fullName}'s Dynamic Health Telemetry`}
+                {activeTab === 'trends' && 'Vital Sign Changes Over Time'}
+                {activeTab === 'notices' && 'Onboard Medical Recommendations'}
+                {activeTab === 'history' && 'Chronological Medical Check History'}
+                {activeTab === 'profile' && 'Spacecraft Environment & Profile'}
+              </h1>
             </div>
-            <h1>
-              {activeTab === 'vitals' && `${profile.fullName}'s Dynamic Health Telemetry`}
-              {activeTab === 'trends' && 'Vital Sign Changes Over Time'}
-              {activeTab === 'notices' && 'Onboard Medical Recommendations'}
-              {activeTab === 'history' && 'Chronological Medical Check History'}
-              {activeTab === 'profile' && 'Spacecraft Environment & Profile'}
-            </h1>
           </div>
 
           <div className="top-header-stats">
