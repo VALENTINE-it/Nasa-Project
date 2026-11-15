@@ -445,70 +445,90 @@ export function useWearableBluetooth({ onHeartRateUpdate, onDisconnect } = {}) {
       let vendorEngineActive = false
       let standardHrFound = false
 
-      // 1. If Oraimo Watch is detected, prioritize SEWear Vendor Engine directly (never query standard heart_rate which hangs on Linux)
+      // 1. If Oraimo Watch is detected, prioritize SEWear Vendor Engine directly
       if (isOraimo) {
         logDiag('Oraimo device detected. Prioritizing SEWear Vendor Service (16186f00)...')
+        let vendorService = null
+
         try {
-          const vendorService = await withTimeout(
+          // Allow ample time (12s) for Linux BlueZ over-the-air GATT service discovery
+          vendorService = await withTimeout(
             server.getPrimaryService('16186f00-0000-1000-8000-00807f9b34fb'),
-            3500,
+            12000,
             'Oraimo 16186f00 Service'
           )
           logDiag('Discovered Primary Service: 16186f00 (Oraimo SEWear Telemetry Engine)')
-
-          const chars = await withTimeout(
-            vendorService.getCharacteristics(),
-            3000,
-            'Get 16186f00 Characteristics'
-          )
-          logDiag(`Found ${chars.length} characteristics under 16186f00`)
-
-          const char6f01 = chars.find((c) => c.uuid.toLowerCase().startsWith('16186f01'))
-          const char6f02 = chars.find((c) => c.uuid.toLowerCase().startsWith('16186f02'))
-          const char6f03 = chars.find((c) => c.uuid.toLowerCase().startsWith('16186f03'))
-
-          if (char6f02) {
-            txCharRef.current = char6f02
-            logDiag('Mapped TX Command Characteristic: 16186f02')
+        } catch (dirErr) {
+          logDiag(`Direct 16186f00 query note: ${dirErr.message}. Attempting broad service scan...`)
+          try {
+            const allServices = await withTimeout(server.getPrimaryServices(), 10000, 'All Primary Services')
+            logDiag(`Discovered ${allServices.length} primary services on watch: ${allServices.map(s => s.uuid).join(', ')}`)
+            vendorService = allServices.find((s) => s.uuid.toLowerCase().includes('16186f00') || s.uuid.toLowerCase().includes('aa01')) || allServices[0]
+          } catch (scanErr) {
+            logDiag(`Service scan error: ${scanErr.message}`)
           }
+        }
 
-          if (char6f01) {
-            rxCharRef.current = char6f01
-            logDiag('Mapped RX Telemetry Characteristic: 16186f01')
-            try {
-              await withTimeout(char6f01.startNotifications(), 3000, 'Start Notifications 6f01')
-              char6f01.addEventListener('characteristicvaluechanged', handleVendorPacket)
-              logDiag('SUCCESS: Attached event listener on 16186f01 notifications!')
+        if (vendorService) {
+          logDiag(`Using Service: ${vendorService.uuid}`)
+          try {
+            const chars = await withTimeout(
+              vendorService.getCharacteristics(),
+              8000,
+              'Get Characteristics'
+            )
+            logDiag(`Found ${chars.length} characteristics: ${chars.map(c => c.uuid.slice(0, 8)).join(', ')}`)
 
-              // Try reading initial cached data snapshot immediately
+            const char6f01 = chars.find((c) => c.uuid.toLowerCase().includes('6f01') || c.uuid.toLowerCase().includes('16186f01'))
+            const char6f02 = chars.find((c) => c.uuid.toLowerCase().includes('6f02') || c.uuid.toLowerCase().includes('16186f02'))
+            const char6f03 = chars.find((c) => c.uuid.toLowerCase().includes('6f03') || c.uuid.toLowerCase().includes('16186f03'))
+
+            const rxCandidate = char6f01 || chars.find((c) => c.properties && c.properties.notify)
+            const txCandidate = char6f02 || chars.find((c) => c.properties && (c.properties.write || c.properties.writeWithoutResponse))
+
+            if (txCandidate) {
+              txCharRef.current = txCandidate
+              logDiag(`Mapped TX Command Characteristic: ${txCandidate.uuid.slice(0, 8)}`)
+            }
+
+            if (rxCandidate) {
+              rxCharRef.current = rxCandidate
+              logDiag(`Mapped RX Telemetry Characteristic: ${rxCandidate.uuid.slice(0, 8)}`)
               try {
-                const initVal = await withTimeout(char6f01.readValue(), 1200, 'Read 6f01')
-                if (initVal && initVal.byteLength > 0) {
-                  logDiag(`Read ${initVal.byteLength} initial bytes from 16186f01! Parsing...`)
-                  handleVendorPacket({ target: char6f01, targetValue: initVal })
+                await withTimeout(rxCandidate.startNotifications(), 5000, 'Start Notifications')
+                rxCandidate.addEventListener('characteristicvaluechanged', handleVendorPacket)
+                logDiag(`SUCCESS: Attached event listener on ${rxCandidate.uuid.slice(0, 8)} notifications!`)
+
+                // Try reading initial cached data snapshot immediately
+                try {
+                  const initVal = await withTimeout(rxCandidate.readValue(), 1500, 'Read Initial Snapshot')
+                  if (initVal && initVal.byteLength > 0) {
+                    logDiag(`Read ${initVal.byteLength} initial bytes from watch! Parsing...`)
+                    handleVendorPacket({ target: rxCandidate, targetValue: initVal })
+                  }
+                } catch (rErr) {
+                  logDiag(`Initial read note: ${rErr.message}`)
                 }
-              } catch (rErr) {
-                logDiag(`Initial read note: ${rErr.message}`)
+              } catch (nErr) {
+                logDiag(`Notification error on ${rxCandidate.uuid.slice(0, 8)}: ${nErr.message}`)
               }
-            } catch (nErr) {
-              logDiag(`Notification error on 6f01: ${nErr.message}`)
             }
-          }
 
-          // Also listen on 6f02 & 6f03 notifications if supported
-          for (const ch of [char6f02, char6f03]) {
-            if (ch && ch.properties && ch.properties.notify) {
-              try {
-                await withTimeout(ch.startNotifications(), 1500, `Notify ${ch.uuid.slice(0, 8)}`)
-                ch.addEventListener('characteristicvaluechanged', handleVendorPacket)
-                logDiag(`Subscribed to additional channel: ${ch.uuid.slice(0, 8)}`)
-              } catch {}
+            // Also listen on other notify channels if present
+            for (const ch of chars) {
+              if (ch !== rxCandidate && ch.properties && ch.properties.notify) {
+                try {
+                  await withTimeout(ch.startNotifications(), 2000, `Notify ${ch.uuid.slice(0, 8)}`)
+                  ch.addEventListener('characteristicvaluechanged', handleVendorPacket)
+                  logDiag(`Subscribed to additional notify channel: ${ch.uuid.slice(0, 8)}`)
+                } catch {}
+              }
             }
-          }
 
-          vendorEngineActive = true
-        } catch (vErr) {
-          logDiag(`Oraimo vendor service note: ${vErr.message}`)
+            vendorEngineActive = true
+          } catch (charsErr) {
+            logDiag(`Error resolving characteristics: ${charsErr.message}`)
+          }
         }
       } else {
         // Standard Bluetooth SIG Heart Rate Service (for Polar, Garmin, etc.)
