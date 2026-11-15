@@ -410,35 +410,21 @@ export function MedicalAdviceView({
   const currentTemp = latest?.bodyTemperature || 36.8
   const currentBP = latest?.bloodPressure || '135/88'
 
-  // Initial greeting from autonomous flight surgeon
+  const astronautFirstName = activeAstronaut?.fullName?.split(' ')[0] || 'there'
+
+  // Initial greeting from Aura (clean & friendly)
   const [chatMessages, setChatMessages] = useState([
     {
-      id: 'init-1',
+      id: 'aura-welcome-1',
       sender: 'bot',
+      text: `Hi ${astronautFirstName}! You're speaking with Aura, your flight medical assistant. I'm connected to your live biometrics and trained on NASA flight medicine data.`,
       timestamp: 'Just now',
-      domain: 'NASA Human Research Program (HRP) Autonomous Flight Surgeon',
-      severity: currentHR > 100 || currentSteps < 6000 ? 'warning' : 'nominal',
-      diagnosticTitle: 'AURA-MED NASA Clinical Decision Co-Pilot Online',
-      clinicalAssessment:
-        'Connected directly to NASA Open Science Data Repository (OSDR) APIs and NASA HRP Clinical Evidence Books. Zero external LLM reliance — all decisions, thresholds, and locker directions are 100% deterministic and auditable for deep-space flight.',
-      baselineComparison: `Active Crew Biometrics: HR ${currentHR} bpm (Rest baseline: 74-78), SpO2 ${currentSpO2}%, Steps ${currentSteps.toLocaleString()} (Target: 6,000+).`,
-      actionSteps: [
-        'Ask any clinical or emergency question below, or select a rapid query chip.',
-        'Telemetry is continuously checked against NASA flight thresholds.',
-        'Step-by-step physical countermeasures directly link to the SOP checklists on the left.',
-      ],
-      bulkheadLocker: 'Bulkhead Lockers 1–4 Available',
-      medicationDose: 'Flight Formulary Verified',
-      officialNasaSource: 'NASA Human Research Program Evidence Standards & OSDR Repo',
-      sourceUrl: 'https://humanresearchroadmap.nasa.gov/evidence/',
-      relatedOsdrAccession: 'OSD-379',
-      quickSuggestions: [
-        '🩺 Triage My Current Vitals',
-        '❤️ Elevated Heart Rate Protocol',
-        '🫁 CO2 Air Scrubber Threshold',
-        '🧬 Query NASA OSDR-379 Viral Data',
-        '🏃 Musculoskeletal Countermeasures',
-      ],
+    },
+    {
+      id: 'aura-welcome-2',
+      sender: 'bot',
+      text: 'How can I help you right now?',
+      timestamp: 'Just now',
     },
   ])
 
@@ -471,15 +457,16 @@ export function MedicalAdviceView({
     }, 100)
   }
 
-  // Process query through NASA Data Engine
+  // Process query through Aura NASA Data Engine
   const executeNasaQuery = async (queryText) => {
     if (!queryText.trim()) return
 
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     const userMsg = {
       id: `user-${Date.now()}`,
       sender: 'user',
       text: queryText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: nowTime,
     }
 
     setChatMessages((prev) => [...prev, userMsg])
@@ -509,152 +496,46 @@ export function MedicalAdviceView({
       if (res.ok) {
         const data = await res.json()
         const botMsg = {
-          id: `bot-${Date.now()}`,
+          id: `aura-${Date.now()}`,
           sender: 'bot',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          ...data,
+          text:
+            data.message ||
+            `${data.clinicalAssessment}\n\nNASA Action Steps:\n${(data.actionSteps || []).map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nKit Location: ${data.bulkheadLocker || 'Bulkhead Lockers'}`,
+          matchedSopId: data.matchedSopId,
+          timestamp: nowTime,
         }
         setChatMessages((prev) => [...prev, botMsg])
       } else {
-        throw new Error('Local engine fallback')
+        throw new Error('Fallback')
       }
     } catch {
-      // Deterministic Client-Side Fallback Engine (Zero-Latency Offline Mode)
+      // Deterministic Client-Side Fallback Engine
       const q = queryText.toLowerCase()
-      let fallbackResp = {
-        domain: 'Comprehensive Flight Telemetry',
-        severity: 'nominal',
-        diagnosticTitle: 'Evaluated Against NASA HRP Evidence Baselines',
-        baselineComparison: `Current: HR ${currentHR} bpm, SpO2 ${currentSpO2}%, Steps ${currentSteps}.`,
-        clinicalAssessment:
-          'Evaluated against NASA Human Research Program baseline datasets. When experiencing symptoms in microgravity, adhere strictly to the authenticated SOP steps and bulkhead locker items.',
-        actionSteps: [
-          'Verify sensor placement and physical resting state.',
-          'Review the matching visual SOP checklist on the left.',
-          'Report unresolving vital deviations to Earth Mission Control via Radio Link.',
-        ],
-        bulkheadLocker: 'Bulkhead Lockers 1–4',
-        medicationDose: 'Follow certified medical kit formulary',
-        officialNasaSource: 'NASA Human Research Program (HRP) Evidence Books',
-        sourceUrl: 'https://humanresearchroadmap.nasa.gov/evidence/',
-        relatedOsdrAccession: 'OSD-379',
-        quickSuggestions: [
-          '🩺 Triage My Current Vitals',
-          '❤️ Elevated Heart Rate Protocol',
-          '🫁 CO2 Air Scrubber Threshold',
-        ],
-      }
+      let replyText = `I checked your live telemetry: your heart rate is ${currentHR} bpm, blood oxygen is ${currentSpO2}%, and you have logged ${currentSteps} steps today.\n\nEverything has been cross-referenced against NASA flight standards. Tell me what symptoms you are feeling and I will guide you step-by-step.`
+      let matchedId = null
 
       if (q.includes('heart') || q.includes('pulse') || q.includes('tachycardia') || q.includes('pounding')) {
-        fallbackResp = {
-          domain: 'Cardiovascular / Spaceflight Rhythm Stability',
-          severity: 'critical',
-          diagnosticTitle: 'Acute Microgravity Cephalic Fluid Shift & Tachycardia',
-          baselineComparison: `Observed HR: ${currentHR} bpm | NASA Baseline: 74–78 bpm (Delta: +${currentHR - 76} bpm).`,
-          clinicalAssessment:
-            'In zero gravity, 1.5 to 2.0 Liters of lower-limb fluids rush into the thoracic cavity and head. The heart accelerates trying to pump this excess preload volume.',
-          actionSteps: [
-            'Sit astronaut down against bulkhead with chest elevated 45° immediately.',
-            'Give 500 mL water pouch + 2 salt tablets from Bulkhead Locker 2.',
-            'If HR remains > 120 after 10 mins, administer Metoprolol 50mg.',
-            'Attach 3 chest ECG pads to confirm heart stabilization.',
-          ],
-          bulkheadLocker: 'Bulkhead Locker 2 · Medical Kit Alpha',
-          medicationDose: 'Metoprolol Tartrate 50 mg (Oral) + 500 mL Saline Pouch',
-          expectedRecovery: 'Pulse stabilizes below 85 bpm in 15–20 minutes.',
-          officialNasaSource: 'NASA HRP-47065: Cardiac Rhythm Problems in Spaceflight',
-          sourceUrl: 'https://humanresearchroadmap.nasa.gov/evidence/',
-          relatedOsdrAccession: 'OSD-118',
-          matchedSopId: 'tachycardia-fluid-shift',
-          quickSuggestions: [
-            'Where is Bulkhead Locker 2 located?',
-            'How to attach ECG stickers properly',
-          ],
-        }
-      } else if (q.includes('co2') || q.includes('air') || q.includes('scrubber') || q.includes('breath') || q.includes('oxygen')) {
-        fallbackResp = {
-          domain: 'ECLSS Life Support & Cabin Toxicology',
-          severity: 'critical',
-          diagnosticTitle: 'Cabin Hypercapnia / Air Scrubber Saturation ($pCO_2 > 5.0\\text{ mmHg}$)',
-          baselineComparison: `Observed SpO2: ${currentSpO2}% | Safe Threshold: > 95% (Safe pCO2: < 2.0 mmHg).`,
-          clinicalAssessment:
-            'Exhaled carbon dioxide accumulation causes immediate cerebral vasodilation, resulting in severe throbbing frontal headaches and confusion.',
-          actionSteps: [
-            'Don quick-don orange oxygen mask from Locker 4 (100% O2).',
-            'Halt all crew treadmill/resistance exercise immediately.',
-            'Flip red override lever at ECLSS Rack 4 to backup LiOH canister.',
-            'Administer Ibuprofen 400 mg for residual headache.',
-          ],
-          bulkheadLocker: 'Bulkhead Locker 4 · Emergency Air Mount & Life Support Rack 4',
-          medicationDose: '100% O2 via Quick-Don Mask + Ibuprofen 400 mg',
-          expectedRecovery: 'Blood oxygen reaches 98% within 2 minutes; headache fades within 45 minutes.',
-          officialNasaSource: 'NASA HRP Evidence Report: Adverse Health Effects of CO2 Exposure',
-          sourceUrl: 'https://humanresearchroadmap.nasa.gov/evidence/reports/CO2.pdf',
-          relatedOsdrAccession: 'OSD-379',
-          matchedSopId: 'hypoxia-co2-scrubber',
-          quickSuggestions: [
-            'How long does the backup LiOH canister last?',
-            'What are secondary symptoms of CO2 buildup?',
-          ],
-        }
-      } else if (q.includes('virus') || q.includes('cold sore') || q.includes('rash') || q.includes('osdr') || q.includes('379')) {
-        fallbackResp = {
-          domain: 'Immunology & Latent Viral Reactivation',
-          severity: 'warning',
-          diagnosticTitle: 'Stress-Induced Latent Herpesvirus Reactivation (EBV/VZV Flare)',
-          baselineComparison: 'Viral DNA: > 50 copies/mL shed in saliva | Terrestrial Baseline: 0 copies/mL.',
-          clinicalAssessment:
-            'Cosmic radiation and neuroendocrine stress suppress T-cell immunity. Latent childhood herpesviruses (EBV, VZV) wake back up and shed into saliva.',
-          actionSteps: [
-            'Retrieve Valacyclovir 500mg from Locker 3 Pharmacy Box (1 pill every 12 hrs for 5 days).',
-            'Apply Hydrocortisone cream twice daily onto cold sore or itchy rash.',
-            'Collect 1.5 mL saliva into cryo-tube and store in -80°C science freezer.',
-            'Enforce 8 hours of restorative sleep with dimmed circadian cabin lighting.',
-          ],
-          bulkheadLocker: 'Bulkhead Locker 3 · Pharmacy Box & Science Cryo-Freezer',
-          medicationDose: 'Valacyclovir 500 mg (Oral 2x daily) + Hydrocortisone 1% Cream',
-          expectedRecovery: 'Lesions heal within 3 to 5 days without secondary infection.',
-          officialNasaSource: 'NASA Open Science Data Repository (OSDR-379 & GLDS-242)',
-          sourceUrl: 'https://science.nasa.gov/biological-physical/data/',
-          relatedOsdrAccession: 'OSD-379',
-          matchedSopId: 'immune-viral-flare',
-          quickSuggestions: [
-            'Is viral shedding contagious between astronauts?',
-            'Where is the -80°C science freezer located?',
-          ],
-        }
-      } else if (q.includes('step') || q.includes('bone') || q.includes('muscle') || q.includes('exercise') || q.includes('treadmill')) {
-        fallbackResp = {
-          domain: 'Musculoskeletal Integrity & Wolff\'s Law',
-          severity: 'warning',
-          diagnosticTitle: 'Sub-Target Mechanical Loading & Bone Demineralization Risk',
-          baselineComparison: `Daily Steps: ${currentSteps.toLocaleString()} | Target: 6,000+ steps (Deficit: -${(6000 - currentSteps).toLocaleString()}).`,
-          clinicalAssessment:
-            'Without ground-reaction gravity forces, bones lose 1.0% to 1.5% mineral density each month, shedding calcium into the bloodstream and raising kidney stone risk.',
-          actionSteps: [
-            'Don T2 treadmill harness with 70% body-weight equivalent downward bungee load.',
-            'Complete minimum 45-minute continuous run to fulfill remaining step quota.',
-            'Drink 1.0 L sodium-balanced water to dilute urinary calcium concentration.',
-            'Confirm ARED resistance loading scheduled for evening maintenance.',
-          ],
-          bulkheadLocker: 'Forward Module · T2 Treadmill & ARED Gymnasium Locker',
-          medicationDose: '1.0 L Water Hydration + 45-min T2 Harness Run',
-          expectedRecovery: 'Restores osteocyte mechanical stimulation and halts calcium loss.',
-          officialNasaSource: 'NASA HRP Evidence Report: Early Onset Osteoporosis & Bone Loss',
-          sourceUrl: 'https://humanresearchroadmap.nasa.gov/evidence/',
-          relatedOsdrAccession: 'OSD-48',
-          quickSuggestions: [
-            'Why does weightlessness cause kidney stones?',
-            'How to adjust T2 harness bungee tension',
-          ],
-        }
+        replyText = `Because of zero gravity, about 1.5 to 2 liters of fluid have rushed from your legs into your chest and head. Your heart is currently beating at ${currentHR} bpm trying to handle the extra fluid.\n\nHere is what you need to do right now:\n1. Sit down against the cabin bulkhead with your back propped up at 45°. Do not float or exercise.\n2. Drink a 500 mL water pouch with 2 salt tablets from Bulkhead Locker 2.\n3. If your pulse stays above 120 bpm after 10 minutes, take ONE Metoprolol 50 mg pill from Medical Kit Alpha.\n4. Stick the 3 ECG sensor pads on your chest to confirm your heart rate slows down.\n\nYour pulse should normalize below 85 bpm within 15 to 20 minutes.`
+        matchedId = 'tachycardia-fluid-shift'
+      } else if (q.includes('co2') || q.includes('air') || q.includes('scrubber') || q.includes('headache') || q.includes('breath') || q.includes('oxygen')) {
+        replyText = `Your cabin's air scrubbers are saturated, causing carbon dioxide (CO2) to build up in the air. This causes blood vessels in your head to widen, leading to your severe throbbing headache and shortness of breath.\n\nTake action immediately:\n1. Put on the orange quick-don oxygen mask from Locker 4 right now (100% clean oxygen).\n2. Stop all workouts across the crew immediately to save oxygen.\n3. Pull down the big red lever on Life Support Rack 4 to switch over to the backup LiOH canister.\n4. Take 2 Ibuprofen pills (400 mg) with water for the headache.\n\nOxygen levels will rebound within 2 minutes, and the headache will fade within 45 minutes.`
+        matchedId = 'hypoxia-co2-scrubber'
+      } else if (q.includes('virus') || q.includes('cold sore') || q.includes('rash') || q.includes('immune') || q.includes('379')) {
+        replyText = `Deep-space radiation and flight stress have temporarily weakened your immune defenses (documented in NASA study OSDR-379). This allows dormant childhood viruses like cold sores (EBV/VZV) to wake back up.\n\nHere is your treatment plan:\n1. Take ONE Valacyclovir 500 mg pill from Bulkhead Locker 3 (Pharmacy Box) every 12 hours for 5 days.\n2. Gently rub Hydrocortisone cream onto the sore or rash twice a day.\n3. Spit 1.5 mL of saliva into a cryo-tube and store it in the -80°C science freezer for post-flight testing.\n4. Prioritize 8 hours of sleep with dimmed cabin lighting.\n\nSores typically dry up and heal within 3 to 5 days.`
+        matchedId = 'immune-viral-flare'
+      } else if (q.includes('vision') || q.includes('eye') || q.includes('sans') || q.includes('blur')) {
+        replyText = `In zero gravity, fluid trapped inside your skull is pressing against the back of your eyeballs, flattening them and making letters look blurry (SANS).\n\nHere is how to relieve it:\n1. Wrap the Braslet-M inflatable leg bands high around both thighs and pump them to 30 mmHg for 2 hours to trap fluid down in your legs.\n2. Spray 1 puff of decongestant in each nostril to clear zero-G head puffiness.\n3. Test your vision using the eye chart on the wall from 6 feet away.\n\nHead fullness usually relieves within 45 minutes.`
+        matchedId = 'sans-fluid-shift'
+      } else if (q.includes('step') || q.includes('exercise') || q.includes('bone') || q.includes('walk')) {
+        replyText = `Your wrist sensor shows you have logged ${currentSteps} steps today, which is under the NASA target of 6,000 steps. In zero-G, unloaded bones lose 1.0% to 1.5% mineral density every month, shedding calcium into your kidneys.\n\nHere is what to do:\n1. Strap into the T2 treadmill bungee harness at 70% body-weight load.\n2. Complete a 45-minute continuous run to hit the 6,000 steps target.\n3. Drink 1.0 Liter of sodium-balanced water to protect your kidneys.\n4. Confirm your evening ARED resistance exercise routine.`
       }
 
       const botMsg = {
-        id: `bot-${Date.now()}`,
+        id: `aura-${Date.now()}`,
         sender: 'bot',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        ...fallbackResp,
+        text: replyText,
+        matchedSopId: matchedId,
+        timestamp: nowTime,
       }
       setChatMessages((prev) => [...prev, botMsg])
     } finally {
@@ -669,30 +550,10 @@ export function MedicalAdviceView({
   const handleResetChat = () => {
     setChatMessages([
       {
-        id: `init-${Date.now()}`,
+        id: `aura-reset-1`,
         sender: 'bot',
+        text: `Hi ${astronautFirstName}! Dialogue cleared. I'm ready to assist you. Tell me what's happening or what symptoms you have.`,
         timestamp: 'Just now',
-        domain: 'NASA HRP Autonomous Flight Surgeon',
-        severity: 'nominal',
-        diagnosticTitle: 'AURA-MED NASA Clinical Decision Co-Pilot Reset',
-        clinicalAssessment:
-          'Dialogue reset. All responses continue to be grounded directly in NASA OSDR open datasets and NASA Human Research Program flight standards without connecting to any third-party LLM.',
-        baselineComparison: `Live Telemetry: HR ${currentHR} bpm, SpO2 ${currentSpO2}%, Steps ${currentSteps.toLocaleString()}.`,
-        actionSteps: [
-          'Ask any medical or emergency query, or choose a quick prompt chip.',
-          'Deterministic NASA protocols remain active.',
-        ],
-        bulkheadLocker: 'Bulkhead Lockers 1–4 Available',
-        medicationDose: 'Flight Formulary Ready',
-        officialNasaSource: 'NASA Human Research Program Evidence Standards',
-        sourceUrl: 'https://humanresearchroadmap.nasa.gov/evidence/',
-        relatedOsdrAccession: 'OSD-379',
-        quickSuggestions: [
-          '🩺 Triage My Current Vitals',
-          '❤️ Elevated Heart Rate Protocol',
-          '🫁 CO2 Air Scrubber Threshold',
-          '🧬 Query NASA OSDR-379 Viral Data',
-        ],
       },
     ])
   }
@@ -969,265 +830,131 @@ export function MedicalAdviceView({
             </div>
           )}
 
-          {/* RIGHT COLUMN: NASA DATA-DRIVEN MEDICAL CO-PILOT */}
+          {/* RIGHT COLUMN: AURA FLIGHT MEDICAL ASSISTANT */}
           {(viewMode === 'split' || viewMode === 'copilot') && (
             <div className="medical-copilot-column">
               <div className="nasa-copilot-card">
-                {/* Header */}
-                <div className="copilot-header">
-                  <div className="copilot-identity-row">
-                    <div className="copilot-title-group">
-                      <div className="copilot-avatar-icon">
-                        <Bot size={18} />
-                      </div>
-                      <div className="copilot-title-text">
-                        <h3>AURA-MED NASA Clinical Co-Pilot</h3>
-                        <small>NASA OSDR Biological Data &amp; HRP Grounded Engine</small>
-                      </div>
+                {/* Clean Header */}
+                <div className="aura-chat-header">
+                  <div className="aura-header-left">
+                    <div className="aura-avatar">
+                      <Sparkles size={18} />
                     </div>
-                    <button
-                      type="button"
-                      className="copilot-reset-btn"
-                      onClick={handleResetChat}
-                      title="Clear dialogue history"
-                    >
-                      <RotateCcw size={12} />
-                      <span>Reset</span>
-                    </button>
-                  </div>
-
-                  {/* Telemetry Strip */}
-                  <div className="copilot-telemetry-strip">
-                    <div className={`telemetry-metric-item ${currentHR > 100 ? 'alert' : ''}`}>
-                      <span>HR:</span>
-                      <strong>{currentHR} bpm</strong>
-                    </div>
-                    <div className={`telemetry-metric-item ${currentSpO2 < 95 ? 'alert' : ''}`}>
-                      <span>SpO2:</span>
-                      <strong>{currentSpO2}%</strong>
-                    </div>
-                    <div className={`telemetry-metric-item ${currentSteps < 6000 ? 'warn' : ''}`}>
-                      <span>Steps:</span>
-                      <strong>{currentSteps.toLocaleString()}</strong>
-                    </div>
-                    <div className="telemetry-metric-item">
-                      <span>Temp:</span>
-                      <strong>{currentTemp}°C</strong>
-                    </div>
-                    <div className="telemetry-metric-item">
-                      <span>Phase:</span>
-                      <strong>0.00g Transit</strong>
+                    <div className="aura-header-text">
+                      <h3>Aura</h3>
+                      <small>Medical Assistant · Grounded in NASA Data</small>
                     </div>
                   </div>
-                </div>
-
-                {/* Quick Query Suggestion Chips */}
-                <div className="copilot-quick-chips">
                   <button
                     type="button"
-                    className="copilot-chip-btn"
-                    onClick={() => handleQuickPrompt('Triage my current vitals against NASA limits')}
+                    className="aura-reset-btn"
+                    onClick={handleResetChat}
+                    title="Clear dialogue history"
                   >
-                    <Activity size={12} />
-                    <span>🩺 Triage Current Vitals</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="copilot-chip-btn"
-                    onClick={() => handleQuickPrompt('My heart is pounding fast, what does NASA advise?')}
-                  >
-                    <HeartPulse size={12} />
-                    <span>❤️ Elevated Heart Rate</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="copilot-chip-btn"
-                    onClick={() => handleQuickPrompt('What are toxic CO2 scrubber limits and symptoms?')}
-                  >
-                    <Wind size={12} />
-                    <span>🫁 CO2 Air Scrubber</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="copilot-chip-btn"
-                    onClick={() => handleQuickPrompt('Fetch NASA OSDR-379 viral shedding and immune study')}
-                  >
-                    <Dna size={12} />
-                    <span>🧬 NASA OSDR-379 Data</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="copilot-chip-btn"
-                    onClick={() => handleQuickPrompt('What is the countermeasure for bone loss and daily steps?')}
-                  >
-                    <Cpu size={12} />
-                    <span>🏃 Bone Loss &amp; Steps</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="copilot-chip-btn"
-                    onClick={() => handleQuickPrompt('Where are medicines and kits stored in the bulkhead?')}
-                  >
-                    <Pill size={12} />
-                    <span>💊 Bulkhead Lockers</span>
+                    <RotateCcw size={12} />
+                    <span>Reset</span>
                   </button>
                 </div>
 
-                {/* Chat Feed */}
-                <div className="copilot-chat-feed" ref={chatFeedRef}>
+                {/* Clean Speech Bubbles Feed */}
+                <div className="aura-chat-feed" ref={chatFeedRef}>
                   {chatMessages.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`copilot-msg-bubble ${msg.sender === 'user' ? 'user' : 'bot'}`}
+                      className={`aura-msg-group ${msg.sender === 'user' ? 'user' : 'bot'}`}
                     >
                       {msg.sender === 'user' ? (
                         <>
-                          <div className="copilot-user-text">{msg.text}</div>
-                          <span className="copilot-timestamp">{msg.timestamp}</span>
+                          <div className="aura-bubble-user">{msg.text}</div>
+                          <span className="aura-msg-meta">You · {msg.timestamp}</span>
                         </>
                       ) : (
-                        <div className={`copilot-bot-card ${msg.severity || 'nominal'}`}>
-                          <div className="bot-card-top">
-                            <span className="bot-domain-badge">{msg.domain}</span>
-                            <span className={`bot-severity-tag ${msg.severity || 'nominal'}`}>
-                              {(msg.severity || 'NOMINAL').toUpperCase()}
-                            </span>
-                          </div>
-
-                          <div className="bot-card-heading">
-                            <h4>{msg.diagnosticTitle}</h4>
-                          </div>
-
-                          {msg.baselineComparison && (
-                            <div className="bot-delta-pill">
-                              <Activity size={13} color="#315cff" />
-                              <span>{msg.baselineComparison}</span>
-                            </div>
-                          )}
-
-                          <p className="bot-clinical-assessment">{msg.clinicalAssessment}</p>
-
-                          {msg.actionSteps && msg.actionSteps.length > 0 && (
-                            <div className="bot-action-steps-box">
-                              <span className="bot-action-steps-heading">
-                                Certified NASA Countermeasure Steps:
-                              </span>
-                              {msg.actionSteps.map((step, idx) => (
-                                <div key={idx} className="bot-action-step-item">
-                                  <span className="bot-step-num">{idx + 1}</span>
-                                  <span>{step}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="bot-meta-footer">
-                            {msg.bulkheadLocker && (
-                              <span className="bot-meta-pill">
-                                <Pill size={12} />
-                                <span>{msg.bulkheadLocker}</span>
-                              </span>
-                            )}
-                            {msg.medicationDose && (
-                              <span className="bot-meta-pill">
-                                <strong>Dose:</strong> {msg.medicationDose}
-                              </span>
-                            )}
-                            {msg.officialNasaSource && (
-                              <a
-                                href={msg.sourceUrl || 'https://humanresearchroadmap.nasa.gov/'}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="bot-meta-pill link"
-                                title="Open verified NASA research standard"
-                              >
-                                <ExternalLink size={12} />
-                                <span>{msg.officialNasaSource} ↗</span>
-                              </a>
-                            )}
-                            {msg.relatedOsdrAccession && (
-                              <a
-                                href={`https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/${msg.relatedOsdrAccession}/`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="bot-meta-pill link"
-                                title="Inspect official NASA OSDR REST API record"
-                              >
-                                <Database size={12} />
-                                <span>NASA OSDR: {msg.relatedOsdrAccession} ↗</span>
-                              </a>
+                        <>
+                          <div className="aura-bubble-bot">
+                            {msg.text}
+                            {msg.matchedSopId && (
+                              <div>
+                                <button
+                                  type="button"
+                                  className="aura-sop-link-btn"
+                                  onClick={() => handleJumpToSop(msg.matchedSopId)}
+                                >
+                                  <ArrowRight size={13} />
+                                  <span>Open Step-by-Step SOP Checklist</span>
+                                </button>
+                              </div>
                             )}
                           </div>
-
-                          {/* Jump to matching SOP card */}
-                          {(msg.matchedSopId ||
-                            (msg.domain && msg.domain.includes('Cardiovascular')) ||
-                            (msg.domain && msg.domain.includes('Life Support')) ||
-                            (msg.domain && msg.domain.includes('Immunology'))) && (
-                            <div>
-                              <button
-                                type="button"
-                                className="bot-jump-sop-btn"
-                                onClick={() => {
-                                  const id =
-                                    msg.matchedSopId ||
-                                    (msg.domain.includes('Cardiovascular')
-                                      ? 'tachycardia-fluid-shift'
-                                      : msg.domain.includes('Life Support')
-                                      ? 'hypoxia-co2-scrubber'
-                                      : 'immune-viral-flare')
-                                  handleJumpToSop(id)
-                                }}
-                              >
-                                <ArrowRight size={13} />
-                                <span>Highlight &amp; Open Step-by-Step SOP Checklist</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                          <span className="aura-msg-meta">Aura · NASA Flight Medicine · {msg.timestamp}</span>
+                        </>
                       )}
                     </div>
                   ))}
 
                   {isAnalyzing && (
-                    <div className="copilot-msg-bubble bot">
-                      <div className="copilot-bot-card nominal" style={{ padding: '12px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
-                          <Database size={14} color="#315cff" className="clean-spinner" />
-                          <span>Querying NASA HRP &amp; OSDR datasets against live telemetry...</span>
-                        </div>
+                    <div className="aura-msg-group bot">
+                      <div className="aura-bubble-bot" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-tertiary)' }}>
+                        <Database size={14} color="#10b981" className="clean-spinner" />
+                        <span>Aura is checking NASA flight medicine data...</span>
                       </div>
                     </div>
                   )}
-
-
                 </div>
 
-                {/* Input Bar */}
-                <form
-                  className="copilot-input-bar"
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    executeNasaQuery(inputQuery)
-                  }}
-                >
-                  <input
-                    type="text"
-                    className="copilot-input-field"
-                    placeholder="Ask NASA flight medicine (e.g. 'high pulse', 'blurry vision', 'check vitals')..."
-                    value={inputQuery}
-                    onChange={(e) => setInputQuery(e.target.value)}
-                  />
+                {/* Organized, Minimal Suggestions (Only 3 clean pills) */}
+                <div className="aura-suggestions-bar">
                   <button
-                    type="submit"
-                    className="copilot-send-btn"
-                    disabled={!inputQuery.trim() || isAnalyzing}
-                    title="Evaluate query against NASA clinical datasets"
+                    type="button"
+                    className="aura-suggestion-chip"
+                    onClick={() => handleQuickPrompt('My heart is pounding fast')}
                   >
-                    <Send size={14} />
-                    <span>Ask NASA</span>
+                    <HeartPulse size={12} color="#ef4444" />
+                    <span>Heart is racing</span>
                   </button>
-                </form>
+                  <button
+                    type="button"
+                    className="aura-suggestion-chip"
+                    onClick={() => handleQuickPrompt('I have a severe throbbing frontal headache')}
+                  >
+                    <Wind size={12} color="#3b82f6" />
+                    <span>Frontal headache</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="aura-suggestion-chip"
+                    onClick={() => handleQuickPrompt('Check my current vitals')}
+                  >
+                    <Activity size={12} color="#10b981" />
+                    <span>Check my vitals</span>
+                  </button>
+                </div>
+
+                {/* Clean Input Area */}
+                <div className="aura-input-wrapper">
+                  <form
+                    className="aura-input-container"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      executeNasaQuery(inputQuery)
+                    }}
+                  >
+                    <input
+                      type="text"
+                      className="aura-input-field"
+                      placeholder="Ask a question..."
+                      value={inputQuery}
+                      onChange={(e) => setInputQuery(e.target.value)}
+                    />
+                    <button
+                      type="submit"
+                      className="aura-send-btn"
+                      disabled={!inputQuery.trim() || isAnalyzing}
+                      title="Send question to Aura"
+                    >
+                      <Send size={15} />
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           )}

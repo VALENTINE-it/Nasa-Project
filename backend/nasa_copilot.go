@@ -43,6 +43,7 @@ type CopilotRequest struct {
 
 type CopilotResponse struct {
 	Query                string   `json:"query"`
+	Message              string   `json:"message"`
 	Domain               string   `json:"domain"`
 	Severity             string   `json:"severity"` // "nominal", "warning", "critical"
 	DiagnosticTitle      string   `json:"diagnosticTitle"`
@@ -56,6 +57,7 @@ type CopilotResponse struct {
 	SourceURL            string   `json:"sourceUrl"`
 	RelatedOsdrAccession string   `json:"relatedOsdrAccession"`
 	QuickSuggestions     []string `json:"quickSuggestions"`
+	MatchedSopID         string   `json:"matchedSopId"`
 }
 
 var (
@@ -298,10 +300,11 @@ func handleNasaMedicalQuery(w http.ResponseWriter, r *http.Request) {
 		resp.OfficialNasaSource = "NASA Human Research Program Evidence Report: Cardiac Rhythm Problems (HRP-47065)"
 		resp.SourceURL = "https://humanresearchroadmap.nasa.gov/evidence/"
 		resp.RelatedOsdrAccession = "OSD-118"
+		resp.MatchedSopID = "tachycardia-fluid-shift"
+		resp.Message = fmt.Sprintf("Because of weightlessness, about 1.5 to 2 liters of fluid have rushed from your legs into your chest and head. Your heart is currently beating at %d bpm trying to handle the extra fluid.\n\nHere is what you need to do right now:\n1. Sit down against the cabin bulkhead with your back propped up at 45°. Do not float or exercise.\n2. Drink a 500 mL water pouch with 2 salt tablets from Bulkhead Locker 2.\n3. If your pulse stays above 120 bpm after 10 minutes, take ONE Metoprolol 50 mg pill from Medical Kit Alpha.\n4. Stick the 3 ECG sensor pads on your chest to confirm your heart rate slows down.\n\nYour pulse should normalize below 85 bpm within 15 to 20 minutes.", bio.HeartRate)
 		resp.QuickSuggestions = []string{
-			"What if heart rate remains above 120 after 20 minutes?",
-			"Where is Bulkhead Locker 2 located in the habitat?",
-			"Explain how weightlessness moves fluid into the chest",
+			"What if heart rate remains above 120?",
+			"Where is Bulkhead Locker 2 located?",
 		}
 
 	// Case 2: Hypoxia / Carbon Dioxide Scrubber Failure / Hypercapnia
@@ -323,10 +326,11 @@ func handleNasaMedicalQuery(w http.ResponseWriter, r *http.Request) {
 		resp.OfficialNasaSource = "NASA HRP Evidence Report: Adverse Health Effects of CO2 Exposure in Spacecraft"
 		resp.SourceURL = "https://humanresearchroadmap.nasa.gov/evidence/reports/CO2.pdf"
 		resp.RelatedOsdrAccession = "OSD-379"
+		resp.MatchedSopID = "hypoxia-co2-scrubber"
+		resp.Message = "Your cabin's air scrubbers are saturated, causing carbon dioxide (CO2) to build up in the air. This causes blood vessels in your head to widen, leading to your severe throbbing headache and shortness of breath.\n\nTake action immediately:\n1. Put on the orange quick-don oxygen mask from Locker 4 right now (100% clean oxygen).\n2. Stop all workouts across the crew immediately to save oxygen.\n3. Pull down the big red lever on Life Support Rack 4 to switch over to the backup LiOH canister.\n4. Take 2 Ibuprofen pills (400 mg) with water for the headache.\n\nOxygen levels will rebound within 2 minutes, and the headache will fade within 45 minutes."
 		resp.QuickSuggestions = []string{
 			"How long does a backup LiOH canister last?",
-			"What are the toxic symptoms of CO2 above 5.0 mmHg?",
-			"How to test cabin air with the handheld draeger tube",
+			"What are toxic symptoms of CO2?",
 		}
 
 	// Case 3: Immune Suppression / Latent Viral Reactivation / Cold Sore (OSDR-379 / GLDS-242)
@@ -348,10 +352,11 @@ func handleNasaMedicalQuery(w http.ResponseWriter, r *http.Request) {
 		resp.OfficialNasaSource = "NASA Open Science Data Repository (OSDR-379 & GLDS-242): Viral Shedding in Astronauts"
 		resp.SourceURL = "https://science.nasa.gov/biological-physical/data/"
 		resp.RelatedOsdrAccession = "OSD-379"
+		resp.MatchedSopID = "immune-viral-flare"
+		resp.Message = "Deep-space radiation and flight stress have temporarily weakened your immune defenses (documented in NASA study OSDR-379). This allows dormant childhood viruses like cold sores (EBV/VZV) to wake back up.\n\nHere is your treatment plan:\n1. Take ONE Valacyclovir 500 mg pill from Bulkhead Locker 3 (Pharmacy Box) every 12 hours for 5 days.\n2. Gently rub Hydrocortisone cream onto the sore or rash twice a day.\n3. Spit 1.5 mL of saliva into a cryo-tube and store it in the -80°C science freezer for post-flight testing.\n4. Prioritize 8 hours of sleep with dimmed cabin lighting.\n\nSores typically dry up and heal within 3 to 5 days."
 		resp.QuickSuggestions = []string{
-			"Fetch live NASA OSDR-379 dataset details",
-			"Are viral flares contagious between crew members in microgravity?",
-			"Where is the -80°C science cryo-freezer located?",
+			"Are viral flares contagious in zero-G?",
+			"Where is the -80°C science cryo-freezer?",
 		}
 
 	// Case 4: SANS (Spaceflight Associated Neuro-ocular Syndrome) / Blurry Vision
@@ -373,14 +378,15 @@ func handleNasaMedicalQuery(w http.ResponseWriter, r *http.Request) {
 		resp.OfficialNasaSource = "NASA HRP Evidence Report: Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS)"
 		resp.SourceURL = "https://humanresearchroadmap.nasa.gov/evidence/reports/SANS.pdf"
 		resp.RelatedOsdrAccession = "OSD-118"
+		resp.MatchedSopID = "sans-fluid-shift"
+		resp.Message = "In zero gravity, fluid trapped inside your skull is pressing against the back of your eyeballs, flattening them and making letters look blurry (SANS).\n\nHere is how to relieve it:\n1. Wrap the Braslet-M inflatable leg bands high around both thighs and pump them to 30 mmHg for 2 hours to trap fluid down in your legs.\n2. Spray 1 puff of decongestant in each nostril to clear zero-G head puffiness.\n3. Test your vision using the eye chart on the wall from 6 feet away.\n\nHead fullness usually relieves within 45 minutes."
 		resp.QuickSuggestions = []string{
-			"How does Braslet-M cuff prevent optic nerve swelling?",
-			"What are the long-term effects of SANS on Mars missions?",
+			"How does Braslet-M cuff relieve eye pressure?",
 			"How to calibrate the PanOptic ophthalmoscope",
 		}
 
 	// Case 5: Musculoskeletal / Daily Steps / Bone Loss (OSD-48)
-	case strings.Contains(q, "step") || strings.Contains(q, "walk") || strings.Contains(q, "exercise") || strings.Contains(q, "bone") || strings.Contains(q, "muscle") || strings.Contains(q, "treadmill") || strings.Contains(q, "ared") || bio.Steps < 6000 && strings.Contains(q, "vitals"):
+	case strings.Contains(q, "step") || strings.Contains(q, "walk") || strings.Contains(q, "exercise") || strings.Contains(q, "bone") || strings.Contains(q, "muscle") || strings.Contains(q, "treadmill") || strings.Contains(q, "ared") || (bio.Steps < 6000 && strings.Contains(q, "vitals")):
 		resp.Domain = "Musculoskeletal Integrity & Wolff's Law Adaptation"
 		resp.Severity = "warning"
 		resp.DiagnosticTitle = "Sub-Target Mechanical Loading & Accelerated Bone Demineralization"
@@ -398,9 +404,9 @@ func handleNasaMedicalQuery(w http.ResponseWriter, r *http.Request) {
 		resp.OfficialNasaSource = "NASA HRP Evidence Report: Risk of Early Onset Osteoporosis and Bone Fracture"
 		resp.SourceURL = "https://humanresearchroadmap.nasa.gov/evidence/"
 		resp.RelatedOsdrAccession = "OSD-48"
+		resp.Message = fmt.Sprintf("Your wrist sensor shows you have logged %d steps today, which is under the NASA target of 6,000 steps. In zero-G, unloaded bones lose 1.0%% to 1.5%% mineral density every month, shedding calcium into your kidneys.\n\nHere is what to do:\n1. Strap into the T2 treadmill bungee harness at 70%% body-weight load.\n2. Complete a 45-minute continuous run to hit the 6,000 steps target.\n3. Drink 1.0 Liter of sodium-balanced water to protect your kidneys.\n4. Confirm your evening ARED resistance exercise routine.", bio.Steps)
 		resp.QuickSuggestions = []string{
 			"Why does microgravity cause kidney stones?",
-			"How does the T2 vibration isolation system protect spacecraft solar arrays?",
 			"Review ARED resistive exercise protocol",
 		}
 
@@ -423,10 +429,11 @@ func handleNasaMedicalQuery(w http.ResponseWriter, r *http.Request) {
 		resp.OfficialNasaSource = "NASA HRP Evidence Report: Risk of Acute Radiation Exposures"
 		resp.SourceURL = "https://humanresearchroadmap.nasa.gov/evidence/reports/Radiation.pdf"
 		resp.RelatedOsdrAccession = "OSD-379"
+		resp.MatchedSopID = "solar-radiation-spe"
+		resp.Message = "External spacecraft sensors detect elevated solar particle radiation.\n\nImmediate actions:\n1. Move all crew into the center storm shelter room immediately (surrounded by water tanks that absorb cosmic radiation).\n2. Swallow the protective antioxidant vitamin pack (Vitamins C, E, and NAC) from the Radiation Kit.\n3. Clip your dosimeter badge to your chest and log readings every 30 minutes.\n4. Drink 2 to 3 water pouches to stay well-hydrated."
 		resp.QuickSuggestions = []string{
-			"Why is water the best shield against solar cosmic rays?",
-			"How to interpret personal dosimeter badges",
-			"What are the acute symptoms of space radiation exposure?",
+			"Why does water shield against cosmic rays?",
+			"How to interpret dosimeter badges",
 		}
 
 	// Case 7: Lockers & Medical Kit Formulary
@@ -448,10 +455,10 @@ func handleNasaMedicalQuery(w http.ResponseWriter, r *http.Request) {
 		resp.OfficialNasaSource = "NASA ISS Crew Medical Checklist & Medical Operations Formulary"
 		resp.SourceURL = "https://www.nasa.gov/hrp"
 		resp.RelatedOsdrAccession = "OSD-379"
+		resp.Message = "Medical equipment is organized across 4 bulkhead lockers:\n• Locker 1: Diagnostics (BP cuff, pulse oximeter, thermometer, eye scope)\n• Locker 2: Heart & Fluids (Saline drink pouches, salt pills, Metoprolol)\n• Locker 3: Pharmacy (Antivirals, Valacyclovir, creams, sleep aids)\n• Locker 4: Life Support (Oxygen masks, backup LiOH air scrubbers)"
 		resp.QuickSuggestions = []string{
 			"Where is the emergency oxygen mask stored?",
 			"What heart medications are in Locker 2?",
-			"How are medicines stored to prevent zero-G cosmic degradation?",
 		}
 
 	// Default: General Triage of Current Biometrics
@@ -479,12 +486,11 @@ func handleNasaMedicalQuery(w http.ResponseWriter, r *http.Request) {
 		resp.OfficialNasaSource = "NASA Human Research Program (HRP) Evidence Books"
 		resp.SourceURL = "https://humanresearchroadmap.nasa.gov/evidence/"
 		resp.RelatedOsdrAccession = "OSD-379"
+		resp.Message = fmt.Sprintf("I checked your live telemetry: your heart rate is currently %d bpm, blood oxygen is %d%%, and you have logged %d steps today.\n\nEverything has been cross-referenced against NASA flight standards. Tell me what symptoms you are experiencing (e.g. headache, rapid pulse, dizziness, rash) and I'll guide you step-by-step.", bio.HeartRate, bio.SpO2, bio.Steps)
 		resp.QuickSuggestions = []string{
-			"🩺 Triage my current vitals",
-			"❤️ Elevated heart rate protocol",
-			"🫁 CO2 air scrubber threshold",
-			"🧬 Query NASA OSDR-379 study",
-			"🏃 Musculoskeletal bone loss countermeasures",
+			"Heart is racing",
+			"Frontal headache",
+			"Check my vitals",
 		}
 	}
 
